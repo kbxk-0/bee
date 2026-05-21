@@ -75,17 +75,15 @@ async function doRegister() {
 function toggleAuthMode() {
   const overlay  = document.getElementById('auth-overlay');
   const isLogin  = overlay.dataset.mode !== 'register';
-
   overlay.dataset.mode = isLogin ? 'register' : 'login';
 
-  overlay.querySelector('h2').textContent      = isLogin ? 'إنشاء حساب جديد' : 'تسجيل الدخول في bee';
-  overlay.querySelector('.auth-btn').textContent= isLogin ? 'إنشاء الحساب' : 'دخول اللعبة';
-  overlay.querySelector('.auth-btn').onclick    = isLogin ? doRegister : doLogin;
-  overlay.querySelector('.auth-switch').textContent = isLogin ? 'لديك حساب؟ سجّل دخولك' : 'ليس لديك حساب؟ أنشئ واحداً';
+  const btn = overlay.querySelector('.auth-btn');
+  const sw  = overlay.querySelector('.auth-switch');
+  const unf = document.getElementById('l-username');
 
-  // أظهر / أخفِ حقل اسم المستخدم
-  const usernameField = document.getElementById('l-username');
-  if (usernameField) usernameField.style.display = isLogin ? 'block' : 'none';
+  if (btn) { btn.textContent = isLogin ? 'إنشاء الحساب' : 'دخول اللعبة'; btn.onclick = isLogin ? doRegister : doLogin; }
+  if (sw)  sw.innerHTML = isLogin ? 'لديك حساب؟ <span>سجّل دخولك</span>' : 'ليس لديك حساب؟ <span>أنشئ واحداً</span>';
+  if (unf) unf.style.display = isLogin ? 'block' : 'none';
 }
 
 // ===== مراقبة حالة تسجيل الدخول =====
@@ -97,7 +95,6 @@ auth.onAuthStateChanged((user) => {
   const overlay = document.getElementById('auth-overlay');
 
   if (user) {
-    // ✅ المستخدم مسجل الدخول
     if (overlay) overlay.style.display = 'none';
 
     // اشترك في تغييرات بيانات المستخدم في real-time
@@ -172,5 +169,6 @@ auth.onAuthStateChanged((user) => {
     if (pmListener)       { pmListener.off();       pmListener   = null; }
     if (clanChatListener) { clanChatListener.off(); clanChatListener = null; }
     if (notifListener)    { notifListener.off();    notifListener = null; }
+    if (overlay) overlay.style.display = 'flex';
   }
 });

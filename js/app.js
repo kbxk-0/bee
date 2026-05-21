@@ -20,153 +20,7 @@ function avatarHTML(name, size = 36) {
   return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${col};display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.42)}px;font-weight:bold;color:white;flex-shrink:0">${letter}</div>`;
 }
 
-// ===== الرئيسية =====
-function renderHome() {
-  const sec = document.getElementById('home');
-  if (!sec) return;
-
-  const xpCurrent = typeof currentXP !== 'undefined' ? currentXP : 0;
-  const xpNeeded  = currentLevel * 100;
-  const xpPct     = Math.min(100, Math.round(xpCurrent / xpNeeded * 100));
-
-  // جلب بيانات السلسلة والحضور قبل الرسم
-  const user = auth.currentUser;
-  if (!user) return;
-
-  const questChatBtn = claimedChatQuest
-    ? '<span style="color:#2ed573;font-size:11px">✓ تم</span>'
-    : `<button onclick="claimQuest('chat')" ${questChat >= 5 ? '' : 'disabled'} style="background:#ffd700;color:black;border:none;border-radius:4px;font-size:10px;padding:3px 8px;cursor:pointer;font-weight:bold">+20🪙</button>`;
-  const questFlipBtn = claimedFlipQuest
-    ? '<span style="color:#2ed573;font-size:11px">✓ تم</span>'
-    : `<button onclick="claimQuest('flip')" ${questFlip >= 3 ? '' : 'disabled'} style="background:#ffd700;color:black;border:none;border-radius:4px;font-size:10px;padding:3px 8px;cursor:pointer;font-weight:bold">+30🪙</button>`;
-
-  sec.innerHTML = `
-
-    <!-- بطاقة الملف الشخصي -->
-    <div style="background:#1a1a28;border-radius:14px;border:1px solid #2a2a3f;padding:16px;margin-bottom:12px">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-        <div onclick="showEditProfile()" style="cursor:pointer;position:relative">
-          ${avatarHTML(currentUsername, 54)}
-          <div style="position:absolute;bottom:0;right:0;background:#6c63ff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;border:2px solid #0a0a0f">✏️</div>
-        </div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:17px;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-            ${escapeHTML(currentUsername)}
-            ${isAdmin ? '<span style="color:#ff4757;font-size:10px;margin-right:4px">[Admin]</span>' : ''}
-            ${isVIP   ? '<span style="color:#ffd700;font-size:10px">★VIP</span>' : ''}
-          </div>
-          ${currentTitle ? `<div style="font-size:12px;color:${currentTitleColor||'#aaa'}">‹${escapeHTML(currentTitle)}›</div>` : ''}
-          <div style="font-size:12px;color:#888">المستوى ${currentLevel}</div>
-          ${currentClan ? `<div style="font-size:11px;color:#2ed573">[${escapeHTML(currentClan)}]</div>` : ''}
-        </div>
-        <div style="text-align:left;flex-shrink:0">
-          <div style="font-size:20px;font-weight:bold;color:#ffd700">🪙 ${currentCoins}</div>
-        </div>
-      </div>
-
-      <!-- شريط XP -->
-      <div style="margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:#666;margin-bottom:3px">
-          <span>XP</span><span>${xpCurrent} / ${xpNeeded}</span>
-        </div>
-        <div style="background:#2a2a3f;border-radius:10px;height:5px">
-          <div style="background:var(--accent);height:100%;border-radius:10px;width:${xpPct}%;transition:width .4s"></div>
-        </div>
-      </div>
-
-      <!-- أزرار سريعة -->
-      <div style="display:flex;gap:8px">
-        <button onclick="claimDaily()" style="flex:1;padding:8px;background:#2ed573;color:black;border:none;border-radius:8px;font-weight:bold;font-size:12px;cursor:pointer;font-family:inherit">🎁 مكافأة يومية</button>
-        <button onclick="showSection('inventory');renderInventory()" style="flex:1;padding:8px;background:#2a2a4f;color:#a78bfa;border:1px solid #6c63ff;border-radius:8px;font-weight:bold;font-size:12px;cursor:pointer;font-family:inherit">🎒 حقيبتي</button>
-      </div>
-    </div>
-
-    <!-- المهام اليومية -->
-    <div style="background:#1a1a28;border-radius:12px;border:1px solid #2a2a3f;padding:14px;margin-bottom:12px">
-      <div style="font-size:13px;font-weight:bold;color:#ffd700;margin-bottom:10px">🎯 المهام اليومية</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:12px">
-        <div>
-          💬 رسائل الشات
-          <div style="background:#2a2a3f;border-radius:10px;height:4px;margin-top:4px;width:120px">
-            <div style="background:#6c63ff;height:100%;border-radius:10px;width:${Math.min(100,questChat/5*100)}%"></div>
-          </div>
-          <span style="font-size:10px;color:#666">${questChat}/5</span>
-        </div>
-        ${questChatBtn}
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px">
-        <div>
-          🪙 قلب العملة
-          <div style="background:#2a2a3f;border-radius:10px;height:4px;margin-top:4px;width:120px">
-            <div style="background:#ffd700;height:100%;border-radius:10px;width:${Math.min(100,questFlip/3*100)}%"></div>
-          </div>
-          <span style="font-size:10px;color:#666">${questFlip}/3</span>
-        </div>
-        ${questFlipBtn}
-      </div>
-    </div>
-
-    <!-- الرسائل الخاصة -->
-    <div style="background:#1a1a28;border-radius:12px;border:1px solid #00d2d3;margin-bottom:12px;overflow:hidden">
-      <div style="background:#00d2d3;color:black;padding:10px 14px;font-weight:bold;font-size:13px;display:flex;justify-content:space-between;align-items:center">
-        <span>🔒 الرسائل الخاصة</span>
-        <button onclick="togglePMForm()" style="background:rgba(0,0,0,0.15);color:black;border:none;border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer;font-weight:bold">إرسال +</button>
-      </div>
-      <div id="private-messages-box" style="max-height:160px;overflow-y:auto;padding:8px"></div>
-      <div id="pm-send-form" style="display:none;padding:8px;border-top:1px solid #2a2a3f">
-        <input type="text" id="pm-target" placeholder="اسم المستلم..." class="input-field" style="margin-bottom:6px;font-size:12px">
-        <div style="display:flex;gap:6px">
-          <input type="text" id="pm-input" placeholder="الرسالة..." class="input-field" style="flex:1;font-size:12px"
-                 onkeydown="if(event.key==='Enter') sendPrivateMessage()">
-          <button onclick="sendPrivateMessage()" style="padding:0 12px;background:#00d2d3;color:black;border:none;border-radius:6px;font-weight:bold;cursor:pointer">➤</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- تحويل الكوينز -->
-    <div style="background:#1a1a28;border-radius:12px;border:1px solid #2a2a3f;padding:14px;margin-bottom:12px">
-      <div style="font-size:13px;font-weight:bold;color:var(--accent);margin-bottom:10px">💸 تحويل كوينز</div>
-      <input type="text" id="tr-user" placeholder="اسم المستخدم..." class="input-field" style="margin-bottom:6px">
-      <input type="number" id="tr-amount" placeholder="الكمية..." class="input-field" style="margin-bottom:8px">
-      <button onclick="transferCoins()" class="btn btn-primary btn-full" style="font-size:12px">إرسال الآن</button>
-    </div>
-
-    ${isAdmin ? `
-    <button onclick="showSection('admin-panel')" style="width:100%;padding:10px;background:#ff4757;color:white;border:none;border-radius:10px;font-weight:bold;font-size:13px;cursor:pointer;font-family:inherit">⚙️ لوحة الإدارة</button>
-    ` : ''}
-
-    <!-- سلسلة الأيام -->
-    <div id="streak-card" style="background:#1a1a28;border-radius:12px;border:1px solid #ff9f43;padding:14px;margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div style="font-size:13px;font-weight:bold;color:#ff9f43">🔥 السلسلة اليومية</div>
-          <div id="streak-info" style="font-size:11px;color:#888;margin-top:3px">جاري التحميل...</div>
-        </div>
-        <div id="streak-rewards-preview" style="text-align:left;font-size:11px;color:#666"></div>
-      </div>
-    </div>
-  `;
-
-  // تحديث السلسلة من Firebase
-  db.ref('users/'+user.uid).once('value', snap => {
-    const u = snap.val() || {};
-    const streak = u.dailyStreak || 0;
-    const rewards = [50,75,100,125,150,175,200,250,300,500];
-    const nextReward = rewards[Math.min(streak, rewards.length-1)];
-    const infoEl = document.getElementById('streak-info');
-    const prevEl = document.getElementById('streak-rewards-preview');
-    if (infoEl) infoEl.textContent = streak > 0 ? `${streak} يوم متتالي 🔥` : 'ابدأ سلسلتك اليوم!';
-    if (prevEl) prevEl.innerHTML = `مكافأة الغد:<br><strong style="color:#ffd700">${nextReward} 🪙</strong>`;
-  });
-
-  listenToPrivateMessages();
-  onHomeOpen();
-}
-
-function togglePMForm() {
-  const f = document.getElementById('pm-send-form');
-  if (f) f.style.display = f.style.display === 'none' ? 'block' : 'none';
-}
+// ===== الرئيسية =====renderHome
 
 // ===== لوحة المتصدرين =====
 function renderLeaderboard() {
@@ -189,7 +43,7 @@ function renderLeaderboard() {
           <div style="font-size:10px;color:#2ed573">${p.clan ? '['+p.clan+'] · ' : ''}Lv.${p.level||1}</div>
         </div>
         <div style="color:#ffd700;font-weight:bold;font-size:13px">🪙 ${p.coins||0}</div>
-        ${isAdmin ? `<button onclick="adminGiveCoinsToUser('${p.uid}','${escapeHTML(p.username||'')}')" style="background:#ff4757;color:white;border:none;border-radius:4px;font-size:10px;padding:3px 6px;cursor:pointer">منح</button>` : ''}
+        ${isAdmin ? `<button data-uid="${p.uid}" data-username="${escapeHTML(p.username||'')}" onclick="adminGiveCoinsToUser(this.dataset.uid, this.dataset.username)" style="background:#ff4757;color:white;border:none;border-radius:4px;font-size:10px;padding:3px 6px;cursor:pointer">منح</button>` : ''}
       </div>
     `).join('') || '<div style="text-align:center;color:#888;padding:20px">لا يوجد لاعبون</div>';
   });
@@ -762,72 +616,237 @@ function renderInventory() {
 
 // ===== المهام والمكافآت =====
 function claimQuest(type) {
-  const user = auth.currentUser; if (!user) return;
-  if (type==='chat' && questChat>=5 && !claimedChatQuest) {
-    db.ref('users/'+user.uid).transaction(u => { if(u){u.coins=(u.coins||0)+20;if(!u.quests)u.quests={};u.quests.chatClaimed=true;}return u; },
-      (e,ok) => { if(ok) alert("تم استلام 20 🪙!"); });
-  }
-  if (type==='flip' && questFlip>=3 && !claimedFlipQuest) {
-    db.ref('users/'+user.uid).transaction(u => { if(u){u.coins=(u.coins||0)+30;if(!u.quests)u.quests={};u.quests.flipClaimed=true;}return u; },
-      (e,ok) => { if(ok) alert("تم استلام 30 🪙!"); });
-  }
+  const user = auth.currentUser; 
+  if (!user) return;
+
+  // جلب الزر الذي تم ضغطه مؤقتاً لمنع الـ Spam
+  const btn = document.querySelector(`button[onclick="claimQuest('${type}')"]`);
+  if (btn) btn.disabled = true;
+
+  db.ref('users/' + user.uid).transaction(u => {
+    if (!u) return u;
+    if (!u.quests) u.quests = {};
+
+    // 1. التحقق من مهمة الشات داخل السيرفر
+    if (type === 'chat') {
+      const progress = u.quests.chatProgress || 0;
+      const claimed  = u.quests.chatClaimed || false;
+
+      if (progress >= 5 && !claimed) {
+        u.coins = (u.coins || 0) + 20;
+        u.quests.chatClaimed = true;
+        u.tempSuccess = true; // علامة لنجاح العملية
+      } else {
+        u.tempSuccess = false;
+      }
+    }
+
+    // 2. التحقق من مهمة قلب العملة داخل السيرفر
+    if (type === 'flip') {
+      const progress = u.quests.flipProgress || 0;
+      const claimed  = u.quests.flipClaimed || false;
+
+      if (progress >= 3 && !claimed) {
+        u.coins = (u.coins || 0) + 30;
+        u.quests.flipClaimed = true;
+        u.tempSuccess = true; // علامة لنجاح العملية
+      } else {
+        u.tempSuccess = false;
+      }
+    }
+
+    return u;
+  }, (error, committed, snap) => {
+    // إعادة تفعيل الزر في حال حدوث خطأ شبكة غير متوقع
+    if (btn && (!committed || error)) btn.disabled = false;
+
+    if (committed && snap.exists()) {
+      const userData = snap.val();
+      
+      if (userData.tempSuccess) {
+        // تحديث المتغيرات العامة محلياً فوراً لتتوافق مع السيرفر
+        if (type === 'chat') {
+          claimedChatQuest = true;
+          alert("تم استلام 20 🪙 بنجاح!");
+        } else if (type === 'flip') {
+          claimedFlipQuest = true;
+          alert("تم استلام 30 🪙 بنجاح!");
+        }
+        
+        // إعادة رسم الصفحة لتحديث شكل الأزرار وتحويلها إلى (✓ تم)
+        renderHome();
+      } else {
+        alert("لم تكمل المهمة بعد، أو قمت بالاستلام مسبقاً!");
+        renderHome(); // لتحديث الواجهة في حال كان هناك تعارض
+      }
+    } else {
+      alert("فشلت العملية، يرجى التحقق من الاتصال.");
+    }
+  });
 }
 
 function claimDaily() {
-  const user = auth.currentUser; if (!user) return;
+  const user = auth.currentUser; 
+  if (!user) return;
 
-  db.ref('users/'+user.uid).once('value', snap => {
-    const u = snap.val() || {};
-    const now       = Date.now();
-    const last      = u.lastDaily || 0;
-    const diff      = now - last;
-    const oneDay    = 24 * 60 * 60 * 1000;
+  // جلب زر الاستلام لتعطيله مؤقتاً ومنع السبام
+  const claimBtn = document.querySelector("button[onclick='claimDaily()']");
+  if (claimBtn) claimBtn.disabled = true;
 
+  // الدخول مباشرة في الترانزكشن لقراءة وتعديل البيانات في نفس اللحظة بأمان
+  db.ref('users/' + user.uid).transaction(d => {
+    if (!d) return d;
+
+    // 1. استخدام وقت السيرفر الحالي الموثق (أو وقت الجهاز كبديل احتياطي داخل السيرفر)
+    const now = Date.now(); 
+    const last = d.lastDaily || 0;
+    const diff = now - last;
+    const oneDay = 24 * 60 * 60 * 1000;
+
+    // 2. الفحص الأمني للوقت (إذا لم يمر يوم كامل، نلغي العملية فوراً)
     if (diff < oneDay) {
-      const r = oneDay - diff;
-      alert(`استلمت بالفعل!\nانتظر ${Math.floor(r/3600000)} ساعة و${Math.floor((r%3600000)/60000)} دقيقة`);
-      return;
+      // نضع علامة مؤقتة داخل الكائن لكي نعرف في النتيجة (callback) كم الوقت المتبقي
+      d.tempTimeLeft = oneDay - diff;
+      return; // إلغاء الترانزكشن دون تغيير أي بيانات
     }
 
-    // السلسلة: لو استلم باليوم الماضي فقط تزيد، وإلا تصفّر
-    const streak = (diff < oneDay * 2) ? (u.dailyStreak || 0) + 1 : 1;
+    // 3. حساب السلسلة بأمان بناءً على بيانات السيرفر الحقيقية
+    const streak = (diff < oneDay * 2) ? (d.dailyStreak || 0) + 1 : 1;
 
-    // المكافأة حسب طول السلسلة
+    // 4. تحديد المكافأة داخل السيرفر
     const rewards = [50, 75, 100, 125, 150, 175, 200, 250, 300, 500];
     const reward  = rewards[Math.min(streak - 1, rewards.length - 1)];
 
-    db.ref('users/'+user.uid).transaction(d => {
-      if (!d) return d;
-      d.coins      = (d.coins || 0) + reward;
-      d.lastDaily  = now;
-      d.dailyStreak= streak;
-      return d;
-    }, (e, ok) => {
-      if (ok) {
-        const streakMsg = streak > 1 ? `\n🔥 سلسلة ${streak} أيام متتالية!` : '';
-        alert(`🎁 استلمت ${reward} 🪙 مكافأة يومية!${streakMsg}`);
+    // 5. تحديث البيانات لحفظها
+    d.coins       = (d.coins || 0) + reward;
+    d.lastDaily   = now;
+    d.dailyStreak = streak;
+    
+    // حفظ المكافأة المستلمة مؤقتاً لإظهارها في رسالة النجاح بالأسفل
+    d.tempReward  = reward; 
+
+    return d;
+  }, (error, committed, snap) => {
+    // تفعيل الزر مجدداً بعد انتهاء العملية بالكامل
+    if (claimBtn) claimBtn.disabled = false;
+
+    if (committed && snap.exists()) {
+      const userData = snap.val();
+      
+      // إذا نجحت العملية وتم الحفظ
+      if (userData.tempReward) {
+        const streakMsg = userData.dailyStreak > 1 ? `\n🔥 سلسلة ${userData.dailyStreak} أيام متتالية!` : '';
+        alert(`🎁 استلمت ${userData.tempReward} 🪙 مكافأة يومية!${streakMsg}`);
         renderHome();
+      } 
+      // إذا لم تلتزم العملية لأن الوقت لم يحن بعد (تم الإلغاء من داخل الترانزكشن)
+      else if (userData.tempTimeLeft) {
+        const r = userData.tempTimeLeft;
+        alert(`استلمت بالفعل!\nانتظر ${Math.floor(r/3600000)} ساعة و${Math.floor((r%3600000)/60000)} دقيقة`);
       }
-    });
+    } else {
+      alert("حدث خطأ أثناء استلام المكافأة، يرجى المحاولة مجدداً.");
+    }
   });
 }
 
-function transferCoins() {
+// --- [ 1. دالة تحويل الكوينز مع الضريبة 5% ] ---
+function transferCoinsFromMenu(targetUid, targetName) {
   const user = auth.currentUser;
-  const target = document.getElementById('tr-user')?.value.trim();
-  const amount = parseInt(document.getElementById('tr-amount')?.value);
-  if (!user||!target||isNaN(amount)||amount<=0) { alert("بيانات غير صحيحة"); return; }
-  if (amount > currentCoins) { alert("لا تملك هذا القدر!"); return; }
-  if (target === currentUsername) { alert("لا تحول لنفسك!"); return; }
-  db.ref('users').orderByChild('username').equalTo(target).once('value', snap => {
-    if (!snap.exists()) { alert("المستخدم غير موجود!"); return; }
-    const tid = Object.keys(snap.val())[0];
-    db.ref('users/'+user.uid).transaction(u => { if(u&&u.coins>=amount){u.coins-=amount;}return u; },
-      (e,ok) => {
-        if (ok) { db.ref('users/'+tid).transaction(u => { if(u)u.coins=(u.coins||0)+amount;return u; }); alert(`تم التحويل 🪙 ${amount} إلى ${target}!`); }
-        else alert("فشل التحويل.");
-      });
+  if (!user) return;
+
+  if (targetName === currentUsername) { 
+    alert("لا يمكنك التحويل لنفسك!"); 
+    return; 
+  }
+
+  // طلب الكمية من اللاعب عبر صندوق إدخال
+  const amountInput = prompt(`أدخل كمية الكوينز المراد تحويلها إلى ${targetName}:`);
+  const amount = parseInt(amountInput);
+
+  if (isNaN(amount) || amount <= 0) { 
+    alert("برجاء إدخال كمية صحيحة!"); 
+    return; 
+  }
+  if (amount > currentCoins) { 
+    alert("لا تملك هذا القدر من الكوينز!"); 
+    return; 
+  }
+
+  // حساب الضريبة (مثال: 5%) والكمية الصافية للمستلم
+  const taxPercentage = 0.05; // 5% ضريبة
+  const tax = Math.floor(amount * taxPercentage);
+  const netAmount = amount - tax;
+
+  // تأكيد العملية من اللاعب
+  const confirmTransfer = confirm(`سيتم خصم ${amount} 🪙 من رصيدك.\n(الضريبة 5%: ${tax} 🪙)\nسيستلم ${targetName} صافي: ${netAmount} 🪙.\n\nهل تريد الاستمرار؟`);
+  if (!confirmTransfer) return;
+
+  // الخطوة الأولى: خصم المبلغ كاملاً من الراسل
+  db.ref('users/' + user.uid).transaction(u => {
+    if (u) {
+      if (u.coins >= amount) {
+        u.coins -= amount;
+        return u;
+      } else {
+        return; // إلغاء الترانزكشن إذا قل الرصيد فجأة
+      }
+    }
+    return u;
+  }, (error, committed) => {
+    if (committed) {
+      // الخطوة الثانية: إيداع المبلغ الصافي (بعد خصم الضريبة) للمستلم
+      db.ref('users/' + targetUid + '/coins').set(firebase.database.ServerValue.increment(netAmount))
+        .then(() => {
+          alert(`تم تحويل 🪙 ${netAmount} إلى ${targetName} بنجاح بعد خصم الضريبة!`);
+          closePlayerMenu(); // إغلاق المنيو تلقائياً
+        })
+        .catch(err => {
+          console.error("خطأ في الإيداع:", err);
+          alert("تم خصم الكوينز لكن فشل إيداعها، يرجى مراسلة الإدارة.");
+        });
+    } else {
+      alert("فشل التحويل. تأكد من رصيدك الحالي.");
+    }
   });
+}
+
+// --- [ 2. دالة إرسال الرسائل الخاصة من المنيو ] ---
+function sendPrivateMessageFromMenu(targetUid, targetName) {
+  const user = auth.currentUser;
+  if (!user) return;
+  if (isMuted) { alert("أنت مكتوم!"); return; }
+
+  const text = prompt(`أرسل رسالة خاصة إلى ${targetName}:`);
+  if (!text || !text.trim()) { return; }
+
+  const pmData = {
+    senderUid: user.uid, 
+    senderName: currentUsername,
+    receiverUid: targetUid, 
+    receiverName: targetName,
+    text: text.trim(),
+    timestamp: firebase.database.ServerValue.TIMESTAMP
+  };
+
+  const updates = {};
+  const newPmKey = db.ref().child('user_pms').push().key;
+  updates['/user_pms/' + user.uid + '/' + newPmKey] = pmData;
+  updates['/user_pms/' + targetUid + '/' + newPmKey] = pmData;
+  updates['/users/' + targetUid + '/unreadPMs'] = firebase.database.ServerValue.increment(1);
+
+  db.ref().update(updates)
+    .then(() => {
+      if (typeof showBrowserNotif === 'function') {
+        showBrowserNotif(`رسالة من ${currentUsername}`, text);
+      }
+      alert("تم إرسال الرسالة الخاصة بنجاح ✓");
+      closePlayerMenu();
+    })
+    .catch(err => {
+      console.error("خطأ في الخاص:", err);
+      alert("فشل إرسال الرسالة.");
+    });
 }
 
 // ===== الملف الشخصي =====

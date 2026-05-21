@@ -7,7 +7,8 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon-192.png" type="image/png">
   <link rel="apple-touch-icon" href="icon-192.png">
-  <meta name="theme-color" content="#6c63ff">
+  <meta name="theme-color" content="#7c3aed">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
@@ -15,100 +16,105 @@
 </head>
 <body>
 
-  <!-- شاشة تسجيل الدخول -->
-  <div id="auth-overlay" data-mode="login">
-    <div style="font-size:42px;margin-bottom:8px">🐝</div>
-    <h2 style="margin:0 0 6px">bee</h2>
-    <p style="color:#888;font-size:13px;margin:0 0 20px">منصة الألعاب الاجتماعية</p>
-    <input type="text" id="l-username" placeholder="اسم المستخدم..." class="auth-input" style="display:none">
-    <input type="email" id="l-email" placeholder="البريد الإلكتروني..." class="auth-input">
-    <input type="password" id="l-pass" placeholder="كلمة المرور..." class="auth-input"
-           onkeydown="if(event.key==='Enter') doLogin()">
-    <button class="auth-btn" onclick="doLogin()">دخول اللعبة</button>
-    <span class="auth-switch" onclick="toggleAuthMode()">ليس لديك حساب؟ أنشئ واحداً</span>
+  <!-- شاشة التحميل -->
+  <div id="splash-screen">
+    <div class="splash-logo">🐝</div>
+    <div class="splash-title">BEE</div>
+    <div class="splash-bar"><div class="splash-bar-fill"></div></div>
   </div>
 
-  <!-- زر تثبيت التطبيق (PWA) -->
-  <button id="install-btn" style="display:none;position:fixed;top:10px;left:10px;z-index:999;background:#6c63ff;color:white;border:none;border-radius:20px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;font-weight:bold">
-    📲 تثبيت التطبيق
+  <!-- شاشة تسجيل الدخول -->
+  <div id="auth-overlay" data-mode="login" style="display:none">
+    <div class="auth-logo">🐝</div>
+    <div class="auth-title">BEE</div>
+    <p class="auth-sub">منصة الألعاب الاجتماعية</p>
+    <div class="auth-card">
+      <input type="text"     id="l-username" placeholder="اسم المستخدم..." class="auth-input" style="display:none">
+      <input type="email"    id="l-email"    placeholder="البريد الإلكتروني..." class="auth-input">
+      <input type="password" id="l-pass"     placeholder="كلمة المرور..." class="auth-input"
+             onkeydown="if(event.key==='Enter') doLogin()">
+      <button class="auth-btn" onclick="doLogin()">دخول اللعبة</button>
+      <span class="auth-switch" onclick="toggleAuthMode()">
+        ليس لديك حساب؟ <span>أنشئ واحداً</span>
+      </span>
+    </div>
+  </div>
+
+  <!-- زر التثبيت PWA -->
+  <button id="install-btn" style="display:none;position:fixed;top:12px;left:12px;z-index:999;background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-family:inherit;cursor:pointer;font-weight:bold;box-shadow:0 4px 14px rgba(124,58,237,0.4)">
+    📲 تثبيت
   </button>
 
-  <!-- ===== الرئيسية ===== -->
-  <section id="home" class="page" style="display:block; overflow-y:auto; padding:14px 14px 70px;">
-    <!-- تُملأ بـ renderHome() -->
-  </section>
+  <!-- الرئيسية -->
+  <section id="home" class="page" style="display:block;overflow-y:auto;padding:14px 14px 75px"></section>
 
-  <!-- ===== الشات (بدون رسائل خاصة — انتقلت للرئيسية) ===== -->
-  <section id="chat" class="page" style="display:none; flex-direction:column; padding:8px 8px 70px; gap:8px;">
-    <div style="flex:1;min-height:0;background:#1a1a28;border-radius:10px;border:1px solid var(--accent);display:flex;flex-direction:column;overflow:hidden;height:calc(100vh - 86px)">
-      <div id="admin-marquee"><span class="marquee-text" id="marquee-content">أهلاً بك في شات bee!</span></div>
-      <div id="chat-messages" style="flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px"></div>
-      <div style="padding:8px;border-top:1px solid #2a2a3f;display:flex;gap:6px;flex-shrink:0">
+  <!-- الشات -->
+  <section id="chat" class="page" style="display:none;flex-direction:column;padding:8px 8px 75px;gap:8px">
+    <div style="flex:1;min-height:0;background:var(--card);border-radius:14px;border:1px solid var(--border2);display:flex;flex-direction:column;overflow:hidden;height:calc(100vh - 90px)">
+      <div id="admin-marquee"><span class="marquee-text" id="marquee-content">🐝 أهلاً بك في شات bee!</span></div>
+      <div id="chat-messages" style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px"></div>
+      <div style="padding:10px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;background:var(--card)">
         <input type="text" id="chat-input" placeholder="اكتب رسالتك..." class="input-field" style="flex:1"
                onkeydown="if(event.key==='Enter') sendMessage()">
-        <button onclick="sendMessage()" style="padding:0 14px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer">➤</button>
+        <button onclick="sendMessage()" style="width:42px;height:42px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;border:none;border-radius:10px;font-size:16px;cursor:pointer;box-shadow:0 4px 12px var(--accent-glow);flex-shrink:0">➤</button>
       </div>
     </div>
   </section>
 
-  <!-- ===== الألعاب ===== -->
-  <section id="games" class="page" style="display:none;padding:14px 14px 70px;overflow-y:auto"></section>
+  <!-- الألعاب -->
+  <section id="games" class="page" style="display:none;padding:14px 14px 75px;overflow-y:auto"></section>
 
-  <!-- ===== الكلانات ===== -->
+  <!-- الكلانات -->
   <section id="clan" class="page" style="display:none"></section>
 
-  <!-- ===== المتجر ===== -->
-  <section id="store" class="page" style="display:none;overflow-y:auto;padding-bottom:70px"></section>
+  <!-- المتجر -->
+  <section id="store" class="page" style="display:none;overflow-y:auto;padding-bottom:75px"></section>
 
-  <!-- ===== لوحة المتصدرين ===== -->
-  <section id="leaderboard" class="page" style="display:none;padding:14px 14px 70px;overflow-y:auto;color:white">
-    <h2 style="text-align:center;margin:0 0 14px;font-size:18px">🏆 لوحة الشرف</h2>
-    <div id="leaderboard-list" style="background:#1a1a28;border-radius:10px;border:1px solid var(--accent);overflow:hidden"></div>
+  <!-- المتصدرون -->
+  <section id="leaderboard" class="page" style="display:none;padding:14px 14px 75px;overflow-y:auto;color:white">
+    <h2 style="text-align:center;margin:0 0 16px;font-size:18px;background:linear-gradient(135deg,var(--accent2),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">🏆 لوحة الشرف</h2>
+    <div id="leaderboard-list" style="background:var(--card);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden"></div>
   </section>
 
-  <!-- ===== الحقيبة ===== -->
-  <section id="inventory" class="page" style="display:none;padding:14px 14px 70px;overflow-y:auto;color:white">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <h2 style="margin:0">🎒 حقيبتي</h2>
-      <button onclick="showSection('home')" class="btn" style="font-size:12px;background:#2a2a3f;color:#aaa">← رجوع</button>
+  <!-- الحقيبة -->
+  <section id="inventory" class="page" style="display:none;padding:14px 14px 75px;overflow-y:auto;color:white">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <h2 style="margin:0;font-size:18px">🎒 حقيبتي</h2>
+      <button onclick="showSection('home')" class="btn btn-ghost" style="font-size:12px;padding:7px 14px">← رجوع</button>
     </div>
-    <p style="color:#888;font-size:12px;margin:4px 0 14px">كل مشترياتك مع مدة الصلاحية</p>
     <div id="inventory-list"></div>
   </section>
 
-  <!-- ===== لوحة الإدارة ===== -->
-  <section id="admin-panel" class="page" style="display:none;overflow-y:auto;padding-bottom:70px"></section>
+  <!-- لوحة الإدارة -->
+  <section id="admin-panel" class="page" style="display:none;overflow-y:auto;padding-bottom:75px"></section>
 
   <!-- نافذة الملف الشخصي -->
   <div id="profile-modal">
     <div class="modal-box">
-      <h3 style="margin:0 0 14px;color:var(--accent)">ملف اللاعب</h3>
+      <h3 style="margin:0 0 16px;background:linear-gradient(135deg,var(--accent2),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:16px">ملف اللاعب</h3>
       <div id="profile-content">جاري التحميل...</div>
-      <button onclick="document.getElementById('profile-modal').style.display='none'" class="btn btn-danger btn-full" style="margin-top:14px">إغلاق</button>
+      <button onclick="document.getElementById('profile-modal').style.display='none'" class="btn btn-danger btn-full" style="margin-top:16px">إغلاق</button>
     </div>
   </div>
 
-  <!-- شريط التنقل السفلي -->
+  <!-- شريط التنقل -->
   <nav id="navbar">
-    <button data-section="home" onclick="showSection('home')">
-      <span class="nav-icon">🏠</span>الرئيسية
-    </button>
     <button data-section="chat" onclick="showSection('chat')">
       <span class="nav-icon">💬</span>الشات
     </button>
     <button data-section="games" onclick="showSection('games')">
       <span class="nav-icon">🎮</span>الألعاب
     </button>
-    <button data-section="clan" onclick="showSection('clan')">
-      <span class="nav-icon">⚔️</span>الكلانات
-    </button>
-    <button data-section="store" onclick="showSection('store')">
-      <span class="nav-icon">🛒</span>المتجر
+    <button data-section="home" onclick="showSection('home')">
+      <span class="nav-icon">🏠</span>
     </button>
     <button data-section="leaderboard" onclick="showSection('leaderboard');renderLeaderboard()">
       <span class="nav-icon">🏆</span>المتصدرون
     </button>
-    <button id="admin-sidebar-btn" data-section="admin-panel" onclick="showSection('admin-panel')" style="display:none;color:#ff4757">
+    <button data-section="store" onclick="showSection('store')">
+      <span class="nav-icon">🛒</span>المتجر
+    </button>
+    <button id="admin-sidebar-btn" data-section="admin-panel" onclick="showSection('admin-panel')" style="display:none">
       <span class="nav-icon">⚙️</span>الإدارة
     </button>
   </nav>
@@ -117,21 +123,28 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
   <script src="js/config.js"></script>
   <script src="js/notifications.js"></script>
   <script src="js/app.js"></script>
   <script src="js/chat.js"></script>
   <script src="js/auth.js"></script>
 
-  <!-- PWA Install Prompt -->
   <script>
+    // شاشة التحميل
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const s = document.getElementById('splash-screen');
+        if (s) s.classList.add('hidden');
+        setTimeout(() => { if(s) s.remove(); }, 500);
+      }, 1800);
+    });
+
+    // PWA
     let pwaPrompt = null;
     window.addEventListener('beforeinstallprompt', e => {
-      e.preventDefault();
-      pwaPrompt = e;
-      const btn = document.getElementById('install-btn');
-      if (btn) btn.style.display = 'block';
+      e.preventDefault(); pwaPrompt = e;
+      const b = document.getElementById('install-btn');
+      if (b) b.style.display = 'block';
     });
     document.getElementById('install-btn')?.addEventListener('click', async () => {
       if (!pwaPrompt) return;
@@ -144,6 +157,5 @@
       navigator.serviceWorker.register('/service-worker.js').catch(() => {});
     }
   </script>
-
 </body>
 </html>
