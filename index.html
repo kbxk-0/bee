@@ -17,28 +17,25 @@
 <body>
 
   <!-- شاشة التحميل -->
-  <div id="splash-screen">
-    <div class="splash-logo">🐝</div>
-    <div class="splash-title">BEE</div>
-    <div class="splash-bar"><div class="splash-bar-fill"></div></div>
-  </div>
+<div id="splash-screen">
+  <div class="splash-logo">🐝</div>
+  <div class="splash-title">BEE</div>
+  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+</div>
 
-  <!-- شاشة تسجيل الدخول -->
-  <div id="auth-overlay" data-mode="login" style="display:none">
-    <div class="auth-logo">🐝</div>
-    <div class="auth-title">BEE</div>
-    <p class="auth-sub">منصة الألعاب الاجتماعية</p>
-    <div class="auth-card">
-      <input type="text"     id="l-username" placeholder="اسم المستخدم..." class="auth-input" style="display:none">
-      <input type="email"    id="l-email"    placeholder="البريد الإلكتروني..." class="auth-input">
-      <input type="password" id="l-pass"     placeholder="كلمة المرور..." class="auth-input"
-             onkeydown="if(event.key==='Enter') doLogin()">
-      <button class="auth-btn" onclick="doLogin()">دخول اللعبة</button>
-      <span class="auth-switch" onclick="toggleAuthMode()">
-        ليس لديك حساب؟ <span>أنشئ واحداً</span>
-      </span>
-    </div>
+<!-- شاشة الدخول -->
+<div id="auth-overlay" data-mode="login" style="display:none">
+  <div class="auth-logo">🐝</div>
+  <div class="auth-title">BEE</div>
+  <p class="auth-sub">منصة الألعاب الاجتماعية</p>
+  <div class="auth-card">
+    <input type="text" id="l-username" placeholder="اسم المستخدم..." class="auth-input" style="display:none">
+    <input type="email" id="l-email" placeholder="البريد الإلكتروني..." class="auth-input">
+    <input type="password" id="l-pass" placeholder="كلمة المرور..." class="auth-input" onkeydown="if(event.key==='Enter') doLogin()">
+    <button class="auth-btn" onclick="doLogin()">دخول اللعبة</button>
+    <span class="auth-switch" onclick="toggleAuthMode()">ليس لديك حساب؟ <span>أنشئ واحداً</span></span>
   </div>
+</div>
 
   <!-- زر التثبيت PWA -->
   <button id="install-btn" style="display:none;position:fixed;top:12px;left:12px;z-index:999;background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-family:inherit;cursor:pointer;font-weight:bold;box-shadow:0 4px 14px rgba(124,58,237,0.4)">
@@ -99,25 +96,25 @@
 
   <!-- شريط التنقل -->
   <nav id="navbar">
-    <button data-section="chat" onclick="showSection('chat')">
-      <span class="nav-icon">💬</span>الشات
-    </button>
-    <button data-section="games" onclick="showSection('games')">
-      <span class="nav-icon">🎮</span>الألعاب
-    </button>
-    <button data-section="home" onclick="showSection('home')">
-      <span class="nav-icon">🏠</span>
-    </button>
-    <button data-section="leaderboard" onclick="showSection('leaderboard');renderLeaderboard()">
-      <span class="nav-icon">🏆</span>المتصدرون
-    </button>
-    <button data-section="store" onclick="showSection('store')">
-      <span class="nav-icon">🛒</span>المتجر
-    </button>
-    <button id="admin-sidebar-btn" data-section="admin-panel" onclick="showSection('admin-panel')" style="display:none">
-      <span class="nav-icon">⚙️</span>الإدارة
-    </button>
-  </nav>
+  <button data-section="chat" onclick="showSection('chat')">
+    <span class="nav-icon">💬</span>الشات
+  </button>
+  <button data-section="games" onclick="showSection('games')">
+    <span class="nav-icon">🎮</span>الألعاب
+  </button>
+  <button data-section="home" onclick="showSection('home')">
+    <span class="nav-icon">🏠</span>
+  </button>
+  <button data-section="clan" onclick="showSection('clan')">
+    <span class="nav-icon">⚔️</span>الكلانات
+  </button>
+  <button data-section="store" onclick="showSection('store')">
+    <span class="nav-icon">🛒</span>المتجر
+  </button>
+  <button id="admin-sidebar-btn" data-section="admin-panel" onclick="showSection('admin-panel')" style="display:none">
+    <span class="nav-icon">⚙️</span>الإدارة
+  </button>
+</nav>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -157,5 +154,13 @@
       navigator.serviceWorker.register('/service-worker.js').catch(() => {});
     }
   </script>
+  <script>
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      const s = document.getElementById('splash-screen');
+      if (s) { s.classList.add('hidden'); setTimeout(() => s.remove(), 500); }
+    }, 1800);
+  });
+</script>
 </body>
 </html>

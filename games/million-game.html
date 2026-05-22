@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>مليون</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0c0c0c;--gold:#c8a940;--gold2:#f0c040;--gold3:#7a6010;
+  --metal1:#787878;--metal2:#2e2e2e;--metal3:#989898;
+  --red1:#7a0000;--red2:#4a0000;--red3:#1a0000;
+  --card:#fafafa;--red:#c0392b;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);
+  font-family:'Cairo',sans-serif;color:#fff;direction:rtl;touch-action:manipulation}
+/* ══ SCREENS ══ */
+.sc{position:fixed;inset:0;display:none;flex-direction:column}
+.sc.on{display:flex}
+/* ══ SPLASH ══ */
+#splash{background:radial-gradient(ellipse at 50% 45%,#1c0808 0%,#080808 100%);
+  align-items:center;justify-content:center;gap:0}
+.sp-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.sp-c{position:absolute;width:50px;height:68px;border-radius:6px;
+  background:linear-gradient(135deg,#6a0000,#2a0000);opacity:.08;
+  border:1px solid rgba(200,169,64,.15)}
+.sp-c:nth-child(1){top:5%;left:7%;transform:rotate(-20deg)}
+.sp-c:nth-child(2){top:9%;left:14%;transform:rotate(-10deg)}
+.sp-c:nth-child(3){top:5%;right:7%;transform:rotate(18deg)}
+.sp-c:nth-child(4){top:9%;right:14%;transform:rotate(8deg)}
+.sp-c:nth-child(5){bottom:20%;left:4%;transform:rotate(25deg)}
+.sp-c:nth-child(6){bottom:24%;right:4%;transform:rotate(-22deg)}
+.splash-logo{font-size:clamp(3rem,16vw,5.5rem);font-weight:900;letter-spacing:4px;
+  color:var(--gold);text-shadow:0 0 60px rgba(200,169,64,.7),0 3px 10px #000;
+  animation:glow 3s ease-in-out infinite;position:relative;z-index:2}
+@keyframes glow{0%,100%{text-shadow:0 0 40px rgba(200,169,64,.4),0 3px 10px #000}
+  50%{text-shadow:0 0 100px rgba(200,169,64,.9),0 0 160px rgba(200,169,64,.2),0 3px 10px #000}}
+.splash-sub{font-size:.72rem;letter-spacing:7px;color:rgba(200,169,64,.4);
+  margin-bottom:48px;text-transform:uppercase;position:relative;z-index:2}
+.splash-form{display:flex;flex-direction:column;gap:12px;width:min(280px,84vw);
+  position:relative;z-index:2}
+.name-inp{background:rgba(255,255,255,.06);border:1.5px solid rgba(200,169,64,.2);
+  border-radius:13px;padding:13px 16px;color:#fff;font-family:'Cairo',sans-serif;
+  font-size:1rem;outline:none;text-align:center}
+.name-inp::placeholder{color:rgba(255,255,255,.3)}
+.name-inp:focus{border-color:rgba(200,169,64,.55)}
+.av-row{display:flex;justify-content:center;gap:10px;margin-bottom:4px}
+.av-opt{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.06);
+  border:2px solid rgba(255,255,255,.1);display:flex;align-items:center;
+  justify-content:center;font-size:1.4rem;cursor:pointer;transition:all .18s}
+.av-opt.pick{border-color:var(--gold);background:rgba(200,169,64,.15);
+  box-shadow:0 0 10px rgba(200,169,64,.4);transform:scale(1.1)}
+/* ══ BUTTONS ══ */
+.btn{border:none;border-radius:13px;cursor:pointer;font-family:'Cairo',sans-serif;
+  font-weight:900;font-size:.98rem;padding:14px 18px;transition:all .18s;
+  display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-g{background:linear-gradient(135deg,#a87e10,#f0c040,#a87e10);color:#1a0800;
+  box-shadow:0 4px 20px rgba(200,169,64,.4)}
+.btn-g:active{transform:scale(.97)}
+.btn-o{background:rgba(200,169,64,.1);color:var(--gold);
+  border:1.5px solid rgba(200,169,64,.25)}
+.btn-o:active{background:rgba(200,169,64,.2)}
+.btn-r{background:rgba(192,57,43,.15);color:#e74c3c;
+  border:1.5px solid rgba(192,57,43,.3)}
+.btn-r:active{background:rgba(192,57,43,.3)}
+/* ══ LOBBY ══ */
+#lobby{background:#0c0c0c;flex-direction:column}
+.lb-top{display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;background:rgba(0,0,0,.5);border-bottom:1px solid rgba(255,255,255,.06)}
+.lb-title{font-size:1.2rem;font-weight:900;color:var(--gold)}
+.lb-user{display:flex;align-items:center;gap:8px;font-size:.85rem;color:#ccc}
+.lb-body{flex:1;overflow-y:auto;padding:16px}
+.sect-title{font-size:.72rem;color:rgba(255,255,255,.4);letter-spacing:4px;
+  text-transform:uppercase;margin-bottom:10px;margin-top:6px}
+.quick-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.q-btn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:16px;padding:18px 12px;display:flex;flex-direction:column;
+  align-items:center;gap:8px;cursor:pointer;transition:all .2s}
+.q-btn:active{transform:scale(.97);background:rgba(200,169,64,.08)}
+.q-btn .qi{font-size:1.8rem}
+.q-btn .qt{font-size:.82rem;font-weight:700;color:#ddd}
+.q-btn .qd{font-size:.7rem;color:rgba(255,255,255,.35)}
+/* room cards */
+.room-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:12px;
+  margin-bottom:8px;cursor:pointer;transition:all .2s}
+.room-card:active{background:rgba(200,169,64,.07)}
+.rc-icon{font-size:1.5rem;width:44px;height:44px;border-radius:12px;
+  background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rc-info{flex:1}
+.rc-name{font-weight:700;font-size:.88rem}
+.rc-meta{font-size:.72rem;color:rgba(255,255,255,.4);margin-top:2px}
+.rc-right{text-align:left;flex-shrink:0}
+.rc-count{font-size:.75rem;color:var(--gold)}
+.rc-bet{font-size:.7rem;color:rgba(255,255,255,.35);margin-top:2px}
+.dot-row{display:flex;gap:3px;margin-top:4px}
+.dot{width:8px;height:8px;border-radius:50%}
+.dot-on{background:var(--gold)}.dot-off{background:rgba(255,255,255,.15)}
+/* ══ CREATE ══ */
+#create{background:#0c0c0c;overflow-y:auto;padding:0}
+.pg-head{display:flex;align-items:center;gap:12px;
+  padding:12px 16px;background:rgba(0,0,0,.5);border-bottom:1px solid rgba(255,255,255,.06);
+  position:sticky;top:0;z-index:10}
+.pg-back{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);
+  border-radius:9px;padding:6px 14px;color:#ccc;cursor:pointer;
+  font-family:'Cairo',sans-serif;font-size:.82rem}
+.pg-title{font-size:1.1rem;font-weight:900}
+.create-body{padding:16px;display:flex;flex-direction:column;gap:14px}
+.fcard{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.fg label{display:block;font-size:.78rem;color:rgba(255,255,255,.5);
+  margin-bottom:6px;font-weight:600;letter-spacing:.5px}
+.fi{width:100%;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);
+  border-radius:11px;padding:11px 14px;color:#fff;font-family:'Cairo',sans-serif;
+  font-size:.9rem;outline:none;transition:border-color .2s;-webkit-appearance:none}
+.fi:focus{border-color:rgba(200,169,64,.5)}
+.fi option{background:#1a1a1a}
+.t-opts{display:flex;gap:8px}
+.t-opt{flex:1;padding:10px 4px;background:rgba(255,255,255,.05);
+  border:1.5px solid rgba(255,255,255,.1);border-radius:11px;text-align:center;
+  cursor:pointer;font-family:'Cairo',sans-serif;font-size:.84rem;color:#999;transition:all .2s}
+.t-opt.on{background:rgba(200,169,64,.15);border-color:var(--gold);color:var(--gold);font-weight:700}
+.prize-preview{background:rgba(200,169,64,.07);border:1px solid rgba(200,169,64,.18);
+  border-radius:12px;padding:12px;text-align:center}
+.pp-l{font-size:.68rem;color:rgba(200,169,64,.6);margin-bottom:2px}
+.pp-v{font-size:1.5rem;font-weight:900;color:var(--gold2)}
+.pp-u{font-size:.68rem;color:rgba(200,169,64,.4)}
+/* ══ WAITING ══ */
+#waiting{background:radial-gradient(ellipse at 50% 50%,#0d2010 0%,#080808 100%);
+  align-items:center;justify-content:center}
+.wait-box{background:rgba(255,255,255,.04);border:1px solid rgba(200,169,64,.15);
+  border-radius:22px;padding:24px 20px;width:min(320px,90vw);
+  display:flex;flex-direction:column;align-items:center;gap:14px}
+.wait-title{font-size:1.1rem;font-weight:900;color:var(--gold)}
+.wait-rid{font-size:.75rem;color:rgba(255,255,255,.35);
+  background:rgba(255,255,255,.05);padding:4px 14px;border-radius:20px}
+.wait-players{width:100%;display:flex;flex-direction:column;gap:6px;min-height:80px}
+.wp{background:rgba(255,255,255,.05);border-radius:10px;padding:9px 12px;
+  display:flex;align-items:center;gap:10px;font-size:.88rem}
+.wp-av{font-size:1.2rem}
+.wp-name{flex:1;font-weight:700}
+.wp-host{font-size:.65rem;color:var(--gold);
+  background:rgba(200,169,64,.12);padding:2px 8px;border-radius:10px}
+.wp-empty{border:1px dashed rgba(255,255,255,.1);color:rgba(255,255,255,.25)}
+.wait-status{font-size:.8rem;color:rgba(255,255,255,.45)}
+.pulse{animation:pulse2 1.5s ease-in-out infinite}
+@keyframes pulse2{0%,100%{opacity:1}50%{opacity:.4}}
+/* ══ GAME ══ */
+#game{background:#0c0c0c;overflow:hidden}
+.g-bar{position:absolute;top:0;left:0;right:0;z-index:30;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px;background:linear-gradient(to bottom,rgba(0,0,0,.95),transparent)}
+.g-back{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);
+  border-radius:9px;padding:5px 12px;color:#ccc;cursor:pointer;
+  font-family:'Cairo',sans-serif;font-size:.78rem}
+.g-name{font-size:1rem;font-weight:900;color:var(--gold)}
+.g-round{font-size:.72rem;color:rgba(200,169,64,.65);
+  background:rgba(200,169,64,.08);padding:3px 12px;border-radius:20px;
+  border:1px solid rgba(200,169,64,.15)}
+/* score */
+.g-score{position:absolute;top:48px;right:10px;z-index:25;
+  background:rgba(0,0,0,.8);border-radius:12px;padding:8px 12px;
+  border:1px solid rgba(255,255,255,.08)}
+.gs-row{display:flex;gap:6px;align-items:center}
+.gs-c{display:flex;flex-direction:column;align-items:center;min-width:36px}
+.gs-l{font-size:.6rem;color:rgba(255,255,255,.4)}
+.gs-v{font-size:1rem;font-weight:900}
+.gs-div{width:1px;height:28px;background:rgba(255,255,255,.12)}
+/* ── ORNATE FRAME ── */
+.frame-area{position:absolute;left:50%;transform:translateX(-50%);
+  top:48px;bottom:160px;
+  width:min(300px,86vw);display:flex;align-items:center;justify-content:center}
+.frame-wrap{position:relative;width:100%;height:100%}
+.fm{position:absolute;inset:0;
+  background:linear-gradient(130deg,
+    #888 0%,#333 12%,#999 24%,#222 36%,
+    #777 48%,#1e1e1e 60%,#888 72%,#2a2a2a 100%);
+  border-radius:8px;
+  clip-path:polygon(
+    0% 3.5%,2% 1.5%,3.5% 0%,
+    46% 0%,48% 1.8%,50% 3.5%,52% 1.8%,54% 0%,
+    96.5% 0%,98% 1.5%,100% 3.5%,
+    100% 96.5%,98% 98.5%,96.5% 100%,
+    54% 100%,52% 98.2%,50% 96.5%,48% 98.2%,46% 100%,
+    3.5% 100%,2% 98.5%,0% 96.5%
+  );
+  box-shadow:0 0 0 1px rgba(255,255,255,.05),0 12px 50px rgba(0,0,0,.9),
+    inset 0 1px 0 rgba(255,255,255,.1)}
+.fi2{position:absolute;inset:9px;
+  background:radial-gradient(ellipse at 45% 30%,#960000 0%,#650000 30%,#320000 60%,#180000 100%);
+  clip-path:polygon(0% 2%,2% 0%,98% 0%,100% 2%,100% 98%,98% 100%,2% 100%,0% 98%);
+  overflow:hidden}
+.fi2::before{content:'';position:absolute;inset:0;
+  background-image:
+    repeating-linear-gradient(60deg,transparent 0,transparent 20px,rgba(0,0,0,.06) 20px,rgba(0,0,0,.06) 22px),
+    repeating-linear-gradient(-60deg,transparent 0,transparent 20px,rgba(0,0,0,.06) 20px,rgba(0,0,0,.06) 22px)}
+/* corner ornaments */
+.oc{position:absolute;width:24px;height:24px}
+.oc-tl{top:-1px;right:-1px;
+  background:linear-gradient(225deg,#909090,#383838);
+  clip-path:polygon(100% 0,100% 35%,65% 100%,0 100%,0 55%,35% 0)}
+.oc-tr{top:-1px;left:-1px;
+  background:linear-gradient(315deg,#909090,#383838);
+  clip-path:polygon(0 0,55% 0,100% 45%,100% 100%,35% 100%,0 65%)}
+.oc-bl{bottom:-1px;right:-1px;
+  background:linear-gradient(135deg,#909090,#383838);
+  clip-path:polygon(0 0,35% 0,100% 65%,100% 100%,55% 100%,0 45%)}
+.oc-br{bottom:-1px;left:-1px;
+  background:linear-gradient(45deg,#909090,#383838);
+  clip-path:polygon(65% 0,100% 0,100% 45%,55% 100%,0 100%,0 35%)}
+/* top ornament */
+.ot{position:absolute;top:-13px;left:50%;transform:translateX(-50%);
+  width:80px;height:24px;z-index:4;
+  background:linear-gradient(to bottom,#707070,#282828);
+  clip-path:polygon(8% 100%,0 55%,12% 0,50% 30%,88% 0,100% 55%,92% 100%)}
+.ot::after{content:'';position:absolute;inset:2px;
+  background:linear-gradient(to bottom,#a00,#500);
+  clip-path:polygon(8% 100%,0 55%,12% 0,50% 30%,88% 0,100% 55%,92% 100%)}
+/* bottom diamond */
+.ob{position:absolute;bottom:-19px;left:50%;transform:translateX(-50%);
+  width:28px;height:32px;z-index:4}
+.ob-o{width:100%;height:100%;
+  background:linear-gradient(150deg,#900,#500,#1a0000);
+  clip-path:polygon(50% 0,100% 35%,50% 100%,0 35%);
+  position:relative}
+.ob-i{position:absolute;top:4px;left:4px;right:4px;bottom:4px;
+  background:linear-gradient(150deg,#ff4444,#cc0000,#880000);
+  clip-path:polygon(50% 0,100% 35%,50% 100%,0 35%);
+  filter:drop-shadow(0 0 6px rgba(255,50,50,.7))}
+/* side blades */
+.osl{position:absolute;left:-20px;top:50%;transform:translateY(-50%);
+  width:26px;height:44px;
+  background:linear-gradient(to right,#252525,#747474);
+  clip-path:polygon(100% 12%,100% 88%,28% 72%,0 50%,28% 28%)}
+.osr{position:absolute;right:-20px;top:50%;transform:translateY(-50%);
+  width:26px;height:44px;
+  background:linear-gradient(to left,#252525,#747474);
+  clip-path:polygon(0 12%,0 88%,72% 72%,100% 50%,72% 28%)}
+/* POT inside frame */
+.pot-box{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  text-align:center;z-index:10}
+.pot-l{font-size:.58rem;letter-spacing:3px;color:rgba(200,169,64,.6);
+  text-transform:uppercase;margin-bottom:3px}
+.pot-chips{display:flex;justify-content:center;gap:3px;margin-bottom:3px}
+.chip{width:13px;height:13px;border-radius:50%;border:1.5px dashed rgba(255,255,255,.2)}
+.ch-r{background:#c0392b}.ch-b{background:#2980b9}.ch-g{background:#27ae60}
+.pot-v{font-size:clamp(1.3rem,5vw,1.7rem);font-weight:900;color:var(--gold2);
+  text-shadow:0 0 20px rgba(240,192,64,.5)}
+/* ── OPPONENT SEATS ── */
+.opp{position:absolute;display:flex;flex-direction:column;align-items:center;gap:3px;z-index:20}
+/* positions for up to 11 opponents */
+.opp[data-pos="1"]{top:2%;left:50%;transform:translateX(-50%)}
+.opp[data-pos="2"]{top:38%;left:-2px;transform:translateY(-50%)}
+.opp[data-pos="3"]{top:38%;right:-2px;transform:translateY(-50%)}
+.opp[data-pos="4"]{top:2%;left:15%}
+.opp[data-pos="5"]{top:2%;right:15%}
+.opp[data-pos="6"]{top:18%;left:0}
+.opp[data-pos="7"]{top:18%;right:0}
+.opp[data-pos="8"]{top:58%;left:0}
+.opp[data-pos="9"]{top:58%;right:0}
+.opp[data-pos="10"]{top:2%;left:32%}
+.opp[data-pos="11"]{top:2%;right:32%}
+/* avatar circle */
+.oav{width:52px;height:52px;border-radius:50%;overflow:hidden;position:relative;
+  border:2.5px solid rgba(150,120,50,.35);flex-shrink:0;
+  background:#111;box-shadow:0 4px 14px rgba(0,0,0,.7);
+  display:flex;align-items:center;justify-content:center;font-size:1.6rem}
+.oav.active{border-color:var(--gold)!important;
+  box-shadow:0 0 0 3px rgba(200,169,64,.22),0 0 18px rgba(200,169,64,.5)!important}
+.oav.folded{opacity:.35}
+/* timer ring */
+.tring{position:absolute;inset:-6px;z-index:3;pointer-events:none}
+.tring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.tring circle{fill:none;stroke:var(--gold);stroke-width:2.5;
+  stroke-dasharray:196;stroke-dashoffset:0;stroke-linecap:round;transition:stroke-dashoffset .9s linear}
+/* name pill */
+.npill{background:rgba(0,0,0,.8);border:1px solid rgba(255,255,255,.1);
+  border-radius:30px;padding:2px 10px;font-size:.68rem;font-weight:700;
+  white-space:nowrap;color:#ccc;max-width:70px;overflow:hidden;text-overflow:ellipsis}
+.npill.act{border-color:rgba(200,169,64,.45)!important;color:var(--gold)!important}
+.nbadge{font-size:.58rem;padding:2px 7px;border-radius:20px;
+  background:rgba(200,169,64,.12);color:var(--gold);margin-top:1px}
+/* mini card fan */
+.mfan{display:flex;position:relative;height:42px;width:48px;margin-top:1px}
+.mfc{position:absolute;width:28px;height:38px;border-radius:4px;
+  background:linear-gradient(135deg,#900,#380000);
+  border:1px solid rgba(255,255,255,.12);box-shadow:0 2px 8px rgba(0,0,0,.6)}
+.mfc:nth-child(1){transform:rotate(-15deg);top:4px;right:16px}
+.mfc:nth-child(2){transform:rotate(-4deg);top:1px;right:10px}
+.mfc:nth-child(3){transform:rotate(7deg);top:3px;right:3px}
+.mfc:nth-child(4){transform:rotate(18deg);top:7px;right:-3px}
+.mfan.side{height:35px;width:55px}
+.mfan.side .mfc{width:24px;height:32px}
+.mfan.side .mfc:nth-child(1){transform:rotate(-18deg);top:2px;right:26px}
+.mfan.side .mfc:nth-child(2){transform:rotate(-5deg);top:0;right:17px}
+.mfan.side .mfc:nth-child(3){transform:rotate(8deg);top:2px;right:9px}
+.mfan.side .mfc:nth-child(4){transform:rotate(20deg);top:5px;right:2px}
+/* ── CARDS STRIP ── */
+.cards-strip{position:absolute;bottom:82px;left:0;right:0;z-index:22;
+  background:linear-gradient(to bottom,#ccc,#ececec);
+  padding:12px 8px 10px;
+  display:flex;align-items:center;justify-content:center;gap:5px}
+.mycard{background:var(--card);border-radius:8px;
+  width:calc((min(100vw,480px) - 56px)/4);
+  max-width:70px;aspect-ratio:0.72;
+  border:1px solid #ddd;box-shadow:0 3px 10px rgba(0,0,0,.2);
+  display:flex;flex-direction:column;padding:4px;
+  cursor:pointer;transition:transform .18s,box-shadow .18s;position:relative}
+.mycard:active,.mycard.up{transform:translateY(-14px);
+  box-shadow:0 10px 22px rgba(200,169,64,.4);border-color:var(--gold)}
+.mc-top{font-size:clamp(.68rem,.85rem,1rem);font-weight:900;line-height:1}
+.mc-mid{font-size:clamp(.9rem,1.3rem,1.5rem);text-align:center;
+  flex:1;display:flex;align-items:center;justify-content:center}
+.mc-bot{font-size:clamp(.68rem,.85rem,1rem);font-weight:900;
+  line-height:1;align-self:flex-end;transform:rotate(180deg)}
+.c-red{color:#c0392b}.c-blk{color:#111}
+/* ── MY BAR ── */
+.my-bar{position:absolute;bottom:0;left:0;right:0;z-index:25;
+  background:linear-gradient(to top,#000 65%,rgba(0,0,0,.8) 100%);
+  display:flex;align-items:center;gap:8px;padding:8px 12px 10px}
+.my-av{width:46px;height:46px;border-radius:50%;
+  background:#111;border:2.5px solid rgba(200,169,64,.35);
+  display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+.my-info{flex:0 0 auto;min-width:0}
+.my-nm{font-size:.78rem;font-weight:900;white-space:nowrap;overflow:hidden;
+  max-width:60px;text-overflow:ellipsis}
+.my-bal{font-size:.72rem;color:var(--gold);font-weight:700}
+.my-bet-wrap{flex:1;display:flex;flex-direction:column;gap:4px}
+.bet-top{display:flex;align-items:center;justify-content:space-between}
+.bet-lbl{font-size:.65rem;color:rgba(255,255,255,.45)}
+.bet-val{font-size:.88rem;font-weight:900;color:var(--gold2)}
+.bet-slider{width:100%;appearance:none;-webkit-appearance:none;height:4px;
+  border-radius:2px;background:rgba(200,169,64,.2);outline:none;cursor:pointer}
+.bet-slider::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;
+  width:18px;height:18px;border-radius:50%;background:var(--gold);
+  box-shadow:0 0 8px rgba(200,169,64,.6)}
+.my-acts{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.act-fold{background:rgba(192,57,43,.18);color:#e74c3c;
+  border:1.5px solid rgba(192,57,43,.3);border-radius:11px;
+  padding:8px 12px;font-family:'Cairo',sans-serif;font-weight:700;
+  font-size:.82rem;cursor:pointer;white-space:nowrap}
+.act-bet{background:linear-gradient(135deg,#a07810,#f0c040);color:#1a0800;
+  border:none;border-radius:11px;padding:8px 12px;font-family:'Cairo',sans-serif;
+  font-weight:900;font-size:.82rem;cursor:pointer;white-space:nowrap;
+  box-shadow:0 3px 12px rgba(200,169,64,.4)}
+.my-bar.waiting-turn .bet-slider,.my-bar.waiting-turn .act-bet,
+.my-bar.waiting-turn .act-fold{opacity:.4;pointer-events:none}
+/* ── OVERLAYS ── */
+.overlay{display:none;position:absolute;inset:0;z-index:100;
+  background:rgba(0,0,0,.88);backdrop-filter:blur(8px);
+  align-items:center;justify-content:center;flex-direction:column;gap:14px}
+.overlay.show{display:flex;animation:fi .3s ease}
+@keyframes fi{from{opacity:0}to{opacity:1}}
+/* round result */
+.res-box{background:rgba(255,255,255,.05);border:1px solid rgba(200,169,64,.2);
+  border-radius:20px;padding:20px;width:min(300px,90vw);
+  display:flex;flex-direction:column;align-items:center;gap:10px}
+.res-crown{font-size:2.8rem;animation:bob 1s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.res-title{font-size:1.5rem;font-weight:900;color:var(--gold)}
+.res-winner{font-size:1rem;color:#fff;font-weight:700}
+.res-hand{font-size:.8rem;color:rgba(200,169,64,.7)}
+.res-pot{font-size:.85rem;color:rgba(255,255,255,.5)}
+.res-cards{display:flex;gap:5px;margin:6px 0}
+.res-card{background:var(--card);border-radius:6px;width:38px;height:52px;
+  display:flex;flex-direction:column;padding:3px;
+  border:1px solid #ddd;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.rc-t{font-size:.6rem;font-weight:900;line-height:1}
+.rc-m{font-size:.9rem;text-align:center;flex:1;display:flex;align-items:center;justify-content:center}
+/* game over */
+.go-crown{font-size:3.5rem;animation:bob 1s ease-in-out infinite}
+.go-title{font-family:'Cairo',sans-serif;font-size:clamp(1.8rem,8vw,2.6rem);
+  font-weight:900;color:var(--gold);text-shadow:0 0 50px rgba(200,169,64,.8)}
+.go-name{font-size:1.1rem;font-weight:700}
+.go-prize{font-size:.9rem;color:rgba(200,169,64,.7)}
+/* countdown */
+.cd-num{font-size:clamp(4rem,20vw,7rem);font-weight:900;color:var(--gold);
+  text-shadow:0 0 60px rgba(200,169,64,.8);animation:pop .4s ease}
+@keyframes pop{from{transform:scale(1.8);opacity:0}to{transform:scale(1);opacity:1}}
+/* toast */
+.toast{position:fixed;bottom:180px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.9);border:1px solid rgba(255,255,255,.12);
+  border-radius:30px;padding:10px 20px;font-size:.85rem;
+  z-index:200;opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap}
+.toast.show{opacity:1}
+/* ══ TOURNAMENTS ══ */
+#tournaments{background:#0c0c0c;overflow-y:auto;padding:0}
+.t-list{padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.tc{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  border-radius:15px;padding:13px 14px;display:flex;gap:11px;
+  cursor:pointer;transition:all .18s}
+.tc:active{border-color:rgba(200,169,64,.3);background:rgba(200,169,64,.04)}
+.tc-icon{width:46px;height:46px;border-radius:12px;flex-shrink:0;font-size:1.4rem;
+  background:rgba(200,169,64,.1);border:1px solid rgba(200,169,64,.2);
+  display:flex;align-items:center;justify-content:center}
+.tc-body{flex:1;min-width:0}
+.tc-name{font-weight:900;font-size:.88rem;margin-bottom:2px}
+.tc-meta{font-size:.7rem;color:rgba(255,255,255,.38);display:flex;gap:7px;flex-wrap:wrap;margin-bottom:5px}
+.tc-r{flex-shrink:0;text-align:left;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.tc-prize{font-size:.95rem;font-weight:900;color:var(--gold2)}
+.tc-unit{font-size:.65rem;color:rgba(200,169,64,.4);margin-top:-3px}
+.badge{padding:3px 9px;border-radius:20px;font-size:.65rem;font-weight:700}
+.b-sys{background:rgba(200,169,64,.14);color:var(--gold);border:1px solid rgba(200,169,64,.28)}
+.b-wait{background:rgba(46,204,113,.14);color:#2ecc71;border:1px solid rgba(46,204,113,.25)}
+</style>
+</head>
+<body>
+<!-- ══ SPLASH ══ -->
+<div id="splash" class="sc on">
+  <div class="sp-bg">
+    <div class="sp-c"></div><div class="sp-c"></div><div class="sp-c"></div>
+    <div class="sp-c"></div><div class="sp-c"></div><div class="sp-c"></div>
+  </div>
+  <div class="splash-logo">مليون</div>
+  <div class="splash-sub">لعبة الورق</div>
+  <div class="splash-form">
+    <div class="av-row" id="avRow">
+      <div class="av-opt pick" data-av="😈" onclick="pickAv(this)">😈</div>
+      <div class="av-opt" data-av="🤠" onclick="pickAv(this)">🤠</div>
+      <div class="av-opt" data-av="😎" onclick="pickAv(this)">😎</div>
+      <div class="av-opt" data-av="🥸" onclick="pickAv(this)">🥸</div>
+      <div class="av-opt" data-av="🤩" onclick="pickAv(this)">🤩</div>
+    </div>
+    <input class="name-inp" id="nameInp" placeholder="اسمك في اللعبة" maxlength="14">
+    <button class="btn btn-g" onclick="enterLobby()">دخول ▶</button>
+  </div>
+</div>
+
+<!-- ══ LOBBY ══ -->
+<div id="lobby" class="sc">
+  <div class="lb-top">
+    <div class="lb-title">🃏 مليون</div>
+    <div class="lb-user">
+      <span id="lobbyAvSpan">😈</span>
+      <span id="lobbyNameSpan">لاعب</span>
+    </div>
+  </div>
+  <div class="lb-body">
+    <div class="sect-title">إبدأ اللعبة</div>
+    <div class="quick-btns">
+      <div class="q-btn" onclick="goCreate(false)">
+        <div class="qi">🎮</div>
+        <div class="qt">إنشاء لعبة</div>
+        <div class="qd">اختر الإعدادات</div>
+      </div>
+      <div class="q-btn" onclick="goCreate(true)">
+        <div class="qi">🏆</div>
+        <div class="qt">إنشاء مسابقة</div>
+        <div class="qd">رسوم الدخول بكوينز</div>
+      </div>
+    </div>
+    <div class="sect-title" style="display:flex;justify-content:space-between;align-items:center">
+      <span>الغرف المتاحة</span>
+      <span style="font-size:.7rem;color:rgba(200,169,64,.5);cursor:pointer" onclick="refreshRooms()">↻ تحديث</span>
+    </div>
+    <div id="roomsList">
+      <div style="text-align:center;padding:28px;color:rgba(255,255,255,.3);font-size:.85rem">
+        جاري التحميل...
+      </div>
+    </div>
+    <div class="sect-title" style="margin-top:16px">المسابقات</div>
+    <div class="room-card" onclick="go('tournaments')">
+      <div class="rc-icon">🏆</div>
+      <div class="rc-info">
+        <div class="rc-name">مسابقة المليون الكبرى</div>
+        <div class="rc-meta">8 لاعبين · دخول 500 كوينز</div>
+      </div>
+      <div class="rc-right">
+        <div class="rc-count" style="color:#f0c040">4,000 🪙</div>
+        <div class="dot-row">
+          <div class="dot dot-on"></div><div class="dot dot-on"></div>
+          <div class="dot dot-on"></div><div class="dot dot-on"></div>
+          <div class="dot dot-on"></div><div class="dot dot-off"></div>
+          <div class="dot dot-off"></div><div class="dot dot-off"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CREATE ══ -->
+<div id="create" class="sc">
+  <div class="pg-head">
+    <button class="pg-back" onclick="go('lobby')">← رجوع</button>
+    <div class="pg-title" id="createTitle">إنشاء لعبة</div>
+  </div>
+  <div class="create-body">
+    <div class="fcard">
+      <div class="fg">
+        <label>عدد اللاعبين</label>
+        <select class="fi" id="cfgPlayers" onchange="updatePrize()">
+          <option value="4">4 لاعبين</option>
+          <option value="6">6 لاعبين</option>
+          <option value="8">8 لاعبين</option>
+          <option value="10">10 لاعبين</option>
+          <option value="12">12 لاعب</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>الرصيد الابتدائي (نقاط)</label>
+        <input type="number" class="fi" id="cfgBal" value="100000" min="10000" step="10000">
+      </div>
+      <div class="fg">
+        <label>هدف الفوز (نقاط)</label>
+        <input type="number" class="fi" id="cfgTarget" value="1000000" min="100000" step="100000">
+      </div>
+      <div class="fg">
+        <label>الحد الأدنى للمراهنة</label>
+        <input type="number" class="fi" id="cfgMinBet" value="1000" min="100" step="100">
+      </div>
+      <div class="fg" id="costWrap" style="display:none">
+        <label>رسوم الدخول (كوينز)</label>
+        <input type="number" class="fi" id="cfgCost" value="500" min="100" step="100" oninput="updatePrize()">
+      </div>
+      <div class="fg">
+        <label>مؤقت الدور</label>
+        <div class="t-opts">
+          <div class="t-opt" onclick="pickTimer(this,5)">5 ث</div>
+          <div class="t-opt on" onclick="pickTimer(this,15)">15 ث ★</div>
+          <div class="t-opt" onclick="pickTimer(this,30)">30 ث</div>
+        </div>
+      </div>
+    </div>
+    <div class="prize-preview" id="prizeBox" style="display:none">
+      <div class="pp-l">إجمالي الجائزة</div>
+      <div class="pp-v" id="ppv">0</div>
+      <div class="pp-u">كوينز للفائز</div>
+    </div>
+    <button class="btn btn-g" onclick="createRoom()" style="width:100%;padding:15px">
+      إنشاء اللعبة ✓
+    </button>
+  </div>
+</div>
+
+<!-- ══ WAITING ══ -->
+<div id="waiting" class="sc">
+  <div class="wait-box">
+    <div class="wait-title">انتظار اللاعبين</div>
+    <div class="wait-rid" id="waitRid">—</div>
+    <div class="wait-players" id="waitPlayers"></div>
+    <div class="wait-status pulse" id="waitStatus">في انتظار المزيد من اللاعبين...</div>
+    <button class="btn btn-g" id="startBtn" style="display:none;width:100%;padding:14px"
+      onclick="startGame()">▶ ابدأ اللعبة</button>
+    <button class="btn btn-r" onclick="leaveRoom()" style="width:100%;padding:11px;font-size:.88rem">
+      مغادرة الغرفة
+    </button>
+  </div>
+</div>
+
+<!-- ══ GAME ══ -->
+<div id="game" class="sc">
+  <div class="g-bar">
+    <button class="g-back" onclick="leaveGame()">← خروج</button>
+    <div class="g-name">مليون</div>
+    <div class="g-round" id="gRound">جولة 1</div>
+  </div>
+  <div class="g-score">
+    <div class="gs-row">
+      <div class="gs-c"><div class="gs-l">رصيدي</div><div class="gs-v" id="gsMyBal">-</div></div>
+      <div class="gs-div"></div>
+      <div class="gs-c"><div class="gs-l">البوت</div><div class="gs-v" id="gsPot">0</div></div>
+    </div>
+  </div>
+  <!-- frame area -->
+  <div class="frame-area" id="frameArea">
+    <div class="frame-wrap">
+      <div class="fm"><div class="fi2"></div></div>
+      <div class="oc oc-tl"></div><div class="oc oc-tr"></div>
+      <div class="oc oc-bl"></div><div class="oc oc-br"></div>
+      <div class="ot"></div>
+      <div class="osl"></div><div class="osr"></div>
+      <div class="ob"><div class="ob-o"></div><div class="ob-i"></div></div>
+      <div class="pot-box">
+        <div class="pot-l">البوت</div>
+        <div class="pot-chips">
+          <div class="chip ch-r"></div><div class="chip ch-b"></div>
+          <div class="chip ch-g"></div><div class="chip ch-r"></div>
+        </div>
+        <div class="pot-v" id="potV">0</div>
+      </div>
+      <!-- opponent seats injected here -->
+      <div id="oppSeats"></div>
+    </div>
+  </div>
+  <!-- my cards strip -->
+  <div class="cards-strip" id="cardsStrip"></div>
+  <!-- my bar -->
+  <div class="my-bar waiting-turn" id="myBar">
+    <div class="my-av" id="myAv">😈</div>
+    <div class="my-info">
+      <div class="my-nm" id="myNm">أنت</div>
+      <div class="my-bal" id="myBalDisp">💰 —</div>
+    </div>
+    <div class="my-bet-wrap">
+      <div class="bet-top">
+        <span class="bet-lbl">المراهنة</span>
+        <span class="bet-val" id="betDisp">—</span>
+      </div>
+      <input type="range" class="bet-slider" id="betSlider"
+        min="1000" max="100000" value="5000" step="1000" oninput="onSlider(this.value)">
+    </div>
+    <div class="my-acts">
+      <button class="act-fold" onclick="sendFold()">🚪 انسحاب</button>
+      <button class="act-bet" id="betBtn" onclick="sendBet()">💰 راهن</button>
+    </div>
+  </div>
+  <!-- overlays -->
+  <div class="overlay" id="cdOverlay">
+    <div style="color:rgba(255,255,255,.5);font-size:.9rem">اللعبة تبدأ في</div>
+    <div class="cd-num" id="cdNum">3</div>
+  </div>
+  <div class="overlay" id="resOverlay">
+    <div class="res-box">
+      <div class="res-crown">👑</div>
+      <div class="res-title" id="resTitle">فائز!</div>
+      <div class="res-winner" id="resWinner"></div>
+      <div class="res-hand" id="resHand"></div>
+      <div class="res-cards" id="resCards"></div>
+      <div class="res-pot" id="resPot"></div>
+    </div>
+  </div>
+  <div class="overlay" id="goOverlay">
+    <div class="go-crown">👑</div>
+    <div class="go-title">الفائز بالمليون!</div>
+    <div class="go-name" id="goName"></div>
+    <div class="go-prize" id="goPrize"></div>
+    <button class="btn btn-g" style="width:min(260px,80vw);padding:14px;margin-top:10px"
+      onclick="leaveGame()">العودة للرئيسية 🏠</button>
+  </div>
+</div>
+
+<!-- ══ TOURNAMENTS ══ -->
+<div id="tournaments" class="sc">
+  <div class="pg-head">
+    <button class="pg-back" onclick="go('lobby')">← رجوع</button>
+    <div class="pg-title">🏆 المسابقات</div>
+  </div>
+  <div class="t-list">
+    <div class="tc" onclick="goCreate(true)">
+      <div class="tc-icon">🏆</div>
+      <div class="tc-body">
+        <div class="tc-name">مسابقة المليون الكبرى</div>
+        <div class="tc-meta"><span>👥 8 لاعبين</span><span>🎯 500 كوينز</span></div>
+        <div class="dot-row">
+          <div class="dot dot-on"></div><div class="dot dot-on"></div><div class="dot dot-on"></div>
+          <div class="dot dot-on"></div><div class="dot dot-on"></div>
+          <div class="dot dot-off"></div><div class="dot dot-off"></div><div class="dot dot-off"></div>
+        </div>
+      </div>
+      <div class="tc-r">
+        <div class="tc-prize">4,000</div>
+        <div class="tc-unit">كوينز</div>
+        <span class="badge b-sys">نظام</span>
+      </div>
+    </div>
+    <div class="tc" onclick="goCreate(true)">
+      <div class="tc-icon">⚡</div>
+      <div class="tc-body">
+        <div class="tc-name">تحدي سريع</div>
+        <div class="tc-meta"><span>👥 4 لاعبين</span><span>🎯 200 كوينز</span></div>
+        <div class="dot-row">
+          <div class="dot dot-on"></div><div class="dot dot-on"></div>
+          <div class="dot dot-off"></div><div class="dot dot-off"></div>
+        </div>
+      </div>
+      <div class="tc-r">
+        <div class="tc-prize">800</div>
+        <div class="tc-unit">كوينز</div>
+        <span class="badge b-wait">منتظر</span>
+      </div>
+    </div>
+    <button class="btn btn-o" style="width:100%;padding:14px" onclick="goCreate(true)">
+      + إنشاء مسابقة جديدة
+    </button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+    // ربط مع bee — يقرأ اسم اللاعب من الرابط
+(function() {
+  const p = new URLSearchParams(location.search);
+  const name = p.get('name');
+  const avatar = p.get('avatar');
+  if (name) {
+    const inp = document.getElementById('nameInp');
+    if (inp) { inp.value = name; inp.readOnly = true; }
+  }
+  if (avatar) {
+    document.querySelectorAll('.av-opt').forEach(el => el.classList.remove('pick'));
+    const first = document.querySelector('.av-opt');
+    if (first) { first.dataset.av = avatar; first.textContent = avatar; first.classList.add('pick'); }
+  }
+})();
+// ══════════════════════════════════════════════════════
+//  CONFIG — غيّر هذا عند الرفع
+// ══════════════════════════════════════════════════════
+const WS_URL = 'ws://localhost:3001'; // ← حط رابط سيرفرك هنا
+
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+let ws = null, myId = null, myName = 'لاعب', myAv = '😈';
+let currentRoom = null, isHost = false, roomCfg = {};
+let seats = [], myCards = [], betAmt = 5000;
+let myTurn = false, timerInterval = null, timerMax = 15;
+let isTournamentCreate = false, cfgTimer = 15;
+
+// ══════════════════════════════════════════════════════
+//  ROUTER
+// ══════════════════════════════════════════════════════
+function go(id) {
+  document.querySelectorAll('.sc').forEach(s => s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+
+// ══════════════════════════════════════════════════════
+//  SPLASH
+// ══════════════════════════════════════════════════════
+function pickAv(el) {
+  document.querySelectorAll('.av-opt').forEach(a => a.classList.remove('pick'));
+  el.classList.add('pick');
+  myAv = el.dataset.av;
+}
+function enterLobby() {
+  const n = document.getElementById('nameInp').value.trim();
+  if (!n) { showToast('أدخل اسمك أولاً'); return; }
+  myName = n;
+  document.getElementById('lobbyNameSpan').textContent = myName;
+  document.getElementById('lobbyAvSpan').textContent = myAv;
+  document.getElementById('myAv').textContent = myAv;
+  document.getElementById('myNm').textContent = myName;
+  connectWS();
+  go('lobby');
+}
+
+// ══════════════════════════════════════════════════════
+//  WEBSOCKET
+// ══════════════════════════════════════════════════════
+function connectWS() {
+  if (ws && ws.readyState <= 1) return;
+  try {
+    ws = new WebSocket(WS_URL);
+    ws.onopen = () => {
+      ws.send(JSON.stringify({type:'set_name', name:myName}));
+      refreshRooms();
+    };
+    ws.onmessage = e => { try { handle(JSON.parse(e.data)); } catch(err){} };
+    ws.onclose = () => { setTimeout(connectWS, 3000); };
+    ws.onerror = () => {};
+  } catch(e) {}
+}
+function send(obj) {
+  if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj));
+}
+
+// ══════════════════════════════════════════════════════
+//  MESSAGE HANDLER
+// ══════════════════════════════════════════════════════
+function handle(msg) {
+  switch(msg.type) {
+
+    case 'hello':
+      myId = msg.pid;
+      break;
+
+    case 'room_created':
+    case 'joined':
+      currentRoom = msg.rid;
+      isHost = msg.isHost;
+      roomCfg = msg.cfg;
+      seats = msg.players;
+      renderWaiting(msg.players, msg.rid);
+      go('waiting');
+      break;
+
+    case 'player_joined':
+      seats = msg.players;
+      renderWaiting(msg.players, currentRoom);
+      break;
+
+    case 'player_left':
+      showToast(msg.name + ' غادر اللعبة');
+      seats = seats.filter(s => s.id !== msg.pid);
+      renderWaiting(seats, currentRoom);
+      break;
+
+    case 'starting':
+      startCountdown(msg.cd);
+      break;
+
+    case 'game_start':
+      seats = msg.players;
+      initGameScreen();
+      go('game');
+      break;
+
+    case 'round_start':
+      document.getElementById('gRound').textContent = 'جولة ' + msg.round;
+      updatePotDisplay(0);
+      // reset seats status
+      seats = msg.players;
+      msg.players.forEach(p => setSeatStatus(p.id, 'in'));
+      document.getElementById('cardsStrip').innerHTML = '';
+      myCards = [];
+      document.getElementById('myBar').classList.add('waiting-turn');
+      myTurn = false;
+      break;
+
+    case 'your_cards':
+      myCards = msg.cards;
+      renderMyCards(msg.cards);
+      break;
+
+    case 'your_turn':
+      if (msg.pid === myId) {
+        myTurn = true;
+        document.getElementById('myBar').classList.remove('waiting-turn');
+        startMyTimer(msg.timeLeft);
+        showToast('دورك! راهن أو انسحب');
+      } else {
+        myTurn = false;
+        document.getElementById('myBar').classList.add('waiting-turn');
+        const seatEl = document.getElementById('seat_'+msg.pid);
+        if (seatEl) {
+          const av = seatEl.querySelector('.oav');
+          if (av) av.classList.add('active');
+          const tr = seatEl.querySelector('.tring circle');
+          if (tr) { tr.style.strokeDashoffset = '0'; startOppTimer(tr, msg.timeLeft); }
+        }
+        highlightSeat(msg.pid);
+      }
+      break;
+
+    case 'tick':
+      if (!myTurn) {
+        document.querySelectorAll('.tring circle').forEach(c => {
+          const pct = msg.timeLeft / timerMax;
+          c.style.strokeDashoffset = 196 * (1 - pct);
+        });
+      }
+      break;
+
+    case 'did_bet':
+      updatePotDisplay(msg.pot);
+      updateSeatBal(msg.pid, msg.bal);
+      showToast(getSeatName(msg.pid) + ' راهن ' + fmt(msg.amt));
+      clearSeatActive();
+      stopMyTimer();
+      break;
+
+    case 'did_fold':
+      setSeatStatus(msg.pid, 'fold');
+      showToast(getSeatName(msg.pid) + (msg.auto?' انسحب تلقائياً':' انسحب'));
+      clearSeatActive();
+      stopMyTimer();
+      break;
+
+    case 'round_end':
+      showRoundResult(msg);
+      break;
+
+    case 'player_out':
+      setSeatStatus(msg.pid, 'out');
+      showToast(msg.name + ' خرج من اللعبة');
+      break;
+
+    case 'game_over':
+      hideOverlay('resOverlay');
+      document.getElementById('goName').textContent = msg.wname +
+        (msg.wid === myId ? ' 🎉 (أنت!)' : '');
+      document.getElementById('goPrize').textContent =
+        msg.isTournament ? 'جائزة: ' + fmt(msg.prize) + ' كوينز' : 'وصل المليون!';
+      showOverlay('goOverlay');
+      break;
+
+    case 'rooms':
+      renderRoomsList(msg.list);
+      break;
+
+    case 'err':
+      showToast('⚠️ ' + msg.msg);
+      break;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  LOBBY
+// ══════════════════════════════════════════════════════
+function refreshRooms() {
+  send({type:'rooms_list'});
+}
+function renderRoomsList(list) {
+  const el = document.getElementById('roomsList');
+  if (!list.length) {
+    el.innerHTML = '<div style="text-align:center;padding:28px;color:rgba(255,255,255,.3);font-size:.85rem">لا توجد غرف متاحة حالياً</div>';
+    return;
+  }
+  el.innerHTML = list.map(r => `
+    <div class="room-card" onclick="joinRoom('${r.id}')">
+      <div class="rc-icon">${r.isTournament?'🏆':'🎮'}</div>
+      <div class="rc-info">
+        <div class="rc-name">غرفة ${r.id}</div>
+        <div class="rc-meta">حد أدنى ${fmt(r.minBet)} نقطة${r.isTournament?' · '+fmt(r.entryCost)+' كوينز':''}</div>
+      </div>
+      <div class="rc-right">
+        <div class="rc-count" style="color:var(--gold)">${r.count}/${r.max}</div>
+        <div class="dot-row">${Array.from({length:r.max},(_,i)=>
+          `<div class="dot ${i<r.count?'dot-on':'dot-off'}"></div>`).join('')}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════
+//  CREATE
+// ══════════════════════════════════════════════════════
+function goCreate(isTourney) {
+  isTournamentCreate = isTourney;
+  document.getElementById('createTitle').textContent = isTourney ? 'إنشاء مسابقة' : 'إنشاء لعبة';
+  document.getElementById('costWrap').style.display = isTourney ? '' : 'none';
+  document.getElementById('prizeBox').style.display = isTourney ? '' : 'none';
+  if (isTourney) updatePrize();
+  go('create');
+}
+function pickTimer(el, val) {
+  document.querySelectorAll('.t-opt').forEach(t => t.classList.remove('on'));
+  el.classList.add('on'); cfgTimer = val;
+}
+function updatePrize() {
+  if (!isTournamentCreate) return;
+  const p = +document.getElementById('cfgPlayers').value||4;
+  const c = +document.getElementById('cfgCost').value||500;
+  document.getElementById('ppv').textContent = fmt(p*c);
+}
+function createRoom() {
+  if (!ws || ws.readyState !== 1) { showToast('جاري الاتصال...'); connectWS(); return; }
+  const cfg = {
+    type: 'create_room',
+    maxPlayers: +document.getElementById('cfgPlayers').value,
+    startBal:   +document.getElementById('cfgBal').value,
+    winTarget:  +document.getElementById('cfgTarget').value,
+    minBet:     +document.getElementById('cfgMinBet').value,
+    timer:      cfgTimer,
+    entryCost:  isTournamentCreate ? +document.getElementById('cfgCost').value : 0,
+    isTournament: isTournamentCreate,
+    avatar: myAv
+  };
+  send(cfg);
+}
+function joinRoom(rid) {
+  if (!ws || ws.readyState !== 1) { showToast('جاري الاتصال...'); connectWS(); return; }
+  send({type:'join_room', rid, avatar:myAv});
+}
+
+// ══════════════════════════════════════════════════════
+//  WAITING ROOM
+// ══════════════════════════════════════════════════════
+function renderWaiting(players, rid) {
+  document.getElementById('waitRid').textContent = 'كود الغرفة: ' + rid;
+  const max = roomCfg.maxPlayers || 4;
+  const el = document.getElementById('waitPlayers');
+  let html = players.map(p => `
+    <div class="wp">
+      <div class="wp-av">${p.avatar||'😊'}</div>
+      <div class="wp-name">${p.name}</div>
+      ${p.id===myId?'<div class="wp-host">أنت</div>':''}
+    </div>`).join('');
+  for (let i = players.length; i < max; i++)
+    html += `<div class="wp wp-empty" style="justify-content:center">انتظار لاعب...</div>`;
+  el.innerHTML = html;
+  const need = Math.max(0, 4 - players.length);
+  document.getElementById('waitStatus').textContent =
+    need > 0 ? `ينقص ${need} لاعب للبدء` : 'الغرفة مكتملة! جاهز للبدء';
+  const canStart = isHost && players.length >= 4;
+  document.getElementById('startBtn').style.display = canStart ? '' : 'none';
+}
+function startGame() { send({type:'start'}); }
+function leaveRoom() { send({type:'leave'}); currentRoom = null; go('lobby'); }
+
+// ══════════════════════════════════════════════════════
+//  COUNTDOWN
+// ══════════════════════════════════════════════════════
+function startCountdown(n) {
+  showOverlay('cdOverlay');
+  document.getElementById('cdNum').textContent = n;
+  const iv = setInterval(() => {
+    n--;
+    if (n <= 0) { clearInterval(iv); hideOverlay('cdOverlay'); }
+    else document.getElementById('cdNum').textContent = n;
+  }, 1000);
+}
+
+// ══════════════════════════════════════════════════════
+//  GAME SCREEN INIT
+// ══════════════════════════════════════════════════════
+const OPP_POSITIONS = [1,2,3,4,5,6,7,8,9,10,11];
+function initGameScreen() {
+  const me = seats.find(s => s.id === myId);
+  if (me) {
+    document.getElementById('myBalDisp').textContent = '💰 ' + fmt(me.bal);
+    document.getElementById('gsMyBal').textContent = fmt(me.bal);
+  }
+  updateBetUI(roomCfg.startBal||100000, roomCfg.minBet||1000);
+  renderOppSeats();
+}
+function renderOppSeats() {
+  const opps = seats.filter(s => s.id !== myId);
+  let html = '';
+  opps.forEach((p, i) => {
+    const pos = OPP_POSITIONS[i] || i+1;
+    const isSide = pos===2||pos===3||pos===6||pos===7||pos===8||pos===9;
+    html += `
+      <div class="opp" data-pos="${pos}" id="seat_${p.id}">
+        <div class="oav" id="av_${p.id}">
+          <div class="tring"><svg viewBox="0 0 68 68"><circle cx="34" cy="34" r="31"/></svg></div>
+          <span>${p.avatar||'😊'}</span>
+        </div>
+        <div class="npill" id="np_${p.id}">${p.name}</div>
+        <div class="nbadge" id="nb_${p.id}" style="display:none"></div>
+        <div class="mfan ${isSide?'side':''}">
+          <div class="mfc"></div><div class="mfc"></div>
+          <div class="mfc"></div><div class="mfc"></div>
+        </div>
+      </div>`;
+  });
+  document.getElementById('oppSeats').innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════
+//  MY CARDS
+// ══════════════════════════════════════════════════════
+function renderMyCards(cards) {
+  const strip = document.getElementById('cardsStrip');
+  strip.innerHTML = cards.map((c,i) => `
+    <div class="mycard" onclick="this.classList.toggle('up')" style="animation:deal .4s ${i*.12}s both">
+      <div class="mc-top ${c.color==='red'?'c-red':'c-blk'}">${c.val}</div>
+      <div class="mc-mid ${c.color==='red'?'c-red':'c-blk'}">${c.suit}</div>
+      <div class="mc-bot ${c.color==='red'?'c-red':'c-blk'}">${c.val}</div>
+    </div>`).join('');
+  const style = document.getElementById('dealStyle');
+  if (!style) {
+    const s = document.createElement('style');
+    s.id = 'dealStyle';
+    s.textContent = `@keyframes deal{from{transform:translateY(-120px) scale(.5);opacity:0}to{transform:none;opacity:1}}`;
+    document.head.appendChild(s);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  BET UI
+// ══════════════════════════════════════════════════════
+function updateBetUI(bal, minBet) {
+  const slider = document.getElementById('betSlider');
+  slider.min = minBet;
+  slider.max = bal;
+  slider.value = Math.max(minBet, Math.floor(bal * 0.05));
+  betAmt = +slider.value;
+  document.getElementById('betDisp').textContent = fmt(betAmt);
+  document.getElementById('betBtn').textContent = '💰 راهن ' + fmt(betAmt);
+}
+function onSlider(v) {
+  betAmt = +v;
+  document.getElementById('betDisp').textContent = fmt(betAmt);
+  document.getElementById('betBtn').textContent = '💰 راهن ' + fmt(betAmt);
+}
+function sendBet() {
+  if (!myTurn) return;
+  myTurn = false;
+  stopMyTimer();
+  document.getElementById('myBar').classList.add('waiting-turn');
+  send({type:'bet', amt:betAmt});
+}
+function sendFold() {
+  if (!myTurn) return;
+  myTurn = false;
+  stopMyTimer();
+  document.getElementById('myBar').classList.add('waiting-turn');
+  send({type:'fold'});
+}
+
+// ══════════════════════════════════════════════════════
+//  TIMERS
+// ══════════════════════════════════════════════════════
+function startMyTimer(sec) {
+  timerMax = sec;
+  stopMyTimer();
+  let t = sec;
+  document.getElementById('betBtn').textContent = '💰 راهن (' + t + ') ' + fmt(betAmt);
+  timerInterval = setInterval(() => {
+    t--;
+    if (t <= 0) { stopMyTimer(); return; }
+    document.getElementById('betBtn').textContent = '💰 راهن (' + t + ') ' + fmt(betAmt);
+  }, 1000);
+}
+function stopMyTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+function startOppTimer(circle, sec) {
+  let t = sec;
+  const iv = setInterval(() => {
+    t--;
+    const pct = t / sec;
+    circle.style.strokeDashoffset = 196 * (1 - pct);
+    if (t <= 0) clearInterval(iv);
+  }, 1000);
+}
+
+// ══════════════════════════════════════════════════════
+//  SEAT HELPERS
+// ══════════════════════════════════════════════════════
+function setSeatStatus(pid, status) {
+  if (pid === myId) return;
+  const av = document.getElementById('av_'+pid);
+  const nb = document.getElementById('nb_'+pid);
+  if (!av) return;
+  av.classList.remove('active','folded');
+  const tr = av.querySelector('.tring circle');
+  if (tr) tr.style.strokeDashoffset = '196';
+  if (status === 'fold') {
+    av.classList.add('folded');
+    if (nb) { nb.textContent='انسحب'; nb.style.display=''; nb.style.color='#e74c3c'; nb.style.background='rgba(192,57,43,.12)'; }
+  } else if (status === 'out') {
+    av.style.opacity='.3';
+    if (nb) { nb.textContent='خرج'; nb.style.display=''; }
+  } else {
+    if (nb) nb.style.display='none';
+  }
+}
+function clearSeatActive() {
+  document.querySelectorAll('.oav').forEach(a => {
+    a.classList.remove('active');
+    const tr = a.querySelector('.tring circle');
+    if (tr) tr.style.strokeDashoffset = '196';
+  });
+  document.querySelectorAll('.npill').forEach(n => n.classList.remove('act'));
+}
+function highlightSeat(pid) {
+  clearSeatActive();
+  const av = document.getElementById('av_'+pid);
+  const np = document.getElementById('np_'+pid);
+  if (av) av.classList.add('active');
+  if (np) np.classList.add('act');
+}
+function getSeatName(pid) {
+  if (pid === myId) return 'أنت';
+  const s = seats.find(s => s.id === pid);
+  return s ? s.name : pid;
+}
+function updateSeatBal(pid, bal) {
+  if (pid === myId) {
+    document.getElementById('myBalDisp').textContent = '💰 ' + fmt(bal);
+    document.getElementById('gsMyBal').textContent = fmt(bal);
+    updateBetUI(bal, roomCfg.minBet||1000);
+  }
+}
+function updatePotDisplay(pot) {
+  document.getElementById('potV').textContent = fmt(pot);
+  document.getElementById('gsPot').textContent = fmt(pot);
+}
+
+// ══════════════════════════════════════════════════════
+//  ROUND RESULT
+// ══════════════════════════════════════════════════════
+const SUIT_COLOR2 = {'♥':'c-red','♦':'c-red','♠':'c-blk','♣':'c-blk'};
+function showRoundResult(msg) {
+  const w = msg.winners[0];
+  const isMe = w.id === myId;
+  document.getElementById('resTitle').textContent = isMe ? '🎉 فزت!' : 'نتيجة الجولة';
+  document.getElementById('resWinner').textContent = isMe ? 'أنت الفائز' : w.name + ' فاز';
+  document.getElementById('resHand').textContent = w.hand;
+  document.getElementById('resPot').textContent = 'الجائزة: ' + fmt(msg.share) + ' نقطة';
+  document.getElementById('resCards').innerHTML = (w.cards||[]).map(c => `
+    <div class="res-card">
+      <div class="rc-t ${SUIT_COLOR2[c.suit]||'c-blk'}">${c.val}</div>
+      <div class="rc-m ${SUIT_COLOR2[c.suit]||'c-blk'}">${c.suit}</div>
+    </div>`).join('');
+  showOverlay('resOverlay');
+  setTimeout(() => hideOverlay('resOverlay'), 3800);
+}
+
+// ══════════════════════════════════════════════════════
+//  LEAVE
+// ══════════════════════════════════════════════════════
+function leaveGame() {
+  send({type:'leave'});
+  currentRoom = null; myCards = []; seats = [];
+  hideOverlay('goOverlay'); hideOverlay('resOverlay'); hideOverlay('cdOverlay');
+  go('lobby');
+}
+
+// ══════════════════════════════════════════════════════
+//  OVERLAYS & TOAST
+// ══════════════════════════════════════════════════════
+function showOverlay(id) { document.getElementById(id).classList.add('show'); }
+function hideOverlay(id) { document.getElementById(id).classList.remove('show'); }
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ══════════════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════════════
+function fmt(n) { return (+n||0).toLocaleString('ar-SA'); }
+
+// ══════════════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  // try silent reconnect if returning
+});
+</script>
+</body>
+</html>

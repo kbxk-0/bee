@@ -20,13 +20,161 @@ function avatarHTML(name, size = 36) {
   return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${col};display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.42)}px;font-weight:bold;color:white;flex-shrink:0">${letter}</div>`;
 }
 
-// ===== الرئيسية =====renderHome
+// ===== الرئيسية =====
+function renderHome() {
+  const sec = document.getElementById('home');
+  if (!sec) return;
+
+  const xpCurrent = typeof currentXP !== 'undefined' ? currentXP : 0;
+  const xpNeeded  = currentLevel * 100;
+  const xpPct     = Math.min(100, Math.round(xpCurrent / xpNeeded * 100));
+
+  const user = auth.currentUser;
+  if (!user) return;
+
+  // جلب بيانات السلسلة والمكافآت المتوقعة للعرض مباشرة بدلاً من "جاري التحميل"
+  const currentStreak = typeof currentDailyStreak !== 'undefined' ? currentDailyStreak : 0;
+  const rewards = [50, 75, 100, 125, 150, 175, 200, 250, 300, 500];
+  const nextReward = rewards[Math.min(currentStreak, rewards.length - 1)];
+
+  const questChatBtn = claimedChatQuest
+    ? '<span style="color:#2ed573;font-size:11px">✓ تم</span>'
+    : `<button onclick="claimQuest('chat')" ${questChat >= 5 ? '' : 'disabled'} style="background:#ffd700;color:black;border:none;border-radius:4px;font-size:10px;padding:3px 8px;cursor:pointer;font-weight:bold">+20🪙</button>`;
+  const questFlipBtn = claimedFlipQuest
+    ? '<span style="color:#2ed573;font-size:11px">✓ تم</span>'
+    : `<button onclick="claimQuest('flip')" ${questFlip >= 3 ? '' : 'disabled'} style="background:#ffd700;color:black;border:none;border-radius:4px;font-size:10px;padding:3px 8px;cursor:pointer;font-weight:bold">+30🪙</button>`;
+
+  sec.innerHTML = `
+
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:20px;font-weight:900;background:linear-gradient(135deg,#a855f7,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:3px">BEE 🐝</div>
+      <div style="background:linear-gradient(135deg,rgba(251,191,36,0.15),rgba(251,191,36,0.05));border:1px solid rgba(251,191,36,0.3);color:#fbbf24;font-size:13px;padding:5px 14px;border-radius:20px;font-weight:800">
+        🪙 ${currentCoins.toLocaleString('ar')}
+      </div>
+    </div>
+
+    <!-- بطاقة الملف الشخصي -->
+    <div style="background:linear-gradient(135deg,#1a1a38,#20204a);border:1px solid rgba(168,85,247,0.25);border-radius:20px;padding:16px;margin-bottom:14px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:radial-gradient(circle,rgba(124,58,237,0.25),transparent 70%);pointer-events:none"></div>
+      <div style="position:absolute;bottom:-20px;left:-20px;width:80px;height:80px;background:radial-gradient(circle,rgba(251,191,36,0.1),transparent 70%);pointer-events:none"></div>
+
+      <div style="display:flex;align-items:center;gap:14px;position:relative">
+        <div onclick="showEditProfile()" style="cursor:pointer;position:relative;flex-shrink:0">
+          <div style="width:62px;height:62px;border-radius:50%;background:${getAvatarColor(currentUsername)};display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;color:white;border:2px solid rgba(168,85,247,0.6);box-shadow:0 0 20px rgba(124,58,237,0.4)">
+            ${currentUsername.charAt(0).toUpperCase()}
+          </div>
+          <div style="position:absolute;bottom:0;right:0;background:#7c3aed;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;border:2px solid #08081a;box-shadow:0 0 8px rgba(124,58,237,0.5)">✏️</div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px">
+            <span style="font-size:17px;font-weight:900">${escapeHTML(currentUsername)}</span>
+            ${isVIP ? '<span style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#1a0a00;font-size:9px;padding:2px 8px;border-radius:10px;font-weight:900">★ VIP</span>' : ''}
+            ${isAdmin ? '<span style="background:linear-gradient(135deg,#dc2626,#ef4444);color:white;font-size:9px;padding:2px 8px;border-radius:10px;font-weight:900">Admin</span>' : ''}
+          </div>
+          ${currentTitle ? `<div style="font-size:12px;color:${currentTitleColor||'#a855f7'};font-weight:700;margin-bottom:3px">‹${escapeHTML(currentTitle)}›</div>` : ''}
+          <div style="font-size:11px;color:#9999cc;display:flex;align-items:center;gap:6px">
+            <span>⭐ Lv.${currentLevel}</span>
+            ${currentClan ? `<span style="color:#555577">·</span><span style="color:#10b981">[${escapeHTML(currentClan)}]</span>` : ''}
+          </div>
+        </div>
+      </div>
+
+      <!-- XP Bar -->
+      <div style="margin-top:14px;position:relative">
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:#555577;margin-bottom:5px">
+          <span>XP</span><span>${xpCurrent} / ${xpNeeded}</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.06);border-radius:10px;height:7px;overflow:hidden">
+          <div style="height:100%;width:${xpPct}%;background:linear-gradient(90deg,#7c3aed,#a855f7,#fbbf24);border-radius:10px;box-shadow:0 0 10px rgba(124,58,237,0.6);transition:width .6s ease"></div>
+        </div>
+      </div>
+
+      <!-- أزرار سريعة -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+        <button onclick="claimDaily()" style="padding:11px;background:linear-gradient(135deg,#059669,#10b981);color:white;border:none;border-radius:12px;font-weight:800;font-size:12px;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(16,185,129,0.3)">🎁 مكافأة يومية</button>
+        <button onclick="showSection('inventory');renderInventory()" style="padding:11px;background:linear-gradient(135deg,#4c1d95,#6d28d9);color:white;border:1px solid rgba(168,85,247,0.3);border-radius:12px;font-weight:800;font-size:12px;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(124,58,237,0.2)">🎒 حقيبتي</button>
+      </div>
+    </div>
+
+    <!-- المهام اليومية -->
+    <div style="background:linear-gradient(135deg,#16163a,#1e1e44);border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:16px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:900;color:#fbbf24;margin-bottom:14px">🎯 المهام اليومية</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px">💬 رسائل الشات <span style="color:#555577;font-weight:400;font-size:10px">${questChat}/5</span></div>
+          <div style="background:rgba(255,255,255,0.06);border-radius:10px;height:6px;overflow:hidden;width:85%">
+            <div style="height:100%;width:${Math.min(100,questChat/5*100)}%;background:linear-gradient(90deg,#7c3aed,#a855f7);border-radius:10px;box-shadow:0 0 8px rgba(124,58,237,0.4)"></div>
+          </div>
+        </div>
+        ${claimedChatQuest
+          ? '<span style="color:#10b981;font-size:13px;font-weight:800">✓</span>'
+          : `<button onclick="claimQuest('chat')" ${questChat>=5?'':'disabled'} style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#1a0a00;border:none;border-radius:8px;font-size:11px;padding:6px 12px;cursor:pointer;font-weight:900;font-family:inherit;${questChat>=5?'box-shadow:0 4px 12px rgba(251,191,36,0.3)':'opacity:0.35'}">+20🪙</button>`}
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px">🎲 قلب العملة <span style="color:#555577;font-weight:400;font-size:10px">${questFlip}/3</span></div>
+          <div style="background:rgba(255,255,255,0.06);border-radius:10px;height:6px;overflow:hidden;width:85%">
+            <div style="height:100%;width:${Math.min(100,questFlip/3*100)}%;background:linear-gradient(90deg,#f59e0b,#fbbf24);border-radius:10px;box-shadow:0 0 8px rgba(251,191,36,0.4)"></div>
+          </div>
+        </div>
+        ${claimedFlipQuest
+          ? '<span style="color:#10b981;font-size:13px;font-weight:800">✓</span>'
+          : `<button onclick="claimQuest('flip')" ${questFlip>=3?'':'disabled'} style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#1a0a00;border:none;border-radius:8px;font-size:11px;padding:6px 12px;cursor:pointer;font-weight:900;font-family:inherit;${questFlip>=3?'box-shadow:0 4px 12px rgba(251,191,36,0.3)':'opacity:0.35'}">+30🪙</button>`}
+      </div>
+    </div>
+
+    <!-- السلسلة اليومية -->
+    <div style="background:linear-gradient(135deg,#1c1500,#251d00);border:1px solid rgba(251,191,36,0.2);border-radius:18px;padding:14px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:13px;font-weight:900;color:#fbbf24;margin-bottom:4px">🔥 السلسلة اليومية</div>
+          <div id="streak-info" style="font-size:11px;color:#9999cc">${currentStreak > 0 ? `${currentStreak} يوم متتالي 🔥` : 'ابدأ سلسلتك اليوم!'}</div>
+        </div>
+        <div style="text-align:left">
+          <div style="font-size:10px;color:#555577;margin-bottom:2px">مكافأة الغد</div>
+          <div style="font-size:15px;font-weight:900;color:#fbbf24">🪙 ${nextReward}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- الرسائل الخاصة -->
+    <div style="background:linear-gradient(135deg,#001a14,#001f18);border:1px solid rgba(16,185,129,0.2);border-radius:18px;margin-bottom:12px;overflow:hidden">
+      <div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;font-weight:900;color:#10b981">🔒 الرسائل الخاصة</span>
+        <button onclick="togglePMForm()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid rgba(16,185,129,0.25);border-radius:10px;padding:5px 12px;font-size:11px;cursor:pointer;font-weight:800;font-family:inherit">إرسال +</button>
+      </div>
+      <div id="private-messages-box" style="max-height:140px;overflow-y:auto;padding:0 8px 8px"></div>
+      <div id="pm-send-form" style="display:none;padding:10px;border-top:1px solid rgba(16,185,129,0.1)">
+        <input type="text" id="pm-target" placeholder="اسم المستلم..." class="input-field" style="margin-bottom:7px;font-size:12px">
+        <div style="display:flex;gap:6px">
+          <input type="text" id="pm-input" placeholder="الرسالة..." class="input-field" style="flex:1;font-size:12px" onkeydown="if(event.key==='Enter') sendPrivateMessage()">
+          <button onclick="sendPrivateMessage()" style="padding:0 14px;background:#10b981;color:white;border:none;border-radius:8px;font-weight:800;cursor:pointer;font-size:16px">➤</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- تحويل كوينز -->
+    <div style="background:linear-gradient(135deg,#16163a,#1e1e44);border:1px solid rgba(255,255,255,0.06);border-radius:18px;padding:16px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:900;color:#a855f7;margin-bottom:12px">💸 تحويل كوينز</div>
+      <input type="text"   id="tr-user"   placeholder="اسم المستخدم..." class="input-field" style="margin-bottom:8px">
+      <input type="number" id="tr-amount" placeholder="الكمية..." class="input-field" style="margin-bottom:10px">
+      <button onclick="transferCoins()" style="width:100%;padding:11px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;border-radius:12px;font-weight:900;font-size:13px;cursor:pointer;font-family:inherit;box-shadow:0 4px 16px rgba(124,58,237,0.35)">إرسال الآن</button>
+    </div>
+
+    ${isAdmin ? `<button onclick="showSection('admin-panel')" style="width:100%;padding:13px;background:linear-gradient(135deg,#dc2626,#ef4444);color:white;border:none;border-radius:14px;font-weight:900;font-size:13px;cursor:pointer;font-family:inherit;box-shadow:0 4px 16px rgba(239,68,68,0.35);margin-bottom:12px">⚙️ لوحة الإدارة</button>` : ''}
+
+  `;
+
+  if (typeof listenToPrivateMessages === 'function') listenToPrivateMessages();
+  if (typeof onHomeOpen === 'function') onHomeOpen();
+}
 
 // ===== لوحة المتصدرين =====
 function renderLeaderboard() {
   const list = document.getElementById('leaderboard-list');
   if (!list) return;
-  list.innerHTML = '<div style="text-align:center;color:#888;padding:20px">جاري التحميل...</div>';
+  list.innerHTML = '<div style="text-align:center;color:#555577;padding:24px;font-size:13px">جاري التحميل...</div>';
 
   db.ref('users').orderByChild('coins').limitToLast(20).once('value', snap => {
     let players = [];
@@ -34,18 +182,22 @@ function renderLeaderboard() {
     players.reverse();
 
     const medals = ['🥇','🥈','🥉'];
+    const bgTop = ['rgba(251,191,36,0.08)','rgba(168,85,247,0.06)','rgba(16,185,129,0.06)'];
+
     list.innerHTML = players.map((p, i) => `
-      <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid #2a2a3f;${i < 3 ? 'background:#1a1a28' : ''}">
-        <span style="font-size:${i < 3 ? 20 : 14}px;width:24px;text-align:center">${medals[i] || (i+1)+'.'}</span>
-        ${avatarHTML(p.username || '؟', 34)}
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:bold">${escapeHTML(p.username||'لاعب')}</div>
-          <div style="font-size:10px;color:#2ed573">${p.clan ? '['+p.clan+'] · ' : ''}Lv.${p.level||1}</div>
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.04);background:${i < 3 ? bgTop[i] : 'transparent'}">
+        <div style="font-size:${i<3?22:13}px;width:28px;text-align:center;flex-shrink:0">${medals[i] || `<span style="color:#555577">${i+1}</span>`}</div>
+        <div style="width:38px;height:38px;border-radius:50%;background:${getAvatarColor(p.username||'؟')};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:white;flex-shrink:0;${i===0?'box-shadow:0 0 12px rgba(251,191,36,0.4)':''}">
+          ${(p.username||'؟').charAt(0).toUpperCase()}
         </div>
-        <div style="color:#ffd700;font-weight:bold;font-size:13px">🪙 ${p.coins||0}</div>
-        ${isAdmin ? `<button data-uid="${p.uid}" data-username="${escapeHTML(p.username||'')}" onclick="adminGiveCoinsToUser(this.dataset.uid, this.dataset.username)" style="background:#ff4757;color:white;border:none;border-radius:4px;font-size:10px;padding:3px 6px;cursor:pointer">منح</button>` : ''}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHTML(p.username||'لاعب')}</div>
+          <div style="font-size:10px;color:#555577;margin-top:1px">${p.clan?`<span style="color:#10b981">[${p.clan}]</span> · `:''}<span>Lv.${p.level||1}</span></div>
+        </div>
+        <div style="color:#fbbf24;font-weight:900;font-size:13px;flex-shrink:0">🪙 ${(p.coins||0).toLocaleString('ar')}</div>
+        ${isAdmin ? `<button data-uid="${p.uid}" data-username="${escapeHTML(p.username||'')}" onclick="adminGiveCoinsToUser(this.dataset.uid,this.dataset.username)" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:6px;font-size:9px;padding:3px 7px;cursor:pointer;font-family:inherit">منح</button>` : ''}
       </div>
-    `).join('') || '<div style="text-align:center;color:#888;padding:20px">لا يوجد لاعبون</div>';
+    `).join('') || '<div style="text-align:center;color:#555577;padding:24px">لا يوجد لاعبون</div>';
   });
 }
 
@@ -220,10 +372,11 @@ function buyTitle(name, color, cost) {
 
 // ===== الألعاب =====
 const GAMES_LIST = [
-  { id:'coinflip', name:'قلب العملة',   icon:'🪙', desc:'طُرّة أو نقش — راهن واختر', color:'#6c63ff' },
-  { id:'dice',     name:'رمي النرد',     icon:'🎲', desc:'عالي أو منخفض — راهن على النرد', color:'#ff6584' },
-  { id:'guess',    name:'خمّن الرقم',    icon:'🔢', desc:'اختر رقم ١-١٠ واربح ٨ أضعاف', color:'#2ed573' },
-  { id:'redblack', name:'أحمر أو أسود', icon:'🃏', desc:'ورقة واحدة — لونها؟', color:'#ff4757' },
+  { id:'million', name:'مليون', icon:'🃏', desc:'لعبة الورق متعدد اللاعبين', color:'#c8a940', external:true },
+  { id:'coinflip', name:'قلب العملة', icon:'🪙', desc:'راهن واختر الوجه الصحيح', color:'#6c63ff' },
+  { id:'dice',     name:'رمي النرد',   icon:'🎲', desc:'عالي أو منخفض', color:'#ff6584' },
+  { id:'guess',    name:'خمّن الرقم',  icon:'🔢', desc:'اربح ٨ أضعاف رهانك', color:'#2ed573' },
+  { id:'redblack', name:'أحمر أو أسود',icon:'🃏', desc:'ورقة واحدة — لونها؟', color:'#ff4757' },
 ];
 
 function renderGames() {
@@ -266,11 +419,14 @@ function playGame(id) {
   const area = document.getElementById('game-area');
   if (!area) return;
 
-  const betInput = (min=1) => `
-    <input type="number" id="bet-amount" placeholder="الرهان..." min="${min}" max="${currentCoins}"
-           class="input-field" style="text-align:center;font-size:16px;margin:10px auto;width:60%;display:block">
-    <div style="font-size:11px;color:#aaa;margin-bottom:12px">رصيدك: <strong style="color:#ffd700">${currentCoins} 🪙</strong></div>`;
-
+  function playGame(id) {
+  if (id === 'million') {
+    const avatar = savedAvatarColor ? '🐝' : '😎';
+    window.location.href = `games/million-game.html?name=${encodeURIComponent(currentUsername)}&avatar=${encodeURIComponent(avatar)}`;
+    return;
+  }
+  // ... باقي الكود
+}
   const games = {
 
     coinflip: `
@@ -750,103 +906,83 @@ function claimDaily() {
   });
 }
 
-// --- [ 1. دالة تحويل الكوينز مع الضريبة 5% ] ---
-function transferCoinsFromMenu(targetUid, targetName) {
+function transferCoins() {
   const user = auth.currentUser;
-  if (!user) return;
+  const targetInput = document.getElementById('tr-user');
+  const amountInput = document.getElementById('tr-amount');
+  // جلب الزر لتعطيله مؤقتاً ومنع السبام
+  const transferBtn = document.querySelector("button[onclick^='transferCoins']");
 
-  if (targetName === currentUsername) { 
-    alert("لا يمكنك التحويل لنفسك!"); 
-    return; 
-  }
+  if (!targetInput || !amountInput) return;
 
-  // طلب الكمية من اللاعب عبر صندوق إدخال
-  const amountInput = prompt(`أدخل كمية الكوينز المراد تحويلها إلى ${targetName}:`);
-  const amount = parseInt(amountInput);
+  const target = targetInput.value.trim();
+  const amount = parseInt(amountInput.value);
 
-  if (isNaN(amount) || amount <= 0) { 
-    alert("برجاء إدخال كمية صحيحة!"); 
+  // 1. الفحوصات الأساسية المدخلة
+  if (!user || !target || isNaN(amount) || amount <= 0) { 
+    alert("بيانات غير صحيحة"); 
     return; 
   }
   if (amount > currentCoins) { 
     alert("لا تملك هذا القدر من الكوينز!"); 
     return; 
   }
+  if (target === currentUsername) { 
+    alert("لا يمكنك التحويل لنفسك!"); 
+    return; 
+  }
 
-  // حساب الضريبة (مثال: 5%) والكمية الصافية للمستلم
-  const taxPercentage = 0.05; // 5% ضريبة
-  const tax = Math.floor(amount * taxPercentage);
-  const netAmount = amount - tax;
+  // 2. تعطيل الزر فوراً لمنع الضغط المتكرر
+  if (transferBtn) transferBtn.disabled = true;
 
-  // تأكيد العملية من اللاعب
-  const confirmTransfer = confirm(`سيتم خصم ${amount} 🪙 من رصيدك.\n(الضريبة 5%: ${tax} 🪙)\nسيستلم ${targetName} صافي: ${netAmount} 🪙.\n\nهل تريد الاستمرار؟`);
-  if (!confirmTransfer) return;
+  // 3. التحقق من وجود المستلم
+  db.ref('users').orderByChild('username').equalTo(target).once('value', snap => {
+    if (!snap.exists()) { 
+      alert("المستخدم المستلم غير موجود!"); 
+      if (transferBtn) transferBtn.disabled = false;
+      return; 
+    }
+    
+    const tid = Object.keys(snap.val())[0];
 
-  // الخطوة الأولى: خصم المبلغ كاملاً من الراسل
-  db.ref('users/' + user.uid).transaction(u => {
-    if (u) {
-      if (u.coins >= amount) {
-        u.coins -= amount;
-        return u;
+    // 4. الخطوة الأولى: خصم الكوينز من الراسل بأمان
+    db.ref('users/' + user.uid).transaction(u => {
+      if (u) {
+        if (u.coins >= amount) {
+          u.coins -= amount;
+          return u; // تأكيد الخصم
+        } else {
+          return; // إلغاء الترانزكشن فوراً (الرصيد غير كافٍ في السيرفر)
+        }
+      }
+      return u;
+    }, (error, committed) => {
+      if (committed) {
+        
+        // 5. الخطوة الثانية: إضافة الكوينز للمستلم فوراً وبشكل ذري (Atomic)
+        // استخدام ServerValue.increment أسرع وأضمن من ترانزكشن كامل هنا
+        db.ref('users/' + tid + '/coins').set(firebase.database.ServerValue.increment(amount))
+          .then(() => {
+            alert(`تم تحويل 🪙 ${amount} إلى ${target} بنجاح!`);
+            // تنظيف الحقول بعد النجاح
+            targetInput.value = '';
+            amountInput.value = '';
+          })
+          .catch(err => {
+            console.error("خطأ في إيداع الكوينز للمستلم:", err);
+            alert("تم خصم الكوينز لكن فشل إيداعها للمستلم، يرجى تصوير الشاشة ومراسلة الإدارة.");
+          })
+          .finally(() => {
+            // إعادة تفعيل الزر في كل الأحوال بعد انتهاء العملية بالكامل
+            if (transferBtn) transferBtn.disabled = false;
+          });
+
       } else {
-        return; // إلغاء الترانزكشن إذا قل الرصيد فجأة
+        alert("فشل التحويل. تأكد من رصيدك الحالي.");
+        if (transferBtn) transferBtn.disabled = false;
       }
-    }
-    return u;
-  }, (error, committed) => {
-    if (committed) {
-      // الخطوة الثانية: إيداع المبلغ الصافي (بعد خصم الضريبة) للمستلم
-      db.ref('users/' + targetUid + '/coins').set(firebase.database.ServerValue.increment(netAmount))
-        .then(() => {
-          alert(`تم تحويل 🪙 ${netAmount} إلى ${targetName} بنجاح بعد خصم الضريبة!`);
-          closePlayerMenu(); // إغلاق المنيو تلقائياً
-        })
-        .catch(err => {
-          console.error("خطأ في الإيداع:", err);
-          alert("تم خصم الكوينز لكن فشل إيداعها، يرجى مراسلة الإدارة.");
-        });
-    } else {
-      alert("فشل التحويل. تأكد من رصيدك الحالي.");
-    }
-  });
-}
-
-// --- [ 2. دالة إرسال الرسائل الخاصة من المنيو ] ---
-function sendPrivateMessageFromMenu(targetUid, targetName) {
-  const user = auth.currentUser;
-  if (!user) return;
-  if (isMuted) { alert("أنت مكتوم!"); return; }
-
-  const text = prompt(`أرسل رسالة خاصة إلى ${targetName}:`);
-  if (!text || !text.trim()) { return; }
-
-  const pmData = {
-    senderUid: user.uid, 
-    senderName: currentUsername,
-    receiverUid: targetUid, 
-    receiverName: targetName,
-    text: text.trim(),
-    timestamp: firebase.database.ServerValue.TIMESTAMP
-  };
-
-  const updates = {};
-  const newPmKey = db.ref().child('user_pms').push().key;
-  updates['/user_pms/' + user.uid + '/' + newPmKey] = pmData;
-  updates['/user_pms/' + targetUid + '/' + newPmKey] = pmData;
-  updates['/users/' + targetUid + '/unreadPMs'] = firebase.database.ServerValue.increment(1);
-
-  db.ref().update(updates)
-    .then(() => {
-      if (typeof showBrowserNotif === 'function') {
-        showBrowserNotif(`رسالة من ${currentUsername}`, text);
-      }
-      alert("تم إرسال الرسالة الخاصة بنجاح ✓");
-      closePlayerMenu();
-    })
-    .catch(err => {
-      console.error("خطأ في الخاص:", err);
-      alert("فشل إرسال الرسالة.");
     });
+  });
 }
 
 // ===== الملف الشخصي =====

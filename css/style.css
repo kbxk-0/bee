@@ -521,3 +521,23 @@ body::before {
   from { border-color: var(--danger); }
   to   { border-color: transparent; }
 }
+body {
+  background: var(--bg);
+  background-image: url('../bg.jpg');
+  background-size: cover;
+  background-position: center bottom;
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: 'Cairo', sans-serif;
+  overflow: hidden;
+  height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  pointer-events: none;
+  z-index: 0;
+}

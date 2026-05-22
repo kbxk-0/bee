@@ -1,5 +1,5 @@
 // ============================================================
-//  js/chat.js — bee platform (نسخة خالد المطورة)
+//  js/chat.js — bee platform (نسخة خالد المطورة المدمجة بالهدايا)
 // ============================================================
 
 function triggerMarquee(text) {
@@ -115,7 +115,7 @@ function sendMessage(isAmplifier = false) {
       text: text, timestamp: firebase.database.ServerValue.TIMESTAMP
     });
 
-    // مكافآت الشات اليومية والـ XP (تم إصلاح مكانها لتكون داخل إرسال الرسالة العادية)
+    // مكافآت الشات اليومية والـ XP
     db.ref('users/'+user.uid).transaction(u => {
       if (!u) return u;
       u.coins = (u.coins||0) + 1;
@@ -252,27 +252,32 @@ function openPlayerMenu(targetUid, targetName) {
   const isMod = typeof isChatMod !== 'undefined' ? isChatMod : false;
   const showModTools = isAdmin || isMod;
 
+  // الحاوية الداخلية لتسهيل التبديل لمتجر الهدايا
   menu.innerHTML = `
-    <h3 style="margin: 0 0 4px 0; color: #ffd700;">${escapeHTML(targetName)}</h3>
-    <p style="font-size: 11px; color: #888; margin-bottom: 16px;">إجراءات اللاعب</p>
-    
-    <button onclick="sendPrivateMessageFromMenu('${targetUid}', '${targetName}')" style="width:100%; padding:10px; background:#2a2a4f; color:#a78bfa; border:1px solid #6c63ff; border-radius:8px; margin-bottom:8px; font-weight:bold; cursor:pointer;">💬 إرسال رسالة خاصة</button>
-    <button onclick="transferCoinsFromMenu('${targetUid}', '${targetName}')" style="width:100%; padding:10px; background:#ffd700; color:black; border:none; border-radius:8px; margin-bottom:12px; font-weight:bold; cursor:pointer;">💸 تحويل كوينز</button>
-    
-    ${showModTools ? `
-      <div style="border-top: 1px solid #2a2a3f; padding-top: 10px; margin-top: 10px;">
-        <p style="font-size: 11px; color: #ff4757; font-weight: bold; margin: 0 0 8px 0;">🛡️ أدوات الإشراف داخل الشات</p>
-        <select id="mute-duration" style="width:100%; padding:6px; background:#111118; color:white; border:1px solid #ff4757; border-radius:6px; margin-bottom:8px; font-size:12px;">
-          <option value="10">كتم لمدة 10 دقائق</option>
-          <option value="60">كتم لمدة ساعة</option>
-          <option value="1440">كتم لمدة 24 ساعة</option>
-        </select>
-        <button onclick="modMuteUser('${targetUid}', '${targetName}')" style="width:100%; padding:8px; background:#ff4757; color:white; border:none; border-radius:6px; margin-bottom:6px; font-size:12px; font-weight:bold; cursor:pointer;">🤫 تطبيق الكتم</button>
-        <button onclick="modBanUser24h('${targetUid}', '${targetName}')" style="width:100%; padding:8px; background:#b33939; color:white; border:none; border-radius:6px; font-size:12px; font-weight:bold; cursor:pointer;">🚫 حظر 24 ساعة</button>
-      </div>
-    ` : ''}
-    
-    <button onclick="closePlayerMenu()" style="margin-top: 14px; background: transparent; color: #888; border: none; cursor: pointer; font-size: 12px; text-decoration: underline;">إغلاق</button>
+    <div id="player-menu-container">
+      <h3 style="margin: 0 0 4px 0; color: #ffd700;">${escapeHTML(targetName)}</h3>
+      <p style="font-size: 11px; color: #888; margin-bottom: 16px;">إجراءات اللاعب</p>
+      
+      <button onclick="sendPrivateMessageFromMenu('${targetUid}', '${targetName}')" style="width:100%; padding:10px; background:#2a2a4f; color:#a78bfa; border:1px solid #6c63ff; border-radius:8px; margin-bottom:8px; font-weight:bold; cursor:pointer;">💬 إرسال رسالة خاصة</button>
+      <button onclick="transferCoinsFromMenu('${targetUid}', '${targetName}')" style="width:100%; padding:10px; background:#ffd700; color:black; border:none; border-radius:8px; margin-bottom:8px; font-weight:bold; cursor:pointer;">💸 تحويل كوينز</button>
+      
+      <button onclick="openGiftSubMenu('${targetUid}', '${targetName}')" style="width:100%; padding:10px; background: linear-gradient(135deg, #ff9f43, #ff4757); color:white; border:none; border-radius:8px; margin-bottom:12px; font-weight:bold; cursor:pointer; box-shadow: 0 4px 10px rgba(255,71,87,0.2);">🎁 إرسال هدية ملكية</button>
+      
+      ${showModTools ? `
+        <div style="border-top: 1px solid #2a2a3f; padding-top: 10px; margin-top: 10px;">
+          <p style="font-size: 11px; color: #ff4757; font-weight: bold; margin: 0 0 8px 0;">🛡️ أدوات الإشراف داخل الشات</p>
+          <select id="mute-duration" style="width:100%; padding:6px; background:#111118; color:white; border:1px solid #ff4757; border-radius:6px; margin-bottom:8px; font-size:12px;">
+            <option value="10">كتم لمدة 10 دقائق</option>
+            <option value="60">كتم لمدة ساعة</option>
+            <option value="1440">كتم لمدة 24 ساعة</option>
+          </select>
+          <button onclick="modMuteUser('${targetUid}', '${targetName}')" style="width:100%; padding:8px; background:#ff4757; color:white; border:none; border-radius:6px; margin-bottom:6px; font-size:12px; font-weight:bold; cursor:pointer;">🤫 تطبيق الكتم</button>
+          <button onclick="modBanUser24h('${targetUid}', '${targetName}')" style="width:100%; padding:8px; background:#b33939; color:white; border:none; border-radius:6px; font-size:12px; font-weight:bold; cursor:pointer;">🚫 حظر 24 ساعة</button>
+        </div>
+      ` : ''}
+      
+      <button onclick="closePlayerMenu()" style="margin-top: 14px; background: transparent; color: #888; border: none; cursor: pointer; font-size: 12px; text-decoration: underline;">إغلاق</button>
+    </div>
   `;
 
   const overlay = document.createElement('div');
@@ -282,6 +287,41 @@ function openPlayerMenu(targetUid, targetName) {
 
   document.body.appendChild(overlay);
   document.body.appendChild(menu);
+}
+
+// [تابع للنظام الجديد 🎁] دالة فتح واجهة اختيار الهدايا داخل نفس المنيو
+function openGiftSubMenu(targetUid, targetName) {
+  const container = document.getElementById('player-menu-container');
+  if (!container) return;
+
+  container.innerHTML = `
+    <h3 style="margin: 0 0 4px 0; color: #ff9f43;">🎁 متجر الهدايا الفوري</h3>
+    <p style="font-size: 11px; color: #888; margin-bottom: 16px;">اختر هدية لإرسالها إلى ‹${escapeHTML(targetName)}›</p>
+    
+    <button onclick="triggerGiftDelivery('${targetUid}', '${targetName}', 'gift_honey')" style="width:100%; padding:11px; background:#1e1e2e; color:#fff; border:1px solid rgba(255,159,67,0.3); border-radius:10px; margin-bottom:8px; font-size:12px; font-weight:bold; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+      <span>🍯 عسل ملكي</span> <span style="color:#ffd700;">20 🪙</span>
+    </button>
+    
+    <button onclick="triggerGiftDelivery('${targetUid}', '${targetName}', 'gift_bee')" style="width:100%; padding:11px; background:#1e1e2e; color:#fff; border:1px solid rgba(255,159,67,0.3); border-radius:10px; margin-bottom:8px; font-size:12px; font-weight:bold; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+      <span>🐝 نحلة ذهبية</span> <span style="color:#ffd700;">50 🪙</span>
+    </button>
+    
+    <button onclick="triggerGiftDelivery('${targetUid}', '${targetName}', 'gift_crown')" style="width:100%; padding:11px; background:#1e1e2e; color:#fff; border:1px solid rgba(255,159,67,0.3); border-radius:10px; margin-bottom:16px; font-size:12px; font-weight:bold; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+      <span>👑 تاج النخبة</span> <span style="color:#ffd700;">200 🪙</span>
+    </button>
+    
+    <button onclick="openPlayerMenu('${targetUid}', '${targetName}')" style="background:none; border:none; color:#a78bfa; font-size:12px; font-weight:bold; cursor:pointer; text-decoration:underline;">⬅️ العودة للخلف</button>
+  `;
+}
+
+// [تابع للنظام الجديد 🎁] دالة وسيطة لتنفيذ الإرسال وإغلاق المنيو
+function triggerGiftDelivery(targetUid, targetName, giftId) {
+  if (typeof sendGift === 'function') {
+    sendGift(targetUid, targetName, giftId);
+    closePlayerMenu();
+  } else {
+    alert('⚠️ خطأ: دالة sendGift غير موجودة في ملف app.js الرئيسي!');
+  }
 }
 
 function closePlayerMenu() {
