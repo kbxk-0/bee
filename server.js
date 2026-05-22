@@ -225,6 +225,17 @@ function handle(pid, msg) {
 
   if (msg.type==='set_name') { p.name=msg.name.slice(0,16); return; }
 
+  if (msg.type==='chat') {
+    const room = rooms.get(p.rid);
+    if (room) room.bcastAll({
+      type: 'chat_msg',
+      name: p.name,
+      text: String(msg.text||'').slice(0, 80),
+      av:   msg.av || '😊'
+    });
+    return;
+  }
+
   if (msg.type==='create_room') {
     const rid='R'+Math.random().toString(36).slice(2,6).toUpperCase();
     const cfg={
