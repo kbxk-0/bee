@@ -4,6 +4,7 @@
 
 // ===== أداة: لون ثابت لكل مستخدم بناءً على اسمه =====
 let savedAvatarColor = ''; // يُحدَّث من auth.js عند التحميل
+let activeGame = null; // اللعبة المفتوحة حالياً في الرئيسية
 
 function getAvatarColor(name) {
   // لو اللاعب الحالي وعنده لون محفوظ، استخدمه
@@ -166,8 +167,129 @@ function renderHome() {
 
   `;
 
+  // عرض اللعبة المختارة
+  if (activeGame) {
+    const game = GAMES_LIST.find(g => g.id === activeGame);
+    if (game) {
+      const gameSection = document.createElement('div');
+      gameSection.id = 'active-game-section';
+      gameSection.style.cssText = 'margin-bottom:14px';
+      gameSection.innerHTML = buildGameCard(game);
+      // أضفها بعد بطاقة الملف الشخصي مباشرة
+      const profileCard = sec.querySelector('div[style*="border-radius:20px"]');
+      if (profileCard && profileCard.parentNode) {
+        profileCard.parentNode.insertBefore(gameSection, profileCard.nextSibling);
+      } else {
+        sec.insertAdjacentHTML('afterbegin', gameSection.outerHTML);
+      }
+      // تشغيل اللعبة إذا ليست خارجية
+      if (!game.external) {
+        setTimeout(() => playGame(activeGame), 50);
+      }
+    }
+  }
+
   if (typeof listenToPrivateMessages === 'function') listenToPrivateMessages();
   if (typeof onHomeOpen === 'function') onHomeOpen();
+}
+
+// ===== بطاقة اللعبة بأسلوب جواكر =====
+function buildGameCard(game) {
+  const tournaments = [
+    { prize: '50,000', entry: '5,000', stars: 1, active: false },
+    { prize: '344,000', entry: '49,990', stars: 1, active: true },
+    { prize: '350,000', entry: '99,990', stars: 1, active: false },
+  ];
+
+  const toCards = tournaments.map((t,i) => `
+    <div style="background:${t.active?'linear-gradient(135deg,#1a4a1a,#1f5c1f)':'#1a1a28'};
+      border:${t.active?'2px solid #2ed573':'1px solid #2a2a3f'};
+      border-radius:14px;padding:14px 10px;text-align:center;min-width:110px;flex-shrink:0;
+      ${t.active?'transform:scale(1.05);box-shadow:0 4px 20px rgba(46,213,115,0.3)':''}">
+      <div style="font-size:1.3rem;margin-bottom:4px">🏆</div>
+      <div style="font-size:13px;font-weight:900;color:${t.active?'#2ed573':'#fbbf24'}">🪙 ${t.prize}</div>
+      <div style="font-size:9px;color:#888;margin-top:2px">+${t.stars},000 ⭐</div>
+      <div style="font-size:9px;color:#666;margin-top:6px">رسوم الدخول</div>
+      <div style="font-size:11px;font-weight:700;color:${t.active?'#2ed573':'#aaa'}">🪙 ${t.entry}</div>
+    </div>`).join('');
+
+  return `
+    <div style="background:linear-gradient(135deg,#0d0d20,#141428);border:1px solid rgba(255,255,255,0.08);border-radius:22px;overflow:hidden;margin-bottom:2px">
+      
+      <!-- اسم اللعبة -->
+      <div style="padding:20px 16px 14px;text-align:center;position:relative">
+        <button onclick="activeGame=null;renderHome()" 
+          style="position:absolute;top:12px;right:12px;background:rgba(255,255,255,0.08);border:none;border-radius:8px;color:#aaa;padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit">✕</button>
+        <div style="font-size:3rem;margin-bottom:8px">${game.icon}</div>
+        <div style="font-size:22px;font-weight:900;color:white;margin-bottom:4px">${game.name}</div>
+        <div style="font-size:11px;color:#666">${game.desc}</div>
+      </div>
+
+      <!-- زرا المسابقات ولعبة ودية -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 16px">
+        <button onclick="showGameTournaments('${game.id}')"
+          style="background:linear-gradient(135deg,#1a4a1a,#22622a);color:white;border:1px solid #2ed573;
+          border-radius:14px;padding:14px;font-weight:900;font-size:14px;cursor:pointer;
+          font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;
+          box-shadow:0 4px 16px rgba(46,213,115,0.25)">
+          🏆 المسابقات
+        </button>
+        <button onclick="${game.external ? 
+          `window.location.href='games/million-game.html?name='+encodeURIComponent(currentUsername)+'&avatar='+encodeURIComponent(savedAvatarColor||'😎')` : 
+          `showFriendlyGame('${game.id}')`}"
+          style="background:linear-gradient(135deg,#1a1a2e,#252540);color:white;border:1px solid rgba(255,255,255,0.12);
+          border-radius:14px;padding:14px;font-weight:900;font-size:14px;cursor:pointer;
+          font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px">
+          ▶ لعبة ودية
+        </button>
+      </div>
+
+      <!-- بطاقات المسابقات -->
+      <div id="game-tournaments-${game.id}" style="padding:0 16px 16px">
+        <div style="font-size:11px;color:#555;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
+          <span>المسابقات المتاحة</span>
+          <div style="display:flex;gap:6px">
+            <span style="font-size:14px;cursor:pointer;color:#aaa">‹</span>
+            <span style="font-size:14px;cursor:pointer;color:#aaa">›</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none">
+          ${toCards}
+        </div>
+      </div>
+
+      <!-- أزرار أسفل -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid rgba(255,255,255,0.06)">
+        <button style="padding:12px 6px;background:transparent;color:#aaa;border:none;border-left:1px solid rgba(255,255,255,0.06);font-size:11px;cursor:pointer;font-family:inherit">
+          📊 المتصدرون
+        </button>
+        <button style="padding:12px 6px;background:transparent;color:#aaa;border:none;font-size:11px;cursor:pointer;font-family:inherit">
+          📋 القوانين
+        </button>
+        <button style="padding:12px 6px;background:transparent;color:#aaa;border:none;border-right:1px solid rgba(255,255,255,0.06);font-size:11px;cursor:pointer;font-family:inherit">
+          🎮 الألعاب الجارية
+        </button>
+      </div>
+
+    </div>
+
+    <!-- منطقة اللعبة الودية -->
+    <div id="game-area" style="margin-bottom:14px"></div>
+  `;
+}
+
+function showFriendlyGame(id) {
+  playGame(id);
+  // scroll لمنطقة اللعبة
+  setTimeout(() => {
+    const area = document.getElementById('game-area');
+    if (area) area.scrollIntoView({ behavior:'smooth', block:'center' });
+  }, 200);
+}
+
+function showGameTournaments(id) {
+  showSection('games');
+  const lastGame = localStorage.getItem('lastGame');
 }
 
 // ===== لوحة المتصدرين =====
@@ -397,8 +519,8 @@ function renderGames() {
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
         ${GAMES_LIST.map(g => `
-          <div onclick="playGame('${g.id}')"
-               style="background:#1a1a28;border-radius:12px;border:1px solid ${g.color};padding:16px;text-align:center;cursor:pointer;transition:transform .15s;active:scale(0.95)"
+          <div onclick="openGame('${g.id}')"
+               style="background:#1a1a28;border-radius:12px;border:1px solid ${g.color};padding:16px;text-align:center;cursor:pointer;transition:transform .15s"
                onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform=''">
             <div style="font-size:32px;margin-bottom:6px">${g.icon}</div>
             <div style="font-weight:bold;font-size:13px;color:${g.color}">${g.name}</div>
@@ -413,20 +535,29 @@ function renderGames() {
     const el = document.getElementById('online-count');
     if (el) el.textContent = snap.numChildren() + ' متصل الآن';
   });
+
+  // استعادة آخر لعبة
+  const lastGame = localStorage.getItem('lastGame');
+  if (lastGame && lastGame !== 'million') {
+    setTimeout(() => playGame(lastGame), 100);
+  }
+}
+
+function openGame(id) {
+  activeGame = id;
+  showSection('home');
 }
 
 function playGame(id) {
   const area = document.getElementById('game-area');
   if (!area) return;
+  localStorage.setItem('lastGame', id); // تذكر آخر لعبة
 
-  function playGame(id) {
-  if (id === 'million') {
-    const avatar = savedAvatarColor ? '🐝' : '😎';
-    window.location.href = `games/million-game.html?name=${encodeURIComponent(currentUsername)}&avatar=${encodeURIComponent(avatar)}`;
-    return;
-  }
-  // ... باقي الكود
-}
+  const betInput = (min=1) => `
+    <input type="number" id="bet-amount" placeholder="الرهان..." min="${min}" max="${currentCoins}"
+           class="input-field" style="text-align:center;font-size:16px;margin:10px auto;width:60%;display:block">
+    <div style="font-size:11px;color:#aaa;margin-bottom:12px">رصيدك: <strong style="color:#ffd700">${currentCoins} 🪙</strong></div>`;
+
   const games = {
 
     coinflip: `
@@ -485,6 +616,7 @@ function playGame(id) {
   area.innerHTML = games[id] || '';
   area.scrollIntoView({ behavior:'smooth' });
 }
+
 
 // ===== منطق الألعاب =====
 function getBet() {
