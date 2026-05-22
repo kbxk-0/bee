@@ -4,7 +4,7 @@
 
 // ===== أداة: لون ثابت لكل مستخدم بناءً على اسمه =====
 let savedAvatarColor = ''; // يُحدَّث من auth.js عند التحميل
-let activeGame = null; // اللعبة المفتوحة حالياً في الرئيسية
+let activeGame = localStorage.getItem('activeGame') || null;
 
 function getAvatarColor(name) {
   // لو اللاعب الحالي وعنده لون محفوظ، استخدمه
@@ -167,22 +167,11 @@ function renderHome() {
 
   `;
 
-  // عرض اللعبة المختارة
+  // عرض اللعبة المختارة في أعلى الصفحة
   if (activeGame) {
     const game = GAMES_LIST.find(g => g.id === activeGame);
     if (game) {
-      const gameSection = document.createElement('div');
-      gameSection.id = 'active-game-section';
-      gameSection.style.cssText = 'margin-bottom:14px';
-      gameSection.innerHTML = buildGameCard(game);
-      // أضفها بعد بطاقة الملف الشخصي مباشرة
-      const profileCard = sec.querySelector('div[style*="border-radius:20px"]');
-      if (profileCard && profileCard.parentNode) {
-        profileCard.parentNode.insertBefore(gameSection, profileCard.nextSibling);
-      } else {
-        sec.insertAdjacentHTML('afterbegin', gameSection.outerHTML);
-      }
-      // تشغيل اللعبة إذا ليست خارجية
+      sec.insertAdjacentHTML('afterbegin', `<div id="active-game-section" style="margin-bottom:14px">${buildGameCard(game)}</div>`);
       if (!game.external) {
         setTimeout(() => playGame(activeGame), 50);
       }
@@ -218,8 +207,7 @@ function buildGameCard(game) {
       
       <!-- اسم اللعبة -->
       <div style="padding:20px 16px 14px;text-align:center;position:relative">
-        <button onclick="activeGame=null;renderHome()" 
-          style="position:absolute;top:12px;right:12px;background:rgba(255,255,255,0.08);border:none;border-radius:8px;color:#aaa;padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit">✕</button>
+
         <div style="font-size:3rem;margin-bottom:8px">${game.icon}</div>
         <div style="font-size:22px;font-weight:900;color:white;margin-bottom:4px">${game.name}</div>
         <div style="font-size:11px;color:#666">${game.desc}</div>
@@ -545,6 +533,7 @@ function renderGames() {
 
 function openGame(id) {
   activeGame = id;
+  localStorage.setItem('activeGame', id);
   showSection('home');
 }
 
