@@ -18,5 +18,8 @@
   "bugs": {
     "url": "https://github.com/kbxk-0/bee/issues"
   },
-  "homepage": "https://github.com/kbxk-0/bee#readme"
+  "homepage": "https://github.com/kbxk-0/bee#readme",
+  "dependencies": {
+    "ws": "^8.20.1"
+  }
 }
