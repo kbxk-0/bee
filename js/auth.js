@@ -97,6 +97,15 @@ auth.onAuthStateChanged((user) => {
   if (user) {
     if (overlay) overlay.style.display = 'none';
 
+    // ===== مستمع التحويلات الواردة =====
+    db.ref('transfers/' + user.uid).on('child_added', snap => {
+      const t = snap.val();
+      if (!t) return;
+      db.ref('users/' + user.uid + '/coins').transaction(c => (c || 0) + t.amount);
+      snap.ref.remove();
+      if (typeof showToastTransfer === 'function') showToastTransfer(t.from, t.amount);
+    });
+
     // اشترك في تغييرات بيانات المستخدم في real-time
     db.ref('users/' + user.uid).on('value', (snapshot) => {
       const val = snapshot.val() || {};

@@ -7,8 +7,25 @@ function triggerMarquee(text) {
   if (!el) return;
   el.innerText = text;
   el.style.animation = 'none';
-  el.offsetHeight; // Trigger reflow
+  el.offsetHeight;
   el.style.animation = 'moveMarquee 8s 2 linear';
+}
+
+// إشعار عند استلام تحويل كوينز
+function showToastTransfer(fromName, amount) {
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position:fixed;top:20px;left:50%;transform:translateX(-50%);
+    background:linear-gradient(135deg,#1c1500,#2a2000);
+    border:1px solid rgba(251,191,36,0.5);
+    color:#fbbf24;padding:10px 20px;border-radius:12px;
+    font-size:13px;font-weight:bold;z-index:99999;
+    box-shadow:0 4px 20px rgba(251,191,36,0.2);
+    animation:fadeInUp .3s ease;
+  `;
+  toast.textContent = `💰 استلمت ${amount} 🪙 من ${fromName}`;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
 }
 
 // ===== الشات العام =====
@@ -360,26 +377,23 @@ function transferCoinsFromMenu(targetUid, targetName) {
   if (!confirmTransfer) return;
 
   db.ref('users/' + user.uid).transaction(u => {
-    if (u) {
-      if (u.coins >= amount) {
-        u.coins -= amount;
-        return u;
-      } else {
-        return; 
-      }
-    }
+    if (u && u.coins >= amount) { u.coins -= amount; return u; }
     return u;
   }, (error, committed) => {
     if (committed) {
-      db.ref('users/' + targetUid + '/coins').set(firebase.database.ServerValue.increment(netAmount))
-        .then(() => {
-          alert(`تم تحويل 🪙 ${netAmount} إلى ${targetName} بنجاح بعد خصم الضريبة!`);
-          closePlayerMenu();
-        })
-        .catch(err => {
-          console.error("خطأ في الإيداع:", err);
-          alert("تم خصم الكوينز لكن فشل إيداعها، يرجى مراسلة الإدارة.");
-        });
+      // كتابة طلب التحويل — المستلم يطبقه على نفسه
+      db.ref('transfers/' + targetUid).push({
+        amount:    netAmount,
+        from:      currentUsername,
+        fromUid:   user.uid,
+        timestamp: Date.now()
+      }).then(() => {
+        alert(`تم تحويل 🪙 ${netAmount} إلى ${targetName} بنجاح! (بعد ضريبة ${tax} 🪙)`);
+        closePlayerMenu();
+      }).catch(err => {
+        console.error("خطأ في الإيداع:", err);
+        alert("تم خصم الكوينز لكن فشل إيداعها، يرجى مراسلة الإدارة.");
+      });
     } else {
       alert("فشل التحويل. تأكد من رصيدك الحالي.");
     }

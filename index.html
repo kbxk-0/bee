@@ -13,6 +13,35 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ══ NAVBAR ══ */
+    #navbar button[data-section].active {
+      color: #c8a940 !important;
+    }
+    #navbar button[data-section].active span:first-child {
+      filter: drop-shadow(0 0 6px rgba(200,169,64,0.8));
+    }
+    /* تأثير ضغط الزر الرئيسي */
+    #navbar button[data-section="home"]:active {
+      transform: scale(0.92);
+    }
+    /* إخفاء scrollbar */
+    * { scrollbar-width: none; }
+    *::-webkit-scrollbar { display: none; }
+    /* اللوجو */
+    .bee-logo {
+      font-family: 'Cairo', sans-serif;
+      font-weight: 900;
+      background: linear-gradient(135deg, #c8a940, #f0c040, #c8a940);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 3px;
+      font-size: 22px;
+      text-shadow: none;
+      filter: drop-shadow(0 0 12px rgba(200,169,64,0.4));
+    }
+  </style>
 </head>
 <body>
 
@@ -95,26 +124,55 @@
   </div>
 
   <!-- شريط التنقل -->
-  <nav id="navbar">
-  <button data-section="chat" onclick="showSection('chat')">
-    <span class="nav-icon">💬</span>الشات
-  </button>
-  <button data-section="games" onclick="showSection('games')">
-    <span class="nav-icon">🎮</span>الألعاب
-  </button>
-  <button data-section="home" onclick="showSection('home')">
-    <span class="nav-icon">🏠</span>
-  </button>
-  <button data-section="clan" onclick="showSection('clan')">
-    <span class="nav-icon">⚔️</span>الكلانات
-  </button>
-  <button data-section="store" onclick="showSection('store')">
-    <span class="nav-icon">🛒</span>المتجر
-  </button>
-  <button id="admin-sidebar-btn" data-section="admin-panel" onclick="showSection('admin-panel')" style="display:none">
-    <span class="nav-icon">⚙️</span>الإدارة
-  </button>
-</nav>
+  <nav id="navbar" style="position:fixed;bottom:0;left:0;right:0;z-index:100;
+    background:linear-gradient(to top,#0a0a14,#0d0d1e);
+    border-top:1px solid rgba(200,169,64,0.15);
+    display:flex;align-items:flex-end;justify-content:space-around;
+    padding:0 4px 10px;height:62px">
+
+    <button data-section="store" onclick="showSection('store')"
+      style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;
+      cursor:pointer;padding:8px 10px;color:#555;font-family:inherit;font-size:10px;font-weight:700;transition:color .2s">
+      <span style="font-size:20px">🛒</span>
+      المتجر
+    </button>
+
+    <button data-section="clan" onclick="showSection('clan')"
+      style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;
+      cursor:pointer;padding:8px 10px;color:#555;font-family:inherit;font-size:10px;font-weight:700;transition:color .2s">
+      <span style="font-size:20px">🛡️</span>
+      الأندية
+    </button>
+
+    <!-- زر الرئيسية المرفوع -->
+    <div style="position:relative;display:flex;flex-direction:column;align-items:center;margin-top:-20px">
+      <button data-section="home" onclick="showSection('home')"
+        style="width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#b8930a,#f0c040,#b8930a);
+        border:3px solid #0a0a14;box-shadow:0 0 20px rgba(200,169,64,0.5);
+        cursor:pointer;display:flex;align-items:center;justify-content:center;
+        font-size:28px;transition:all .2s">
+        👑
+      </button>
+      <span style="font-size:9px;font-weight:700;color:#c8a940;margin-top:2px">الرئيسية</span>
+    </div>
+
+    <button data-section="games" onclick="showSection('games')"
+      style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;
+      cursor:pointer;padding:8px 10px;color:#555;font-family:inherit;font-size:10px;font-weight:700;transition:color .2s">
+      <span style="font-size:20px">♠️</span>
+      الألعاب
+    </button>
+
+    <button data-section="chat" onclick="showSection('chat')"
+      style="position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;
+      cursor:pointer;padding:8px 10px;color:#555;font-family:inherit;font-size:10px;font-weight:700;transition:color .2s">
+      <span style="font-size:20px">💬</span>
+      الدردشة
+      <span id="chat-notif-badge" style="display:none;position:absolute;top:4px;right:6px;
+        background:#ef4444;color:white;font-size:9px;font-weight:900;
+        width:16px;height:16px;border-radius:50%;align-items:center;justify-content:center">0</span>
+    </button>
+  </nav>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
