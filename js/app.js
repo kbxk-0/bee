@@ -80,28 +80,40 @@ function renderHome() {
 
     <div style="padding: 10px 5px 25px; display: flex; flex-direction: column; gap: 20px; font-family:'Cairo', sans-serif;">
       
-      <div style="display:flex; justify-content:space-between; align-items:center; background:#161624; padding:10px 14px; border-radius:22px; border:1px solid rgba(255,255,255,0.06); box-shadow: 0 6px 20px rgba(0,0,0,0.3);">
-        
-        <div onclick="typeof showProfilePopup === 'function' ? showProfilePopup() : null" style="display:flex; align-items:center; gap:12px; cursor:pointer;">
-          <div style="width:48px; height:48px; border-radius:50%; background:${userColor}; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:900; color:white; border:2px solid #fbbf24; box-shadow:0 0 12px rgba(251,191,36,0.25);">
-            ${userName.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <div style="font-weight:900; font-size:15px; color:#fff; margin-bottom:3px; text-shadow:0 1px 2px rgba(0,0,0,0.5);">${userName}</div>
-            <div style="background:rgba(251,191,36,0.15); border:1px solid rgba(251,191,36,0.25); border-radius:8px; padding:2px 10px; display:inline-block;">
-              <span style="font-size:11px; color:#fbbf24; font-weight:900;">LVL ${userLevel} 🐝</span>
-            </div>
-          </div>
-        </div>
+      <!-- ===== بطاقة الملف الشخصي الجديدة ===== -->
+      <div style="background:rgba(14,11,4,0.82);border:1px solid rgba(200,169,64,0.22);border-radius:20px;padding:13px 14px;box-shadow:0 4px 20px rgba(0,0,0,0.4)">
+        <div style="display:flex;align-items:center;gap:12px">
 
-        <div style="display:flex; align-items:center; gap:10px;">
-          <div onclick="typeof showSection === 'function' ? showSection('store') : null" style="background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.08); padding:8px 14px; border-radius:14px; display:flex; align-items:center; gap:6px; cursor:pointer; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
-            <span style="font-size:14px; font-weight:900; color:#fbbf24;">${userCoins.toLocaleString('ar')}</span>
-            <span style="font-size:14px; filter:drop-shadow(0 2px 2px rgba(0,0,0,0.5));">🪙</span>
+          <!-- الصورة يسار -->
+          <div id="home-avatar-wrap" onclick="viewProfile('${auth.currentUser?.uid||''}')" style="cursor:pointer;flex-shrink:0;position:relative">
+            <div id="home-avatar" style="width:54px;height:54px;border-radius:50%;background:${userColor};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:white;border:2px solid rgba(200,169,64,0.5);box-shadow:0 0 14px rgba(200,169,64,0.25);overflow:hidden">
+              ${userName.charAt(0).toUpperCase()}
+            </div>
+            <div style="position:absolute;bottom:0;right:0;background:#c8a940;border-radius:50%;width:17px;height:17px;display:flex;align-items:center;justify-content:center;font-size:9px;border:2px solid #0c0a05">✏️</div>
           </div>
-          <div onclick="typeof showProfilePopup === 'function' ? showProfilePopup() : null" style="width:42px; height:42px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; font-size:20px; cursor:pointer; transition: background 0.2s;">
-            ⚙️
+
+          <!-- الاسم والمستوى وسط -->
+          <div style="flex:1;min-width:0">
+            <div style="font-size:15px;font-weight:900;color:#f0e8d0;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+              ${userName}
+              ${typeof isVIP !== 'undefined' && isVIP ? '<span style="background:linear-gradient(135deg,#c8a940,#f0c040);color:#1a0e00;font-size:9px;padding:1px 6px;border-radius:8px;font-weight:900;margin-right:4px">VIP ★</span>' : ''}
+            </div>
+            <!-- شريط XP -->
+            <div style="background:rgba(255,255,255,0.06);border-radius:10px;height:5px;overflow:hidden;margin-bottom:4px">
+              <div style="height:100%;width:${Math.min(100,Math.round(((typeof currentXP!=='undefined'?currentXP:0))/(userLevel*100)*100))}%;background:linear-gradient(90deg,#c8a940,#f0c040);border-radius:10px;box-shadow:0 0 6px rgba(200,169,64,0.5);transition:width .6s"></div>
+            </div>
+            <div style="font-size:10px;color:#c8a940;font-weight:700">⭐ المستوى ${userLevel}</div>
           </div>
+
+          <!-- الكوينز والسلسلة يمين -->
+          <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+            <div onclick="showSection('store')" style="background:rgba(200,169,64,0.12);border:1px solid rgba(200,169,64,0.3);padding:6px 12px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:background .2s" onmousedown="this.style.background='rgba(200,169,64,0.22)'" onmouseup="this.style.background='rgba(200,169,64,0.12)'">
+              <span style="font-size:14px;font-weight:900;color:#f0c040">${userCoins.toLocaleString('ar')}</span>
+              <span style="font-size:14px">🪙</span>
+            </div>
+            <div id="home-streak-badge" style="font-size:11px;color:#f0c040;font-weight:700;text-align:left">🔥 ...</div>
+          </div>
+
         </div>
       </div>
 
@@ -156,6 +168,35 @@ function renderHome() {
   if (typeof onHomeOpen === 'function') onHomeOpen();
   if (typeof loadHomeDynamic === 'function') loadHomeDynamic();
   if (typeof loadTournamentCards === 'function') loadTournamentCards();
+
+  // تحميل صورة المستخدم والسلسلة
+  const user = auth.currentUser;
+  if (user) {
+    db.ref('users/' + user.uid).once('value', snap => {
+      const u = snap.val() || {};
+
+      // الصورة الشخصية
+      if (u.photoURL) {
+        const av = document.getElementById('home-avatar');
+        if (av) {
+          av.innerHTML = '';
+          av.style.background = 'transparent';
+          const img = document.createElement('img');
+          img.src = u.photoURL;
+          img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%';
+          img.onerror = () => { av.textContent = userName.charAt(0).toUpperCase(); av.style.background = userColor; };
+          av.appendChild(img);
+        }
+      }
+
+      // السلسلة اليومية
+      const streak = u.dailyStreak || 0;
+      const badge = document.getElementById('home-streak-badge');
+      if (badge) {
+        badge.textContent = streak > 0 ? `🔥 ${streak} يوم` : '🔥 ابدأ سلسلتك';
+      }
+    });
+  }
 }
 
 function loadHomeDynamic() {
