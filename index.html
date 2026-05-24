@@ -14,60 +14,39 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    /* ══ NAVBAR ══ */
-    #navbar button[data-section].active {
-      color: #c8a940 !important;
-    }
-    #navbar button[data-section].active span:first-child {
-      filter: drop-shadow(0 0 6px rgba(200,169,64,0.8));
-    }
-    /* تأثير ضغط الزر الرئيسي */
-    #navbar button[data-section="home"]:active {
-      transform: scale(0.92);
-    }
-    /* إخفاء scrollbar */
+    #navbar button[data-section].active { color: #c8a940 !important; }
+    #navbar button[data-section].active > span:first-child { filter: drop-shadow(0 0 6px rgba(200,169,64,0.8)); }
+    #navbar button[data-section="home"]:active { transform: scale(0.93); }
     * { scrollbar-width: none; }
     *::-webkit-scrollbar { display: none; }
-    /* اللوجو */
-    .bee-logo {
-      font-family: 'Cairo', sans-serif;
-      font-weight: 900;
-      background: linear-gradient(135deg, #c8a940, #f0c040, #c8a940);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: 3px;
-      font-size: 22px;
-      text-shadow: none;
-      filter: drop-shadow(0 0 12px rgba(200,169,64,0.4));
-    }
   </style>
 </head>
 <body>
 
   <!-- شاشة التحميل -->
-<div id="splash-screen">
-  <div class="splash-logo">🐝</div>
-  <div class="splash-title">BEE</div>
-  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
-</div>
-
-<!-- شاشة الدخول -->
-<div id="auth-overlay" data-mode="login" style="display:none">
-  <div class="auth-logo">🐝</div>
-  <div class="auth-title">BEE</div>
-  <p class="auth-sub">منصة الألعاب الاجتماعية</p>
-  <div class="auth-card">
-    <input type="text" id="l-username" placeholder="اسم المستخدم..." class="auth-input" style="display:none">
-    <input type="email" id="l-email" placeholder="البريد الإلكتروني..." class="auth-input">
-    <input type="password" id="l-pass" placeholder="كلمة المرور..." class="auth-input" onkeydown="if(event.key==='Enter') doLogin()">
-    <button class="auth-btn" onclick="doLogin()">دخول اللعبة</button>
-    <span class="auth-switch" onclick="toggleAuthMode()">ليس لديك حساب؟ <span>أنشئ واحداً</span></span>
+  <div id="splash-screen">
+    <div class="splash-logo">🐝</div>
+    <div class="splash-title">BEE</div>
+    <div class="splash-bar"><div class="splash-bar-fill"></div></div>
   </div>
-</div>
+
+  <!-- شاشة الدخول -->
+  <div id="auth-overlay" data-mode="login" style="display:none">
+    <div class="auth-logo">🐝</div>
+    <div class="auth-title">BEE</div>
+    <p class="auth-sub">منصة الألعاب الاجتماعية</p>
+    <div class="auth-card">
+      <input type="text" id="l-username" placeholder="اسم المستخدم..." class="auth-input" style="display:none">
+      <input type="email" id="l-email" placeholder="البريد الإلكتروني..." class="auth-input">
+      <input type="password" id="l-pass" placeholder="كلمة المرور..." class="auth-input"
+             onkeydown="if(event.key==='Enter') doLogin()">
+      <button class="auth-btn" onclick="doLogin()">دخول اللعبة</button>
+      <span class="auth-switch" onclick="toggleAuthMode()">ليس لديك حساب؟ <span>أنشئ واحداً</span></span>
+    </div>
+  </div>
 
   <!-- زر التثبيت PWA -->
-  <button id="install-btn" style="display:none;position:fixed;top:12px;left:12px;z-index:999;background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-family:inherit;cursor:pointer;font-weight:bold;box-shadow:0 4px 14px rgba(124,58,237,0.4)">
+  <button id="install-btn" style="display:none;position:fixed;top:12px;left:12px;z-index:999;background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-family:inherit;cursor:pointer;font-weight:bold">
     📲 تثبيت
   </button>
 
@@ -82,7 +61,7 @@
       <div style="padding:10px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;background:var(--card)">
         <input type="text" id="chat-input" placeholder="اكتب رسالتك..." class="input-field" style="flex:1"
                onkeydown="if(event.key==='Enter') sendMessage()">
-        <button onclick="sendMessage()" style="width:42px;height:42px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;border:none;border-radius:10px;font-size:16px;cursor:pointer;box-shadow:0 4px 12px var(--accent-glow);flex-shrink:0">➤</button>
+        <button onclick="sendMessage()" style="width:42px;height:42px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;border:none;border-radius:10px;font-size:16px;cursor:pointer;flex-shrink:0">➤</button>
       </div>
     </div>
   </section>
@@ -124,54 +103,36 @@
   </div>
 
   <!-- شريط التنقل -->
-  <nav id="navbar" style="position:fixed;bottom:0;left:0;right:0;z-index:100;
-    background:linear-gradient(to top,#0a0a14,#0d0d1e);
-    border-top:1px solid rgba(200,169,64,0.15);
-    display:flex;align-items:flex-end;justify-content:space-around;
-    padding:0 4px 10px;height:62px">
-
-    <button data-section="store" onclick="showSection('store')"
-      style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;
-      cursor:pointer;padding:8px 10px;color:#555;font-family:inherit;font-size:10px;font-weight:700;transition:color .2s">
-      <span style="font-size:20px">🛒</span>
-      المتجر
-    </button>
-
-    <button data-section="clan" onclick="showSection('clan')"
-      style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;
-      cursor:pointer;padding:8px 10px;color:#555;font-family:inherit;font-size:10px;font-weight:700;transition:color .2s">
-      <span style="font-size:20px">🛡️</span>
-      الأندية
-    </button>
-
-    <!-- زر الرئيسية المرفوع -->
-    <div style="position:relative;display:flex;flex-direction:column;align-items:center;margin-top:-20px">
-      <button data-section="home" onclick="showSection('home')"
-        style="width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#b8930a,#f0c040,#b8930a);
-        border:3px solid #0a0a14;box-shadow:0 0 20px rgba(200,169,64,0.5);
-        cursor:pointer;display:flex;align-items:center;justify-content:center;
-        font-size:28px;transition:all .2s">
-        👑
-      </button>
-      <span style="font-size:9px;font-weight:700;color:#c8a940;margin-top:2px">الرئيسية</span>
-    </div>
-
-    <button data-section="games" onclick="showSection('games')"
-      style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;
-      cursor:pointer;padding:8px 10px;color:#555;font-family:inherit;font-size:10px;font-weight:700;transition:color .2s">
-      <span style="font-size:20px">♠️</span>
-      الألعاب
-    </button>
+  <nav id="navbar" style="position:fixed;bottom:0;left:0;right:0;z-index:100;background:linear-gradient(to top,#0a0a14,#0d0d1e);border-top:1px solid rgba(200,169,64,0.15);display:flex;align-items:flex-end;justify-content:space-around;padding:0 4px 10px;height:65px;direction:ltr">
 
     <button data-section="chat" onclick="showSection('chat')"
-      style="position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;
-      cursor:pointer;padding:8px 10px;color:#555;font-family:inherit;font-size:10px;font-weight:700;transition:color .2s">
-      <span style="font-size:20px">💬</span>
-      الدردشة
-      <span id="chat-notif-badge" style="display:none;position:absolute;top:4px;right:6px;
-        background:#ef4444;color:white;font-size:9px;font-weight:900;
-        width:16px;height:16px;border-radius:50%;align-items:center;justify-content:center">0</span>
+      style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:8px 6px;color:#555;font-family:inherit;font-size:10px;font-weight:700;min-width:52px">
+      <span style="font-size:22px">💬</span><span>الدردشة</span>
     </button>
+
+    <button data-section="games" onclick="showSection('games');renderGames()"
+      style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:8px 6px;color:#555;font-family:inherit;font-size:10px;font-weight:700;min-width:52px">
+      <span style="font-size:22px">♠️</span><span>الألعاب</span>
+    </button>
+
+    <div style="display:flex;flex-direction:column;align-items:center;margin-top:-22px;min-width:62px">
+      <button data-section="home" onclick="showSection('home')"
+        style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#8a6200,#f0c040,#8a6200);border:3px solid #0a0a14;box-shadow:0 -4px 20px rgba(200,169,64,0.5),0 0 0 2px rgba(200,169,64,0.3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:26px">
+        👑
+      </button>
+      <span style="font-size:9px;font-weight:700;color:#c8a940;margin-top:3px">الرئيسية</span>
+    </div>
+
+    <button data-section="clan" onclick="showSection('clan')"
+      style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:8px 6px;color:#555;font-family:inherit;font-size:10px;font-weight:700;min-width:52px">
+      <span style="font-size:22px">🛡️</span><span>الأندية</span>
+    </button>
+
+    <button data-section="store" onclick="showSection('store')"
+      style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:8px 6px;color:#555;font-family:inherit;font-size:10px;font-weight:700;min-width:52px">
+      <span style="font-size:22px">🛒</span><span>المتجر</span>
+    </button>
+
   </nav>
 
   <!-- Firebase -->
@@ -185,16 +146,13 @@
   <script src="js/auth.js"></script>
 
   <script>
-    // شاشة التحميل
     window.addEventListener('load', () => {
       setTimeout(() => {
         const s = document.getElementById('splash-screen');
-        if (s) s.classList.add('hidden');
-        setTimeout(() => { if(s) s.remove(); }, 500);
+        if (s) { s.classList.add('hidden'); setTimeout(() => s.remove(), 500); }
       }, 1800);
     });
 
-    // PWA
     let pwaPrompt = null;
     window.addEventListener('beforeinstallprompt', e => {
       e.preventDefault(); pwaPrompt = e;
@@ -212,13 +170,6 @@
       navigator.serviceWorker.register('/service-worker.js').catch(() => {});
     }
   </script>
-  <script>
-  window.addEventListener('load', () => {
-    setTimeout(() => {
-      const s = document.getElementById('splash-screen');
-      if (s) { s.classList.add('hidden'); setTimeout(() => s.remove(), 500); }
-    }, 1800);
-  });
-</script>
+
 </body>
 </html>

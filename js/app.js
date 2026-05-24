@@ -25,185 +25,137 @@ function avatarHTML(name, size = 36) {
 function renderHome() {
   const sec = document.getElementById('home');
   if (!sec) return;
-  const user = auth.currentUser;
-  if (!user) return;
+  
+  // عشان نتفادى أي خطأ لو بيانات اللاعب لسه ما حملت
+  const userName = typeof currentUsername !== 'undefined' ? currentUsername : "زائر";
+  const userLevel = typeof currentLevel !== 'undefined' ? currentLevel : 1;
+  const userCoins = typeof currentCoins !== 'undefined' ? currentCoins : 0;
+  const userColor = typeof getAvatarColor === 'function' ? getAvatarColor(userName) : '#fbbf24';
 
-  const game = activeGame ? GAMES_LIST.find(g => g.id === activeGame) : null;
-  const hexBg = "background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='64'%3E%3Cpath d='M28 0 L56 16 L56 48 L28 64 L0 48 L0 16Z' fill='none' stroke='rgba(200,169,64,0.08)' stroke-width='1'/%3E%3C/svg%3E\");background-size:56px 64px";
-
-  const hexBadges = [...Array(6)].map((_,i) => {
-    const fill = i < Math.min(currentLevel,2) ? '%23c8a940' : i < Math.min(currentLevel,4) ? '%238a8a8a' : '%232a2a3a';
-    return `<svg width="18" height="20" viewBox="0 0 18 20"><path d="M9 1 L17 5.5 L17 14.5 L9 19 L1 14.5 L1 5.5Z" fill="${fill}" stroke="rgba(0,0,0,0.3)" stroke-width="0.5"/></svg>`;
-  }).join('');
-
-  const tournColors = ['#1e3a8a','#92400e','#7f1d1d','#4c1d95'];
-  const tournCards = tournColors.map(color => `
-    <div onclick="showTournamentsPopup('${game?.id||'coinflip'}')"
-      style="flex-shrink:0;width:108px;cursor:pointer;position:relative;height:124px">
-      <svg viewBox="0 0 108 124" style="position:absolute;top:0;left:0;width:100%;height:100%">
-        <path d="M54 3 L105 29 L105 95 L54 121 L3 95 L3 29Z"
-          fill="${color}" stroke="rgba(200,169,64,0.4)" stroke-width="2"/>
-      </svg>
-      <div style="position:relative;z-index:1;padding:18px 8px 12px;text-align:center">
-        <div style="font-size:24px;margin-bottom:4px">🃏</div>
-        <div style="font-size:9px;font-weight:800;color:white;line-height:1.3">Bee-Spades Open</div>
-        <div style="font-size:9px;color:#fbbf24;margin-top:4px;font-weight:700">10,000 🌼</div>
-        <div style="width:18px;height:18px;border-radius:50%;background:rgba(200,169,64,0.2);
-          border:1px solid rgba(200,169,64,0.4);margin:5px auto 0;
-          display:flex;align-items:center;justify-content:center;font-size:10px">🪙</div>
-      </div>
-    </div>`).join('');
+  const game = typeof activeGame !== 'undefined' && activeGame && typeof GAMES_LIST !== 'undefined' 
+               ? GAMES_LIST.find(g => g.id === activeGame) 
+               : null;
 
   const playOnclick = game
     ? (game.external
-        ? `window.location.href='games/million-game.html?name='+encodeURIComponent(currentUsername)+'&avatar='+encodeURIComponent(savedAvatarColor||'😎')`
-        : `showFriendlyGamePopup('${game.id}')`)
-    : `showSection('games');renderGames()`;
+        ? `window.location.href='games/million-game.html?name='+encodeURIComponent('${userName}')+'&avatar='+encodeURIComponent(savedAvatarColor||'😎')`
+        : `typeof showFriendlyGamePopup === 'function' ? showFriendlyGamePopup('${game.id}') : null`)
+    : `typeof showSection === 'function' ? (showSection('games'), renderGames()) : null`;
 
   sec.innerHTML = `
     <style>
+      /* تأثير النبض الاحترافي للزر الأخضر */
       @keyframes pulse-green {
-        0%,100%{box-shadow:0 0 0 8px rgba(46,213,115,0.12),0 0 0 16px rgba(46,213,115,0.06),0 0 40px rgba(46,213,115,0.35)}
-        50%{box-shadow:0 0 0 14px rgba(46,213,115,0.18),0 0 0 28px rgba(46,213,115,0.08),0 0 60px rgba(46,213,115,0.5)}
+        0% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0.5); }
+        70% { box-shadow: 0 0 0 25px rgba(46, 213, 115, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0); }
       }
-      .pbtn{animation:pulse-green 2s ease-in-out infinite;border-radius:50%}
+      .play-btn-glow {
+        animation: pulse-green 2.5s infinite cubic-bezier(0.66, 0, 0, 1);
+      }
+      /* ستايل الأزرار الجانبية المظلمة */
+      .side-btn {
+        background: linear-gradient(180deg, #1e1e2f, #11111e);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 20px;
+        color: #94a3b8;
+        font-family: 'Cairo', sans-serif;
+        font-weight: 800;
+        font-size: 13px;
+        cursor: pointer;
+        width: 85px;
+        height: 105px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+        transition: transform 0.1s ease, border-color 0.2s;
+      }
+      .side-btn:active { transform: scale(0.95); }
+      .side-btn i { font-size: 26px; font-style: normal; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+      .side-btn:hover { border-color: rgba(255, 255, 255, 0.2); color: white; }
     </style>
 
-    <!-- ══ TOP BAR ══ -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div style="font-size:20px;font-weight:900;color:#c8a940;letter-spacing:2px;text-shadow:0 0 18px rgba(200,169,64,0.5)">🐝 BEE 🐝</div>
-      <div style="display:flex;gap:8px">
-        <div onclick="showNotifications?.()" style="position:relative;width:38px;height:38px;border-radius:12px;
-          background:rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:center;
-          font-size:18px;cursor:pointer">🔔
-          <div style="position:absolute;top:5px;right:5px;width:8px;height:8px;background:#ef4444;border-radius:50%"></div>
-        </div>
-        <div onclick="showProfilePopup()" style="width:38px;height:38px;border-radius:12px;
-          background:rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:center;
-          font-size:18px;cursor:pointer">⚙️</div>
-      </div>
-    </div>
-
-    <!-- ══ USER CARD ══ -->
-    <div onclick="showProfilePopup()" style="background:linear-gradient(135deg,#1a1a2e,#22223a);
-      border:1px solid rgba(200,169,64,0.2);border-radius:18px;padding:12px 14px;
-      margin-bottom:14px;cursor:pointer;display:flex;align-items:center;gap:12px">
-      <div style="width:52px;height:52px;border-radius:50%;flex-shrink:0;
-        border:2.5px solid rgba(200,169,64,0.5);box-shadow:0 0 14px rgba(200,169,64,0.2);
-        background:${getAvatarColor(currentUsername)};
-        display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:white">
-        ${currentUsername.charAt(0).toUpperCase()}
-      </div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:14px;font-weight:900;color:white;margin-bottom:6px">
-          ${escapeHTML(currentUsername)}
-          <span style="font-size:11px;color:#c8a940"> (LVL ${currentLevel}) 🐝</span>
-        </div>
-        <!-- شريط XP -->
-        <div style="background:rgba(255,255,255,0.08);border-radius:6px;height:6px;overflow:hidden;margin-bottom:3px">
-          <div style="height:100%;width:${Math.min(100,Math.round((typeof currentXP!=='undefined'?currentXP:0)/(currentLevel*100)*100))}%;
-            background:linear-gradient(90deg,#c8a940,#f0c040);border-radius:6px;transition:width .5s"></div>
-        </div>
-        <div style="font-size:9px;color:rgba(200,169,64,0.5)">${typeof currentXP!=='undefined'?currentXP:0} / ${currentLevel*100} XP</div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-        <!-- كوينز -->
-        <div style="display:flex;align-items:center;gap:5px">
-          <span style="font-size:13px;font-weight:800;color:#fbbf24">${currentCoins.toLocaleString('ar')}</span>
-          <div onclick="event.stopPropagation()" style="width:26px;height:26px;border-radius:8px;
-            background:rgba(200,169,64,0.15);border:1px solid rgba(200,169,64,0.3);
-            display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer"
-            onclick="showSection('store')">+</div>
-        </div>
-        <!-- الأيام المتبقية -->
-        <div style="display:flex;align-items:center;gap:5px">
-          <span style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.6)">
-            ${typeof currentDailyStreak!=='undefined'&&currentDailyStreak>0 ? currentDailyStreak+' 🔥' : 'يوم 1'}
-          </span>
-          <div style="width:26px;height:26px;border-radius:8px;background:rgba(255,100,50,0.1);
-            border:1px solid rgba(255,100,50,0.2);display:flex;align-items:center;justify-content:center;font-size:13px">📅</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══ BANNER (ديناميكي) ══ -->
-    <div id="home-banner-wrap" style="margin-bottom:16px">
-      <div style="background:linear-gradient(135deg,#1a1200,#2a1e00);${hexBg};
-        border:1px solid rgba(200,169,64,0.3);border-radius:18px;
-        padding:18px 16px;min-height:110px;
-        display:flex;align-items:center;position:relative;overflow:hidden">
-        <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(26,18,0,0.95) 45%,transparent);z-index:1"></div>
-        <div style="flex:1;z-index:2;position:relative" id="banner-text-area">
-          <div style="font-size:26px;font-weight:900;color:#fbbf24;line-height:1.2;text-shadow:0 2px 10px rgba(0,0,0,0.6)" id="banner-title">🐝 مرحباً بك في BEE</div>
-          <div style="font-size:14px;color:rgba(255,255,255,0.65);margin-top:5px" id="banner-sub">منصة الألعاب الاجتماعية</div>
-        </div>
-        <div style="position:absolute;left:12px;top:50%;transform:translateY(-50%);z-index:2;font-size:40px" id="banner-icon">🐝</div>
-      </div>
-      <div style="display:flex;justify-content:center;gap:6px;margin-top:8px">
-        <div style="width:8px;height:8px;border-radius:4px;background:rgba(255,255,255,0.25)"></div>
-        <div style="width:20px;height:8px;border-radius:4px;background:#c8a940"></div>
-        <div style="width:8px;height:8px;border-radius:4px;background:rgba(255,255,255,0.25)"></div>
-      </div>
-    </div>
-
-    <!-- ══ GAME ZONE ══ -->
-    <div style="background:linear-gradient(160deg,#1a1200,#201800);${hexBg};
-      border:1px solid rgba(200,169,64,0.2);border-radius:22px;
-      padding:24px 14px;margin-bottom:14px;position:relative;overflow:hidden">
-      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-        width:220px;height:220px;border-radius:50%;
-        background:radial-gradient(circle,rgba(46,213,115,0.1) 0%,transparent 70%);pointer-events:none"></div>
-
-      <div style="display:flex;align-items:center;justify-content:space-around;position:relative;z-index:2">
-        <!-- لعبة ودية -->
-        <button onclick="${game ? `showFriendlyGamePopup('${game.id}')` : `showSection('games');renderGames()`}"
-          style="background:rgba(20,20,40,0.9);border:1px solid rgba(255,255,255,0.1);
-          border-radius:16px;padding:16px 12px;color:white;font-family:inherit;
-          font-weight:800;font-size:13px;cursor:pointer;min-width:80px;text-align:center;line-height:1.5">
-          لعبة<br>ودية
-        </button>
-
-        <!-- زر اللعب الرئيسي -->
-        <div onclick="${playOnclick}" class="pbtn" style="width:156px;height:156px;cursor:pointer;flex-shrink:0;
-          background:radial-gradient(circle at 35% 35%,#4ade80,#16a34a 55%,#14532d);
-          display:flex;flex-direction:column;align-items:center;justify-content:center;
-          border:3px solid rgba(74,222,128,0.5)">
-          <div style="font-size:19px;font-weight:900;color:white;text-shadow:0 2px 8px rgba(0,0,0,0.5)">لعب الآن</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.8);margin-top:4px">${game ? game.name : 'اختر لعبة 🎮'}</div>
+    <div style="padding: 10px 5px 25px; display: flex; flex-direction: column; gap: 20px; font-family:'Cairo', sans-serif;">
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; background:#161624; padding:10px 14px; border-radius:22px; border:1px solid rgba(255,255,255,0.06); box-shadow: 0 6px 20px rgba(0,0,0,0.3);">
+        
+        <div onclick="typeof showProfilePopup === 'function' ? showProfilePopup() : null" style="display:flex; align-items:center; gap:12px; cursor:pointer;">
+          <div style="width:48px; height:48px; border-radius:50%; background:${userColor}; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:900; color:white; border:2px solid #fbbf24; box-shadow:0 0 12px rgba(251,191,36,0.25);">
+            ${userName.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <div style="font-weight:900; font-size:15px; color:#fff; margin-bottom:3px; text-shadow:0 1px 2px rgba(0,0,0,0.5);">${userName}</div>
+            <div style="background:rgba(251,191,36,0.15); border:1px solid rgba(251,191,36,0.25); border-radius:8px; padding:2px 10px; display:inline-block;">
+              <span style="font-size:11px; color:#fbbf24; font-weight:900;">LVL ${userLevel} 🐝</span>
+            </div>
+          </div>
         </div>
 
-        <!-- قائمة الجلسات -->
-        <button onclick="${game ? `showTournamentsPopup('${game.id}')` : `showSection('games');renderGames()`}"
-          style="background:rgba(20,20,40,0.9);border:1px solid rgba(255,255,255,0.1);
-          border-radius:16px;padding:16px 12px;color:white;font-family:inherit;
-          font-weight:800;font-size:13px;cursor:pointer;min-width:80px;text-align:center;line-height:1.5">
-          قائمة<br>الجلسات
-        </button>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div onclick="typeof showSection === 'function' ? showSection('store') : null" style="background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.08); padding:8px 14px; border-radius:14px; display:flex; align-items:center; gap:6px; cursor:pointer; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
+            <span style="font-size:14px; font-weight:900; color:#fbbf24;">${userCoins.toLocaleString('ar')}</span>
+            <span style="font-size:14px; filter:drop-shadow(0 2px 2px rgba(0,0,0,0.5));">🪙</span>
+          </div>
+          <div onclick="typeof showProfilePopup === 'function' ? showProfilePopup() : null" style="width:42px; height:42px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; font-size:20px; cursor:pointer; transition: background 0.2s;">
+            ⚙️
+          </div>
+        </div>
       </div>
-    </div>
 
-    <!-- ══ TOURNAMENT HEX CARDS ══ -->
-    <div id="tourn-hex-container" style="display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;scrollbar-width:none;margin-bottom:14px">
-      <div style="color:rgba(255,255,255,0.3);font-size:12px;padding:20px;text-align:center;width:100%">⏳ جاري التحميل...</div>
-    </div>
+      <div style="position:relative; margin: 15px 0; display:flex; align-items:center; justify-content:center; gap:18px;">
+        
+        <div class="side-btn" onclick="${game ? `typeof showTournamentsPopup === 'function' ? showTournamentsPopup('${game.id}') : null` : `typeof showSection === 'function' ? (showSection('games'), renderGames()) : null`}">
+          <i>📋</i>
+          <span style="text-align:center; line-height:1.4;">قائمة<br>الجلسات</span>
+        </div>
 
-    <!-- ══ CHALLENGE BANNER ══ -->
-    <div id="home-challenge-banner" onclick="showChallengeDetails()"
-      style="background:linear-gradient(135deg,#2a1e00,#3d2a00);
-      border:1px solid rgba(200,169,64,0.35);border-radius:16px;
-      padding:15px 20px;cursor:pointer;text-align:center;
-      box-shadow:0 4px 20px rgba(200,169,64,0.15)">
-      <div style="font-size:15px;font-weight:900;color:#fbbf24;margin-bottom:4px" id="challenge-title">⏳ جاري تحميل التحدي...</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.45)" id="challenge-sub"></div>
+        <div onclick="${playOnclick}" class="play-btn-glow" style="width:155px; height:155px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #4ade80, #16a34a 60%, #14532d); border:4px solid #064e3b; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; position:relative; z-index:5;">
+          <div style="font-size:42px; margin-bottom:2px; filter:drop-shadow(0 4px 6px rgba(0,0,0,0.4));">🎲</div>
+          <div style="font-size:22px; font-weight:900; color:white; text-shadow:0 3px 6px rgba(0,0,0,0.6);">لعب الآن</div>
+          <div style="font-size:12px; color:#d1fae5; margin-top:4px; font-weight:bold; background:rgba(0,0,0,0.2); padding:2px 8px; border-radius:10px;">
+            ${game ? game.name : 'اختر لعبة 🕹️'}
+          </div>
+        </div>
+
+        <div class="side-btn" onclick="${game ? `typeof showFriendlyGamePopup === 'function' ? showFriendlyGamePopup('${game.id}') : null` : `typeof showSection === 'function' ? (showSection('games'), renderGames()) : null`}">
+          <i>🤝</i>
+          <span style="text-align:center; line-height:1.4;">لعبة<br>ودية</span>
+        </div>
+
+      </div>
+
+      <div style="margin-top:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 8px;">
+          <div style="font-size:15px; font-weight:900; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.5);">🏆 بطولات وجلسات نشطة</div>
+          <div style="font-size:11px; color:#fbbf24; font-weight:bold; cursor:pointer;">عرض الكل ❯</div>
+        </div>
+        <div id="tourn-hex-container" style="display:flex; gap:12px; overflow-x:auto; padding-bottom:15px; scrollbar-width:none;">
+          <div style="color:rgba(255,255,255,0.3); font-size:12px; padding:20px; text-align:center; width:100%;">⏳ جاري تحميل البطولات...</div>
+        </div>
+      </div>
+
+      <div id="home-challenge-banner" onclick="typeof showChallengeDetails === 'function' ? showChallengeDetails() : null" style="background:linear-gradient(135deg, #1e293b, #0f172a); border:1px solid rgba(251,191,36,0.4); border-radius:20px; padding:18px 22px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; box-shadow:0 8px 25px rgba(0,0,0,0.4); position:relative; overflow:hidden;">
+        
+        <div style="position:absolute; top:-20px; right:-20px; width:80px; height:80px; background:radial-gradient(circle, rgba(251,191,36,0.15) 0%, transparent 70%);"></div>
+
+        <div style="position:relative; z-index:2;">
+          <div style="font-size:17px; font-weight:900; color:#fbbf24; margin-bottom:6px; text-shadow:0 2px 5px rgba(0,0,0,0.5);" id="challenge-title">🎯 تحديات اليوم</div>
+          <div style="font-size:12px; color:#cbd5e1;" id="challenge-sub">أكمل المهام واربح كوينز مجانية 🪙</div>
+        </div>
+        <div style="font-size:38px; filter:drop-shadow(0 4px 8px rgba(0,0,0,0.4)); position:relative; z-index:2;">🎁</div>
+      </div>
+
     </div>
   `;
 
+  // استدعاء الدوال الخاصة فيك بعد تحميل الـ HTML لتشغيل الخلفيات والبطولات
   if (typeof listenToPrivateMessages === 'function') listenToPrivateMessages();
   if (typeof onHomeOpen === 'function') onHomeOpen();
-
-  // تحميل البانر والتحدي من Firebase
-  loadHomeDynamic();
-  loadTournamentCards();
+  if (typeof loadHomeDynamic === 'function') loadHomeDynamic();
+  if (typeof loadTournamentCards === 'function') loadTournamentCards();
 }
 
 function loadHomeDynamic() {
@@ -744,38 +696,62 @@ function renderGames() {
   const sec = document.getElementById('games');
   if (!sec) return;
 
-  // عدد المتصلين أونلاين
+  // جلب عدد المتصلين أونلاين من الفايربيس لمنصة Bee
   db.ref('online').once('value', snap => {
     const onlineEl = document.getElementById('online-count');
     if (onlineEl) onlineEl.textContent = snap.numChildren() + ' متصل الآن';
   });
 
   sec.innerHTML = `
-    <div style="color:white">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <h2 style="margin:0;font-size:17px">🎮 صالة الألعاب</h2>
-        <span id="online-count" style="font-size:11px;color:#2ed573;background:#0a2a0a;padding:3px 10px;border-radius:20px;border:1px solid #2ed573">...</span>
+    <div style="color:white; font-family:'Cairo', sans-serif; padding: 5px 4px 20px;">
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; background:#161624; padding:12px 16px; border-radius:14px; border:1px solid rgba(255,255,255,0.06);">
+        <div>
+          <h2 style="margin:0; font-size:15px; font-weight:900; color:#fbbf24;">🎮 صالة الألعاب</h2>
+          <p style="margin:2px 0 0; font-size:10px; color:#6b7280;">اختر الطاولة المفضلة وابدأ اللعب</p>
+        </div>
+        <span id="online-count" style="font-size:11px; font-weight:bold; color:#2ed573; background:rgba(46,213,115,0.08); padding:4px 10px; border-radius:20px; border:1px solid rgba(46,213,115,0.25);">
+          ... متصل الآن
+        </span>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-        ${GAMES_LIST.map(g => `
-          <div onclick="openGame('${g.id}')"
-               style="background:#1a1a28;border-radius:12px;border:1px solid ${g.color};padding:16px;text-align:center;cursor:pointer;transition:transform .15s"
-               onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform=''">
-            <div style="font-size:32px;margin-bottom:6px">${g.icon}</div>
-            <div style="font-weight:bold;font-size:13px;color:${g.color}">${g.name}</div>
-            <div style="font-size:10px;color:#666;margin-top:3px">${g.desc}</div>
-          </div>`).join('')}
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+        ${GAMES_LIST.map(g => {
+          const gameColor = g.color || '#fbbf24';
+          return `
+          <div onclick="openGame('${g.id}')" style="position: relative; width: 100%; height: 160px; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+
+            <div style="position: absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(135deg, ${gameColor}44, #11111e); z-index:1; display:flex; justify-content:center; align-items:center; padding-bottom:30px; font-size:60px; opacity: 0.7;">
+              ${g.icon}
+            </div>
+
+            <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 75%; background: linear-gradient(to top, rgba(0,0,0,0.95), transparent); z-index: 2;"></div>
+
+            <div style="position: absolute; bottom: 12px; left: 12px; right: 12px; z-index: 3; display: flex; justify-content: space-between; align-items: flex-end;">
+              <div style="text-align: right;">
+                <div style="color: white; font-weight: 900; font-size: 14px;">${g.name}</div>
+                <div style="color: #94a3b8; font-size: 10px;">${g.desc}</div>
+              </div>
+              
+              <div style="background: ${gameColor}; color: #000; padding: 5px 14px; border-radius: 10px; font-size: 11px; font-weight: 900; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">
+                لعب
+              </div>
+            </div>
+
+          </div>`;
+        }).join('')}
       </div>
+
       <div id="game-area"></div>
     </div>`;
 
-  // تحديث عداد الأونلاين
+  // تحديث العداد
   db.ref('online').once('value', snap => {
     const el = document.getElementById('online-count');
     if (el) el.textContent = snap.numChildren() + ' متصل الآن';
   });
 
-  // استعادة آخر لعبة
+  // استعادة آخر لعبة نشطة
   const lastGame = localStorage.getItem('lastGame');
   if (lastGame && lastGame !== 'million') {
     setTimeout(() => playGame(lastGame), 100);
@@ -1500,5 +1476,134 @@ function adminModifyClanName() {
   db.ref('users').once('value', snap => {
     snap.forEach(child => { if(child.val().clan===old) db.ref('users/'+child.key+'/clan').set(nw); });
     alert("تم تعديل الكلان لكل الأعضاء!");
+  });
+}
+
+// ============================================================
+//  دوال ناقصة — مضافة
+// ============================================================
+
+// ===== إرسال هدية =====
+function sendGift(targetUid, targetName, giftId) {
+  const gifts = {
+    'gift_honey': { name:'عسل ملكي',    emoji:'🍯', cost:20  },
+    'gift_bee':   { name:'نحلة ذهبية',  emoji:'🐝', cost:50  },
+    'gift_crown': { name:'تاج النخبة',  emoji:'👑', cost:200 }
+  };
+  const gift = gifts[giftId];
+  if (!gift) return;
+  const user = auth.currentUser;
+  if (!user) return;
+  if (currentCoins < gift.cost) { alert("لا تملك كوينز كافية! تحتاج " + gift.cost + " 🪙"); return; }
+
+  db.ref('users/'+user.uid).transaction(u => {
+    if (u && u.coins >= gift.cost) { u.coins -= gift.cost; return u; }
+    return u;
+  }, (err, committed) => {
+    if (!committed) { alert("فشل إرسال الهدية. تحقق من رصيدك."); return; }
+
+    // إشعار للمستلم
+    db.ref('transfers/'+targetUid).push({
+      amount: 0, from: currentUsername, type: 'gift',
+      giftName: gift.name, giftEmoji: gift.emoji, timestamp: Date.now()
+    });
+
+    // إعلان في الشات
+    db.ref('global_chat').push({
+      uid: user.uid, sender: '🎁 النظام',
+      text: `${gift.emoji} ${currentUsername} أهدى ${gift.name} إلى ${targetName}!`,
+      isSystem: true,
+      timestamp: firebase.database.ServerValue.TIMESTAMP
+    });
+
+    alert(`تم إرسال ${gift.emoji} ${gift.name} إلى ${targetName}!`);
+  });
+}
+
+// ===== نافذة اللعبة الودية =====
+function showFriendlyGamePopup(gameId) {
+  const game = GAMES_LIST?.find(g => g.id === gameId);
+  if (!game) { showSection('games'); if(typeof renderGames==='function') renderGames(); return; }
+  if (game.external) {
+    window.location.href = `games/million-game.html?name=${encodeURIComponent(currentUsername)}&avatar=${encodeURIComponent(savedAvatarColor||'😎')}`;
+    return;
+  }
+  showSection('games');
+  if (typeof renderGames === 'function') renderGames();
+  setTimeout(() => { if (typeof playGame === 'function') playGame(gameId); }, 300);
+}
+
+// ===== نافذة البطولات =====
+function showTournamentsPopup(gameId) {
+  const modal   = document.getElementById('profile-modal');
+  const content = document.getElementById('profile-content');
+  if (!modal || !content) return;
+  modal.style.display = 'flex';
+  content.innerHTML = `
+    <div style="text-align:center">
+      <div style="font-size:40px;margin-bottom:8px">🏆</div>
+      <h3 style="margin:0 0 8px;color:#fbbf24">البطولات</h3>
+      <p style="font-size:12px;color:#888;margin-bottom:16px">البطولات الرسمية قريباً!</p>
+      <div style="background:rgba(200,169,64,0.08);border:1px solid rgba(200,169,64,0.3);border-radius:12px;padding:14px;margin-bottom:10px;text-align:right">
+        <div style="font-size:13px;font-weight:800;color:#fbbf24">🥇 بطولة التاج الذهبي</div>
+        <div style="font-size:11px;color:#888;margin-top:3px">بداية وبو بالاثنين 08:30 مساء</div>
+        <div style="font-size:12px;color:#2ed573;margin-top:6px;font-weight:700">الجائزة: 10,000 🪙</div>
+      </div>
+      <button onclick="showSection('games');renderGames();document.getElementById('profile-modal').style.display='none'"
+        style="width:100%;padding:10px;background:linear-gradient(135deg,#c8a940,#f0c040);color:#1a0800;border:none;border-radius:10px;font-weight:900;font-size:13px;cursor:pointer;font-family:inherit">
+        اذهب للألعاب ↗
+      </button>
+    </div>`;
+}
+
+// ===== عرض الملف الشخصي (مع دعم الصورة وتعديل ملفك أنت) =====
+function viewProfile(uid) {
+  const modal   = document.getElementById('profile-modal');
+  const content = document.getElementById('profile-content');
+  if (!modal || !content) return;
+  modal.style.display = 'flex';
+  content.innerHTML = '<div style="color:#888;text-align:center;padding:20px">جاري التحميل...</div>';
+
+  db.ref('users/'+uid).once('value', snap => {
+    const u = snap.val();
+    if (!u) { content.innerHTML = 'المستخدم غير موجود'; return; }
+
+    const isMe = auth.currentUser && auth.currentUser.uid === uid;
+    const avatarSrc = u.photoURL
+      ? `<img src="${u.photoURL}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid rgba(200,169,64,0.5)">`
+      : `<div style="width:64px;height:64px;border-radius:50%;background:${getAvatarColor(u.username||'؟')};display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;color:white;border:2px solid rgba(200,169,64,0.5)">${(u.username||'؟').charAt(0).toUpperCase()}</div>`;
+
+    content.innerHTML = `
+      <div style="text-align:center;margin-bottom:14px">${avatarSrc}</div>
+      <div style="font-size:17px;font-weight:900;text-align:center;margin-bottom:4px">${escapeHTML(u.username||'لاعب')}</div>
+      ${u.title ? `<div style="text-align:center;font-size:12px;color:${u.titleColor||'#a855f7'};margin-bottom:8px">‹${u.title}›</div>` : ''}
+      <div style="font-size:13px;line-height:2.4;color:#ccc;background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;margin-bottom:12px">
+        <div>⭐ المستوى: <strong>${u.level||1}</strong></div>
+        <div>🛡️ الكلان: <span style="color:#2ed573">${u.clan||'لا يوجد'}</span></div>
+        <div>💎 ${u.isVIP ? '<span style="color:#fbbf24">VIP ★</span>' : 'عادي'}</div>
+      </div>
+      ${isMe ? `
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;color:#888;margin-bottom:5px">رابط صورتك الشخصية (URL)</div>
+          <input type="url" id="photo-url-input" value="${u.photoURL||''}" placeholder="https://example.com/photo.jpg"
+            class="input-field" style="font-size:12px;margin-bottom:6px">
+          <button onclick="saveProfilePhoto()" style="width:100%;padding:9px;background:linear-gradient(135deg,#c8a940,#f0c040);color:#1a0800;border:none;border-radius:8px;font-weight:900;cursor:pointer;font-family:inherit;font-size:12px">حفظ الصورة</button>
+        </div>
+      ` : ''}
+      ${isAdmin && !isMe ? `<button onclick="adminGiveCoinsToUser('${uid}','${escapeHTML(u.username||'')}')" style="width:100%;padding:9px;background:#ef4444;color:white;border:none;border-radius:8px;font-size:12px;cursor:pointer;font-weight:900;font-family:inherit;margin-top:4px">🪙 منح كوينز (إدارة)</button>` : ''}
+    `;
+  });
+}
+
+// حفظ صورة الملف الشخصي
+function saveProfilePhoto() {
+  const url  = document.getElementById('photo-url-input')?.value.trim();
+  const user = auth.currentUser;
+  if (!user) return;
+  db.ref('users/'+user.uid+'/photoURL').set(url||'', err => {
+    if (!err) {
+      alert(url ? "✓ تم حفظ الصورة!" : "✓ تم حذف الصورة!");
+      document.getElementById('profile-modal').style.display = 'none';
+    }
   });
 }
