@@ -60,6 +60,9 @@ async function doRegister() {
     });
 
     document.getElementById('auth-overlay').style.display = 'none';
+    const refCode = document.getElementById('l-refcode')?.value?.trim();
+    if (refCode && typeof applyReferralOnRegister === 'function')
+      applyReferralOnRegister(uid, name, refCode);
     alert(`مرحباً ${name}! تم إنشاء حسابك وحصلت على 100 🪙 هدية ترحيبية!`);
   } catch (err) {
     const errors = {
@@ -84,6 +87,8 @@ function toggleAuthMode() {
   if (btn) { btn.textContent = isLogin ? 'إنشاء الحساب' : 'دخول اللعبة'; btn.onclick = isLogin ? doRegister : doLogin; }
   if (sw)  sw.innerHTML = isLogin ? 'لديك حساب؟ <span>سجّل دخولك</span>' : 'ليس لديك حساب؟ <span>أنشئ واحداً</span>';
   if (unf) unf.style.display = isLogin ? 'block' : 'none';
+  const rfc = document.getElementById('l-refcode');
+  if (rfc) rfc.style.display = isLogin ? 'block' : 'none';
 }
 
 // ===== مراقبة حالة تسجيل الدخول =====
@@ -96,14 +101,19 @@ auth.onAuthStateChanged((user) => {
 
   if (user) {
     if (overlay) overlay.style.display = 'none';
+    if (typeof checkForUpdate === 'function') checkForUpdate();
 
     // ===== مستمع التحويلات الواردة =====
     db.ref('transfers/' + user.uid).on('child_added', snap => {
       const t = snap.val();
       if (!t) return;
-      db.ref('users/' + user.uid + '/coins').transaction(c => (c || 0) + t.amount);
+      if (t.amount > 0) db.ref('users/' + user.uid + '/coins').transaction(c => (c || 0) + t.amount);
       snap.ref.remove();
-      if (typeof showToastTransfer === 'function') showToastTransfer(t.from, t.amount);
+      if (typeof showToastTransfer === 'function' && t.amount > 0) showToastTransfer(t.from, t.amount);
+      if (typeof sendNotification === 'function' && t.amount > 0)
+        sendNotification(user.uid, 'transfer', 'تحويل كوينز', `استلمت ${t.amount} 🪙 من ${t.from}`);
+      if (typeof sendNotification === 'function' && t.type === 'gift')
+        sendNotification(user.uid, 'gift', 'هدية جديدة!', `${t.from} أرسل لك ${t.giftEmoji} ${t.giftName}`);
     });
 
     // اشترك في تغييرات بيانات المستخدم في real-time
@@ -111,6 +121,7 @@ auth.onAuthStateChanged((user) => {
       const val = snapshot.val() || {};
 
       // تحديث المتغيرات العامة
+      const prevLevel   = currentLevel; // نحفظ المستوى القديم للمقارنة
       currentUsername   = val.username   || user.email.split('@')[0];
       currentLevel      = val.level      || 1;
       currentXP         = val.xp         || 0;
@@ -121,11 +132,40 @@ auth.onAuthStateChanged((user) => {
       currentTitle      = val.title      || '';
       currentTitleColor = val.titleColor || '';
       isAdmin           = val.isAdmin    || false;
+      isChatMod         = val.isChatMod  || false;
       isMuted           = val.isMuted    || false;
+      isChatMod         = val.isChatMod  || false;
       savedAvatarColor  = val.avatarColor || '';
+
+      // كشف الترقي — نتجاهل أول تحميل (prevLevel === 1 والمستوى ما تغير)
+      if (prevLevel > 1 && currentLevel > prevLevel) {
+        if (typeof showLevelUpPopup === 'function') showLevelUpPopup(currentLevel);
+        // مكافأة الترقي
+        const rewards = [50,75,100,125,150,200,250,300,400,500];
+        const bonus   = rewards[Math.min(currentLevel - 2, rewards.length - 1)] || 50;
+        db.ref('users/' + user.uid + '/coins').transaction(c => (c || 0) + bonus);
+      }
 
       // ابدأ نظام الإشعارات والشارات
       initBadges();
+      if (typeof initNotificationBell === 'function') initNotificationBell();
+      // أظهر زر الإعدادات
+      const settingsBtn = document.getElementById('settings-btn');
+      if (settingsBtn) settingsBtn.style.display = 'block';
+      const searchBtn = document.getElementById('search-btn');
+      if (searchBtn) searchBtn.style.display = 'block';
+      const inboxBtn = document.getElementById('inbox-btn');
+      if (inboxBtn) inboxBtn.style.display = 'block';
+      const tournBtn = document.getElementById('tourn-btn');
+      if (tournBtn) tournBtn.style.display = 'block';
+      // مراقبة الرسائل غير المقروءة
+      db.ref('conversations').orderByChild('participants/' + user.uid).equalTo(true)
+        .on('value', snap => {
+          let total = 0;
+          snap.forEach(s => { total += (s.val().unread?.[user.uid] || 0); });
+          const dot = document.getElementById('inbox-dot');
+          if (dot) dot.style.display = total > 0 ? 'block' : 'none';
+        });
 
       // تتبع الحضور أونلاين
       const connRef  = db.ref('.info/connected');
@@ -150,34 +190,42 @@ auth.onAuthStateChanged((user) => {
       // ابدأ المستمعين مرة واحدة فقط (config.js يتحكم في المنع)
       listenToGlobalChat();
       listenToPrivateMessages();
+// ===== أعد رسم الصفحة النشطة حالياً فقط وبأمان =====
+      const pages = ['home', 'chat', 'games', 'clan', 'store', 'leaderboard', 'inventory', 'admin-panel'];
+      let pageRendered = false;
 
-      // أعد رسم الصفحة الحالية
-      const pages = ['home','chat','games','clan','store','leaderboard','inventory','admin-panel'];
       for (const pid of pages) {
         const el = document.getElementById(pid);
         if (el && el.style.display !== 'none') {
-          if (pid === 'home')        renderHome();
-          if (pid === 'store')       renderStore();
-          if (pid === 'games')       renderGames();
-          if (pid === 'leaderboard') renderLeaderboard();
-          if (pid === 'inventory')   renderInventory();
-          if (pid === 'admin-panel') renderAdminPanelPage();
-          if (pid === 'chat')        renderAdminChatPanel();
-          break;
+          if (pid === 'home' && typeof renderHome === 'function') { renderHome(); pageRendered = true; }
+          else if (pid === 'store' && typeof renderStore === 'function') { renderStore(); pageRendered = true; }
+          else if (pid === 'games' && typeof renderGames === 'function') { renderGames(); pageRendered = true; }
+          else if (pid === 'leaderboard' && typeof renderLeaderboard === 'function') { renderLeaderboard(); pageRendered = true; }
+          else if (pid === 'inventory' && typeof renderInventory === 'function') { renderInventory(); pageRendered = true; }
+          else if (pid === 'admin-panel' && typeof renderAdminPanelPage === 'function') { renderAdminPanelPage(); pageRendered = true; }
+          else if (pid === 'chat' && typeof renderAdminChatPanel === 'function') { renderAdminChatPanel(); pageRendered = true; }
+          break; // نكتفي بتحديث الصفحة الظاهرة فقط ونخرج من الحلقة
         }
       }
-      renderHome();
+
+      // إذا لم تكن هناك أي صفحة نشطة مفتوحة (عند أول دخول مثلاً)، ارسم الرئيسية كخيار افتراضي
+      if (!pageRendered && typeof renderHome === 'function') {
+        renderHome();
+      }
+      // فحص الإنجازات
+      if (typeof checkAchievements === 'function') checkAchievements(val);
+      // فحص انتهاء VIP
+      if (typeof checkVIPExpiry === 'function') checkVIPExpiry(val);
     });
 
   } else {
     // ❌ المستخدم غير مسجل — أظهر شاشة الدخول
     if (overlay) overlay.style.display = 'flex';
 
-    // أوقف المستمعين عند الخروج
+    // أوقف مستمعي Firebase عند تسجيل الخروج لمنع استهلاك البيانات
     if (chatListener)     { chatListener.off();     chatListener = null; }
     if (pmListener)       { pmListener.off();       pmListener   = null; }
     if (clanChatListener) { clanChatListener.off(); clanChatListener = null; }
     if (notifListener)    { notifListener.off();    notifListener = null; }
-    if (overlay) overlay.style.display = 'flex';
   }
 });

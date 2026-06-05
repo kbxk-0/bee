@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المواجهة الصامتة 3D</title>
+    <style>
+        :root {
+            --primary: #2ed573;
+            --gold: #f0c040;
+            --dark-bg: #0a0813;
+            --table-felt: radial-gradient(circle, #0f5132 0%, #082e1c 100%);
+            --wood-rim: #2c1a04;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-bg);
+            color: #fff;
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* حاوية الأبعاد الثلاثية السينمائية */
+        .game-theater {
+            perspective: 1600px;
+            perspective-origin: 50% 30%;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at 50% 30%, #1a153a 0%, #05040a 100%);
+        }
+
+        /* طاولة الكازينو ثلاثية الأبعاد */
+        .casino-table-wrapper {
+            transform-style: preserve-3d;
+            transform: rotateX(54deg) translateY(-40px);
+            position: relative;
+            width: 700px;
+            height: 400px;
+            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .casino-table {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: var(--table-felt);
+            border-radius: 50%;
+            border: 16px solid var(--wood-rim);
+            box-shadow: 
+                0 0 0 4px #150d02,
+                0 25px 0 #150d02,
+                0 30px 40px rgba(0,0,0,0.8),
+                inset 0 0 40px rgba(0,0,0,0.6);
+            transform-style: preserve-3d;
+        }
+
+        /* النيون الداخلي للطاولة */
+        .table-glow {
+            position: absolute;
+            top: 4px; left: 4px; right: 4px; bottom: 4px;
+            border-radius: 50%;
+            border: 2px solid rgba(46, 213, 115, 0.4);
+            box-shadow: inset 0 0 20px rgba(46, 213, 115, 0.3), 0 0 20px rgba(46, 213, 115, 0.3);
+            pointer-events: none;
+        }
+
+        /* منطقة وسط الطاولة (الغنيمة) */
+        .center-pot {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) translateZ(1px);
+            transform-style: preserve-3d;
+            text-align: center;
+        }
+
+        .loot-card-3d {
+            width: 100px;
+            height: 140px;
+            background: linear-gradient(135deg, #1e1b4b, #312e81);
+            border: 3px solid var(--gold);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transform: rotateX(-10deg);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            backface-visibility: hidden;
+        }
+
+        .loot-card-3d .title {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-bottom: 5px;
+        }
+
+        .loot-card-3d .value {
+            font-size: 36px;
+            font-weight: 900;
+            color: var(--gold);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* مقاعد اللاعبين حول الطاولة */
+        .seats-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            pointer-events: none;
+        }
+
+        .seat {
+            position: absolute;
+            transform-style: preserve-3d;
+            width: 90px;
+            height: 90px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* توزيع المقاعد إحداثياً */
+        .seat-1 { top: -40px; left: 50%; transform: translateX(-50%) rotateX(-54deg); } /* الخصم المقابل */
+        .seat-2 { top: 50%; left: -60px; transform: translateY(-50%) rotateX(-54deg); } /* الخsم يسار */
+        .seat-3 { top: 50%; right: -60px; transform: translateY(-50%) rotateX(-54deg); } /* الخصم يمين */
+
+        .seat-avatar {
+            width: 50px;
+            height: 50px;
+            background: #1e293b;
+            border: 2px solid #64748b;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            transition: all 0.3s;
+        }
+
+        .seat.active .seat-avatar {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary);
+            background: #0f172a;
+        }
+
+        .seat-name {
+            font-size: 11px;
+            margin-top: 6px;
+            background: rgba(0,0,0,0.6);
+            padding: 2px 8px;
+            border-radius: 10px;
+            white-space: nowrap;
+        }
+
+        .seat-status {
+            font-size: 10px;
+            color: #ff4757;
+            font-weight: bold;
+        }
+        .seat.ready .seat-status { color: var(--primary); }
+
+        /* غرفة الانتظار السينمائية المتطابقة */
+        .matchmaking-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(7, 5, 15, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lobby-panel {
+            background: rgba(30, 27, 75, 0.4);
+            border: 1px solid rgba(240, 192, 64, 0.15);
+            padding: 40px;
+            border-radius: 24px;
+            text-align: center;
+            max-width: 400px;
+            width: 85%;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .radar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            position: relative;
+            margin: 0 auto 24px;
+            animation: pulse 1.8s infinite ease-in-out;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.6; box-shadow: 0 0 0 0 rgba(46,213,115,0.4); }
+            50% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 20px rgba(46,213,115,0); }
+            100% { transform: scale(0.9); opacity: 0.6; box-shadow: 0 0 0 0 rgba(46,213,115,0); }
+        }
+
+        /* كروت اللعب الفاخرة بالأسفل */
+        .player-station {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 580px;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .cards-deck {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 6px;
+            width: 100%;
+        }
+
+        .game-card {
+            background: linear-gradient(135deg, #ffffff, #e2e8f0);
+            color: #0f172a;
+            border: none;
+            border-radius: 8px;
+            height: 75px;
+            font-size: 18px;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-origin: bottom center;
+        }
+
+        .game-card:hover:not(:disabled) {
+            transform: translateY(-12px) scale(1.08);
+            background: var(--gold);
+            color: #000;
+            box-shadow: 0 12px 20px rgba(240,192,64,0.4);
+        }
+
+        .game-card:disabled {
+            background: #334155 !important;
+            color: #64748b !important;
+            transform: translateY(10px);
+            box-shadow: none;
+            cursor: not-allowed;
+            opacity: 0.4;
+        }
+
+        .hud-status {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 8px 24px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-theater">
+
+        <div id="matchmaking" class="matchmaking-overlay">
+            <div class="lobby-panel">
+                <div class="radar"></div>
+                <h3 style="margin: 0 0 8px; color: #fff; font-size: 18px;">البحث عن طاولة لعب نشطة</h3>
+                <p id="lobby-status-text" style="margin: 0 0 20px; color: #94a3b8; font-size: 13px;">جاري فحص اتصال الخادم الخاص بك...</p>
+                <div id="ready-count" style="font-size: 12px; color: var(--gold); font-weight: bold;"></div>
+            </div>
+        </div>
+
+        <div class="casino-table-wrapper" id="table-wrapper">
+            <div class="casino-table">
+                <div class="table-glow"></div>
+                
+                <div class="center-pot">
+                    <div class="loot-card-3d">
+                        <span class="title">الغنيمة</span>
+                        <span id="pot-value" class="value">?</span>
+                    </div>
+                </div>
+
+                <div class="seats-layer" id="seats-container">
+                    <div class="seat seat-1" id="seat-opp-1">
+                        <div class="seat-avatar">👤</div>
+                        <div class="seat-name">في انتظار لاعب...</div>
+                        <div class="seat-status">---</div>
+                    </div>
+                    <div class="seat seat-2" id="seat-opp-2">
+                        <div class="seat-avatar">👤</div>
+                        <div class="seat-name">في انتظار لاعب...</div>
+                        <div class="seat-status">---</div>
+                    </div>
+                    <div class="seat seat-3" id="seat-opp-3">
+                        <div class="seat-avatar">👤</div>
+                        <div class="seat-name">في انتظار لاعب...</div>
+                        <div class="seat-status">---</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="player-station">
+            <div id="hud-msg" class="hud-status">جاري تهيئة قنوات الاتصال البرمجية...</div>
+            <div class="cards-deck" id="player-deck"></div>
+        </div>
+
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="../js/silent-showdown.js"></script>
+</body>
+</html>

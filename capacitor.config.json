@@ -1,0 +1,9 @@
+{
+  "appId": "com.kbxk.app",
+  "appName": "kbxk",
+  "webDir": "www",
+  "server": {
+    "url": "https://kbxk-0.github.io/bee",
+    "cleartext": true
+  }
+}

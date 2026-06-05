@@ -22,16 +22,17 @@ const auth = firebase.auth();
 const db   = firebase.database();
 
 // ===== متغيرات حالة المستخدم الحالي =====
-// كل هذه القيم تُحدَّث تلقائياً عند تسجيل الدخول (في auth.js)
 let currentUsername   = "لاعب";
 let currentLevel      = 1;
 let currentCoins      = 0;
 let currentXP         = 0;
 let isVIP             = false;
 let currentClan       = "";
+let currentClanId     = "";
 let currentTitle      = "";
 let currentTitleColor = "";
 let isAdmin           = false;
+let isChatMod         = false;
 let isMuted           = false;
 
 // ===== متغيرات المهام اليومية =====
@@ -41,10 +42,10 @@ let claimedChatQuest = false;
 let claimedFlipQuest = false;
 
 // ===== متغيرات المستمعين (لمنع تكرار الرسائل) =====
-// نحفظ كل مستمع في متغير — لو المتغير مش null معناه المستمع شغّال
-let chatListener     = null;   // مستمع الشات العام
-let pmListener       = null;   // مستمع الرسائل الخاصة
-let clanChatListener = null;   // مستمع شات الكلان
+let chatListener     = null;
+let pmListener       = null;
+let clanChatListener = null;
+let notifListener    = null;
 
 // ===== دالة مساعدة: تنظيف النصوص من HTML للحماية من الهجمات =====
 function escapeHTML(str) {
@@ -62,15 +63,19 @@ function showSection(id) {
 
   document.querySelectorAll('#navbar button').forEach(btn => {
     btn.removeAttribute('data-active');
-    if (btn.dataset.section === id) btn.setAttribute('data-active','true');
+    if (btn.dataset.section === id) btn.setAttribute('data-active', 'true');
   });
 
-  if (id === 'chat')        { triggerMarquee("القوانين تطبق على الجميع!"); listenToGlobalChat(); renderAdminChatPanel(); }
-  if (id === 'store')       renderStore();
-  if (id === 'home')        renderHome();
-  if (id === 'games')       renderGames();
-  if (id === 'clan')        renderClan();
-  if (id === 'leaderboard') renderLeaderboard();
-  if (id === 'inventory')   renderInventory();
-  if (id === 'admin-panel') renderAdminPanelPage();
+  if (id === 'chat') {
+    if (typeof triggerMarquee       === 'function') triggerMarquee("القوانين تطبق على الجميع!");
+    if (typeof listenToGlobalChat   === 'function') listenToGlobalChat();
+    if (typeof renderAdminChatPanel === 'function') renderAdminChatPanel();
+  }
+  if (id === 'home')        { if (typeof renderHome          === 'function') renderHome();          }
+  if (id === 'store')       { if (typeof renderStore         === 'function') renderStore();         }
+  if (id === 'games')       { if (typeof renderGames         === 'function') renderGames();         }
+  if (id === 'clan')        { if (typeof renderClan          === 'function') renderClan();          }
+  if (id === 'leaderboard') { if (typeof renderLeaderboard   === 'function') renderLeaderboard();   }
+  if (id === 'inventory')   { if (typeof renderInventory     === 'function') renderInventory();     }
+  if (id === 'admin-panel') { if (typeof renderAdminPanelPage === 'function') renderAdminPanelPage(); }
 }

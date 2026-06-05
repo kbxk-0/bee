@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>⚔️ حرب الميادين</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#06070e;font-family:'Cairo',sans-serif;color:#fff;direction:rtl}
+#wrap{display:flex;flex-direction:column;height:100%;overflow:hidden}
+#cvWrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:2px;background:radial-gradient(ellipse at center,#0d1020 0%,#06070e 100%)}
+#gc{display:block;touch-action:none;border-radius:50%;box-shadow:0 0 60px rgba(100,120,200,.15),0 0 120px rgba(0,0,0,.6);max-width:100%;max-height:100%}
+
+#bar{flex-shrink:0;background:rgba(6,7,14,.98);border-top:1px solid rgba(255,255,255,.07);display:grid;grid-template-columns:64px 1fr 56px;align-items:center;gap:10px;padding:8px 12px;min-height:70px}
+#diceArea{display:flex;flex-direction:column;align-items:center;gap:2px}
+#dice{width:52px;height:52px;border-radius:12px;background:rgba(15,18,35,.9);border:2px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:2rem;cursor:pointer;transition:all .18s;user-select:none;font-family:serif}
+#dice.rdy{border-color:#e0b030;box-shadow:0 0 0 2px rgba(224,176,48,.3),0 0 20px rgba(224,176,48,.3);cursor:pointer}
+#dice.spin{animation:dspin .3s ease}
+@keyframes dspin{0%{transform:rotate(-90deg)scale(.7);opacity:.5}100%{transform:rotate(0)scale(1);opacity:1}}
+#dLbl{font-size:.5rem;color:rgba(255,255,255,.25);letter-spacing:2px;font-weight:700;text-transform:uppercase}
+#info{min-width:0}
+#tname{font-size:1rem;font-weight:900}
+#thint{font-size:.68rem;color:rgba(255,255,255,.35);margin-top:1px}
+#tlog{font-size:.6rem;color:rgba(200,169,64,.5);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#side{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.pr{display:flex;align-items:center;gap:4px;font-size:.6rem}
+.pd{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+
+.ov{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;flex-direction:column}
+.ov.on{display:flex;animation:fi .3s}
+@keyframes fi{from{opacity:0}to{opacity:1}}
+.ob{background:linear-gradient(135deg,#0c0e20,#10142a);border:1px solid rgba(200,169,64,.3);border-radius:22px;padding:26px 20px;width:min(300px,88vw);text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
+.ot{font-size:1.3rem;font-weight:900;color:#f0c040}
+.os{font-size:.82rem;color:rgba(255,255,255,.4)}
+.bg{width:100%;padding:13px;background:linear-gradient(135deg,#9a7010,#f0c040);color:#1a0800;border:none;border-radius:12px;font-family:'Cairo',sans-serif;font-weight:900;font-size:.9rem;cursor:pointer}
+.bo{width:100%;padding:10px;background:rgba(200,169,64,.1);color:#c8a940;border:1px solid rgba(200,169,64,.3);border-radius:12px;font-family:'Cairo',sans-serif;font-weight:700;font-size:.83rem;cursor:pointer}
+
+#toast{position:fixed;bottom:78px;left:50%;transform:translateX(-50%);background:rgba(5,6,12,.95);border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:7px 18px;font-size:.75rem;z-index:80;opacity:0;pointer-events:none;transition:opacity .2s;white-space:nowrap;max-width:80vw;overflow:hidden;text-overflow:ellipsis}
+#toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="cvWrap"><canvas id="gc"></canvas></div>
+  <div id="bar">
+    <div id="diceArea">
+      <div id="dice" onclick="roll()">⚀</div>
+      <div id="dLbl">زهر</div>
+    </div>
+    <div id="info">
+      <div id="tname"></div>
+      <div id="thint"></div>
+      <div id="tlog"></div>
+    </div>
+    <div id="side"></div>
+  </div>
+</div>
+
+<div class="ov" id="winOv">
+  <div class="ob">
+    <div style="font-size:3rem">🏆</div>
+    <div class="ot" id="winT"></div>
+    <div class="os" id="winS"></div>
+    <div id="scoreBoard" style="width:100%;margin-top:4px"></div>
+    <button class="bg" onclick="start()">العب مجدداً</button>
+    <button class="bo" onclick="history.back()">رجوع</button>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  حرب الميادين — Hex Ludo / Territory Wars
+//  بالكامل على الجوال — نرد واحد — ٤+١ بوتات
+// ═══════════════════════════════════════════════
+
+const cv=document.getElementById('gc'), ctx=cv.getContext('2d');
+const S3=Math.sqrt(3);
+
+// ── Board ──
+const R=6; let HS=30, CX=360, CY=360;
+
+// ── Players ──
+const PD=[
+  {id:'red',   name:'الأحمر', color:'#e85040', dk:'#5a0e08', glow:'rgba(232,80,64,.7)',  isBot:false, angle:Math.PI*.5},
+  {id:'blue',  name:'الأزرق', color:'#2e8fd8', dk:'#0b2e52', glow:'rgba(46,143,216,.7)', isBot:true,  angle:Math.PI*1.5},
+  {id:'green', name:'الأخضر', color:'#30b860', dk:'#0a4022', glow:'rgba(48,184,96,.7)',  isBot:true,  angle:0},
+  {id:'yell',  name:'الأصفر', color:'#d8a018', dk:'#503a00', glow:'rgba(216,160,24,.7)', isBot:true,  angle:Math.PI},
+  {id:'boss',  name:'البوص',  color:'#aa30c8', dk:'#3a0850', glow:'rgba(170,48,200,.7)', isBot:true,  isCenter:true},
+];
+
+// ── Paths: straight from corners to center ──
+function makePath(pid){
+  const paths={
+    red:  Array.from({length:7},(_,i)=>({q:0,r:6-i})),
+    blue: Array.from({length:7},(_,i)=>({q:0,r:-6+i})),
+    green:Array.from({length:7},(_,i)=>({q:6-i,r:0})),
+    yell: Array.from({length:7},(_,i)=>({q:-6+i,r:0})),
+    boss: [],
+  };
+  return paths[pid]||[];
+}
+const PATHS={};
+['red','blue','green','yell','boss'].forEach(id=>PATHS[id]=makePath(id));
+
+// ── Homes ──
+const HOMES={
+  red: [{q:-1,r:6},{q:0,r:6},{q:1,r:5},{q:0,r:5},{q:-1,r:5}],
+  blue:[{q:-1,r:-6},{q:0,r:-6},{q:1,r:-5},{q:0,r:-5},{q:-1,r:-5}],
+  green:[{q:6,r:-1},{q:6,r:0},{q:5,r:1},{q:5,r:0},{q:5,r:-1}],
+  yell:[{q:-6,r:0},{q:-6,r:1},{q:-5,r:0},{q:-5,r:1},{q:-5,r:-1}],
+  boss:[{q:0,r:0},{q:1,r:-1},{q:1,r:0},{q:0,r:1},{q:-1,r:1},{q:-1,r:0}],
+};
+
+// Safe = home + first 2 path steps
+const SAFE_STEPS=2;
+
+// ── Grid ──
+const GRID=[];
+for(let q=-R;q<=R;q++)for(let r=-R;r<=R;r++)if(Math.abs(q+r)<=R)GRID.push({q,r});
+function inG(q,r){return Math.abs(q)<=R&&Math.abs(r)<=R&&Math.abs(q+r)<=R;}
+function nbrs(q,r){return[[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]].map(([a,b])=>({q:q+a,r:r+b})).filter(h=>inG(h.q,h.r));}
+function hDist(q1,r1,q2,r2){return(Math.abs(q1-q2)+Math.abs(r1-r2)+Math.abs((q1+r1)-(q2+r2)))/2;}
+
+// ── Coords ──
+function h2p(q,r){return{x:CX+HS*S3*(q+r*.5),y:CY+HS*1.5*r};}
+function p2h(px,py){
+  const q=(px-CX)*(S3/3)/HS-(py-CY)/3/HS, r=(py-CY)*(2/3)/HS;
+  let rq=Math.round(q),rr=Math.round(r),rs=Math.round(-q-r);
+  const dq=Math.abs(rq-q),dr=Math.abs(rr-r),ds=Math.abs(rs-(-q-r));
+  if(dq>dr&&dq>ds)rq=-rr-rs;else if(dr>ds)rr=-rq-rs;
+  return{q:rq,r:rr};
+}
+
+// ── Helpers ──
+function pd(id){return PD.find(p=>p.id===id);}
+function alive(id){return GS.pieces.filter(p=>p.pid===id&&p.status!=='dead');}
+function atHome(id){return GS.pieces.filter(p=>p.pid===id&&p.status==='home');}
+function isHome(q,r){for(const[id,hs]of Object.entries(HOMES))if(hs.some(h=>h.q===q&&h.r===r))return id;return null;}
+function pathStep(pid,q,r){return(PATHS[pid]||[]).findIndex(h=>h.q===q&&h.r===r);}
+function isSafe(pid,q,r){
+  const hi=isHome(q,r); if(hi===pid)return true;
+  const si=pathStep(pid,q,r); return si>=0&&si<SAFE_STEPS;
+}
+
+function pieceAt(q,r){
+  return GS.pieces.find(p=>{
+    if(p.status==='dead')return false;
+    if(p.status==='on'){const ph=PATHS[p.pid]?.[p.step];return ph&&ph.q===q&&ph.r===r;}
+    return false;
+  });
+}
+
+// ── State ──
+let GS={};
+
+function start(){
+  document.getElementById('winOv').classList.remove('on');
+  const pieces=[];
+  let pid=0;
+  PD.forEach(p=>{
+    const slots=p.isCenter?6:5;
+    for(let i=0;i<slots;i++){
+      pieces.push({id:`${p.id}_${i}`,pid:p.id,rank:i===0?'cmd':i<=2?'ofc':'sol',
+        status:p.isCenter?'on':'home',step:p.isCenter?i:null,slot:i});
+    }
+  });
+  GS={phase:'roll',turn:0,dice:null,sel:null,tgts:[],pieces,
+      territory:{},logs:[],winner:null,round:0};
+  // Place center boss pieces
+  GS.pieces.filter(p=>p.pid==='boss').forEach((p,i)=>{
+    p.step=i; p.status='on';
+  });
+  renderUI(); draw();
+  if(PD[0].isBot)setTimeout(botTurn,600);
+}
+
+// ── Territory ──
+function claimHex(q,r,pid){
+  GS.territory[`${q},${r}`]=pid;
+}
+
+// ── Moves ──
+function getMoves(pc){
+  if(!pc||pc.status==='dead')return[];
+  const{pid,status,step}=pc, dice=GS.dice, out=[];
+  const path=PATHS[pid]||[];
+
+  if(status==='home'){
+    // Only deploy if dice is 6 (or 1 for Ludo style)
+    if(dice!==6&&dice!==1)return[];
+    // Find empty start hex
+    const start=path[0];if(!start)return[];
+    const occ=pieceAt(start.q,start.r);
+    if(!occ||occ.pid!==pid)
+      out.push({q:start.q,r:start.r,action:occ?'attack':'deploy',newStep:0});
+    return out;
+  }
+
+  if(status==='on'){
+    // Forward
+    for(let d=1;d<=dice;d++){
+      const ns=step+d;
+      if(ns<path.length){
+        const pos=path[ns];
+        const occ=pieceAt(pos.q,pos.r);
+        if(occ&&occ.pid===pid)break; // own piece blocking
+        const safe=isSafe(pid,pos.q,pos.r);
+        // Can't attack safe zones
+        if(occ&&isSafe(occ.pid,pos.q,pos.r)&&occ.pid!==pid)break;
+        if(!occ)out.push({q:pos.q,r:pos.r,action:'move',newStep:ns});
+        else out.push({q:pos.q,r:pos.r,action:'attack',newStep:ns});
+        if(occ)break;
+      }
+      // Can stay at last hex
+    }
+    // Stay
+    if(!out.length&&step<path.length-1){
+      const pos=path[Math.min(step+1,path.length-1)];
+      const occ=pieceAt(pos.q,pos.r);
+      if(!occ||occ.pid!==pid)
+        out.push({q:pos.q,r:pos.r,action:occ?'attack':'move',newStep:step+1});
+    }
+    return out;
+  }
+  return[];
+}
+
+// ── Rank values ──
+const RV={cmd:4,ofc:3,sgt:2,sol:1};
+const RSYM={cmd:'♛',ofc:'★',sgt:'▲',sol:'●'};
+
+// ── Execute move ──
+function doMove(pc,t){
+  const occ=pieceAt(t.q,t.r);
+  if(occ&&occ.pid!==pc.pid){
+    const atk=RV[pc.rank]||1, def=RV[occ.rank]||1;
+    if(atk>=def){
+      if(occ.pid==='boss'||occ.pid===pc.pid)occ.status='dead';
+      else{occ.status='home';occ.step=null;} // Ludo: send back home
+      lg(pd(pc.pid).name+' هزم '+pd(occ.pid).name+'!');
+    } else {
+      pc.status='home';pc.step=null;
+      lg(pd(pc.pid).name+' هُزم وعاد للبيت!');
+      claimHex(t.q,t.r,occ.pid);
+      draw(); return;
+    }
+  }
+  pc.status='on'; pc.step=t.newStep;
+  const path=PATHS[pc.pid];
+  // Claim all hexes passed through
+  for(let s=Math.max(0,pc.step-(GS.dice-1));s<=pc.step;s++){
+    const h=path[s]; if(h)claimHex(h.q,h.r,pc.pid);
+  }
+  if(t.q===0&&t.r===0&&pc.pid!=='boss')lg('★ '+pd(pc.pid).name+' وصل المركز!');
+  draw();
+}
+
+// ── Boss behavior ──
+function bossTurn(){
+  const bPieces=GS.pieces.filter(p=>p.pid==='boss'&&p.status==='on');
+  const dice=Math.ceil(Math.random()*3);
+  bPieces.forEach(p=>{
+    // Move toward nearest enemy
+    const path=PATHS.boss; if(!path.length)return;
+    const pos=PATHS.red[p.step]||HOMES.boss[p.step]||{q:0,r:0};
+    // Find nearest enemy within 2 hexes
+    const enemies=GS.pieces.filter(e=>e.pid!=='boss'&&e.status==='on');
+    let nearest=null, nearDist=999;
+    enemies.forEach(e=>{
+      const ep=PATHS[e.pid]?.[e.step];if(!ep)return;
+      const d=hDist(pos.q,pos.r,ep.q,ep.r);
+      if(d<nearDist){nearDist=d;nearest=e;}
+    });
+    if(nearest&&nearDist<=2){
+      const ep=PATHS[nearest.pid]?.[nearest.step];
+      if(ep&&!isSafe(nearest.pid,ep.q,ep.r)){
+        const atk=RV[p.rank]||2, def=RV[nearest.rank]||1;
+        if(atk>=def){nearest.status='home';nearest.step=null;lg('💀 البوص طرد '+pd(nearest.pid).name+'!');}
+      }
+    }
+  });
+  draw();
+}
+
+// ── Turn flow ──
+function roll(){
+  if(GS.phase!=='roll'||PD[GS.turn].isBot)return;
+  const el=document.getElementById('dice');
+  el.classList.remove('rdy'); el.classList.add('spin');
+  setTimeout(()=>{
+    el.classList.remove('spin');
+    GS.dice=Math.floor(Math.random()*6)+1;
+    el.textContent=['','⚀','⚁','⚂','⚃','⚄','⚅'][GS.dice];
+    GS.phase='select';
+    const pid=PD[GS.turn].id;
+    const can=GS.pieces.filter(p=>p.pid===pid&&p.status!=='dead'&&getMoves(p).length>0);
+    if(!can.length){lg('لا حركة متاحة');setTimeout(nextTurn,700);}
+    renderUI();
+  },300);
+}
+
+function nextTurn(){
+  if(checkWin())return;
+  let next=(GS.turn+1)%PD.length;
+  // Skip dead players + boss turn handled separately
+  let tries=0;
+  while(tries<PD.length){
+    const p=PD[next];
+    if(p.isCenter){bossTurn();next=(next+1)%PD.length;tries++;continue;}
+    if(alive(p.id).length>0)break;
+    next=(next+1)%PD.length;tries++;
+  }
+  GS.turn=next; GS.dice=null; GS.sel=null; GS.tgts=[]; GS.phase='roll';
+  if(GS.turn===0)GS.round++;
+  renderUI(); draw();
+  if(PD[GS.turn].isBot&&!PD[GS.turn].isCenter)setTimeout(botTurn,450);
+}
+
+function checkWin(){
+  const living=PD.filter(p=>!p.isCenter&&alive(p.id).length>0);
+  if(living.length===1){
+    showWin(living[0]);return true;
+  }
+  // Timed win: round 30+
+  if(GS.round>=30){
+    // Count territory
+    const scores={};
+    PD.forEach(p=>scores[p.id]=0);
+    Object.values(GS.territory).forEach(pid=>scores[pid]=(scores[pid]||0)+1);
+    const winner=PD.filter(p=>!p.isCenter).sort((a,b)=>(scores[b.id]||0)-(scores[a.id]||0))[0];
+    showWin(winner,scores);return true;
+  }
+  return false;
+}
+
+function showWin(winner,scores=null){
+  GS.phase='over';
+  document.getElementById('winT').textContent='🏆 '+winner.name+' انتصر!';
+  document.getElementById('winS').textContent=scores?'بأكبر رقعة محتلة':'أبقى آخر لاعب!';
+  if(scores){
+    const sb=document.getElementById('scoreBoard');
+    sb.innerHTML=PD.filter(p=>!p.isCenter).map(p=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;
+        background:rgba(255,255,255,.04);border-radius:8px;margin:3px 0;font-size:.78rem">
+        <span style="color:${p.color};font-weight:800">${p.name}</span>
+        <span style="color:rgba(255,255,255,.6)">${scores[p.id]||0} منطقة</span>
+      </div>`).join('');
+  }
+  document.getElementById('winOv').classList.add('on');
+}
+
+// ── Bot AI ──
+function botTurn(){
+  if(GS.phase==='over')return;
+  const pid=PD[GS.turn].id; GS.phase='bot';
+  GS.dice=Math.floor(Math.random()*6)+1;
+  document.getElementById('dice').textContent=['','⚀','⚁','⚂','⚃','⚄','⚅'][GS.dice];
+  renderUI();
+  setTimeout(()=>{
+    if(GS.phase==='over')return;
+    const movable=GS.pieces.filter(p=>p.pid===pid&&p.status!=='dead'&&getMoves(p).length>0);
+    if(!movable.length){lg(pd(pid).name+': لا حركة');setTimeout(nextTurn,500);return;}
+    let best=null,bestM=null,bestS=-99;
+    movable.forEach(pc=>getMoves(pc).forEach(mv=>{
+      let s=0;
+      if(mv.action==='attack')s+=15;
+      if(mv.action==='deploy')s+=8;
+      s+=mv.newStep*1.5; // prefer advancing
+      if(mv.q===0&&mv.r===0)s+=20;
+      s+=Math.random()*3;
+      if(s>bestS){bestS=s;best=pc;bestM=mv;}
+    }));
+    if(best&&bestM){
+      GS.sel=best.id; GS.tgts=[bestM]; draw();
+      setTimeout(()=>{
+        if(GS.phase==='over')return;
+        GS.sel=null; GS.tgts=[];
+        doMove(best,bestM);
+        setTimeout(nextTurn,400);
+      },350);
+    } else setTimeout(nextTurn,400);
+  },500);
+}
+
+// ── Input ──
+function getXY(e){
+  const rc=cv.getBoundingClientRect(), src=e.touches?e.touches[0]:e;
+  return{x:(src.clientX-rc.left)*(cv.width/rc.width), y:(src.clientY-rc.top)*(cv.height/rc.height)};
+}
+
+function onInput(e){
+  e.preventDefault();
+  if(!GS.phase||GS.phase==='over'||GS.phase==='bot')return;
+  const p=PD[GS.turn]; if(!p||p.isBot||p.isCenter)return;
+  if(GS.phase==='roll')return; // must press dice button
+  const{x,y}=getXY(e), {q,r}=p2h(x,y), pid=p.id;
+
+  if(GS.phase==='select'){
+    let pc=pieceAt(q,r);
+    if(!pc){// check home
+      const hi=isHome(q,r);
+      if(hi===pid)pc=GS.pieces.find(pp=>pp.pid===pid&&pp.status==='home');
+    }
+    if(pc&&pc.pid===pid&&pc.status!=='dead'){
+      const mv=getMoves(pc);
+      if(mv.length){GS.sel=pc.id;GS.tgts=mv;GS.phase='move';draw();return;}
+      else toast('هذه القطعة لا تستطيع التحرك الآن');
+    }
+    return;
+  }
+
+  if(GS.phase==='move'){
+    const tgt=GS.tgts.find(t=>t.q===q&&t.r===r);
+    const pc=GS.pieces.find(p=>p.id===GS.sel);
+    if(tgt&&pc){GS.sel=null;GS.tgts=[];doMove(pc,tgt);setTimeout(nextTurn,500);return;}
+    // re-select
+    let np=pieceAt(q,r);
+    if(!np){const hi=isHome(q,r);if(hi===pid)np=GS.pieces.find(pp=>pp.pid===pid&&pp.status==='home');}
+    if(np&&np.pid===pid&&np.status!=='dead'){
+      const mv=getMoves(np);
+      if(mv.length){GS.sel=np.id;GS.tgts=mv;draw();return;}
+    }
+    GS.sel=null;GS.tgts=[];GS.phase='select';draw();
+  }
+}
+cv.addEventListener('click',onInput,{passive:false});
+cv.addEventListener('touchend',onInput,{passive:false});
+
+// ══════════════════════════════════════
+//  RENDERING
+// ══════════════════════════════════════
+function draw(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  drawBg();
+  GRID.forEach(h=>drawHex(h.q,h.r));
+  drawPaths();
+  drawHomes();
+  drawCenter();
+  drawTargets();
+  drawSel();
+  drawAllPieces();
+}
+
+function drawBg(){
+  const g=ctx.createRadialGradient(CX,CY,0,CX,CY,CX);
+  g.addColorStop(0,'#0c1128');g.addColorStop(.5,'#080c1c');g.addColorStop(1,'#04060e');
+  ctx.fillStyle=g;ctx.fillRect(0,0,cv.width,cv.height);
+}
+
+function hexPath(x,y,r){
+  ctx.beginPath();
+  for(let i=0;i<6;i++){const a=Math.PI/180*(60*i+30);i?ctx.lineTo(x+r*Math.cos(a),y+r*Math.sin(a)):ctx.moveTo(x+r*Math.cos(a),y+r*Math.sin(a));}
+  ctx.closePath();
+}
+
+// Zone color for each hex
+function zoneColor(q,r){
+  // Determine zone based on position
+  const thr=1.5;
+  if(r>Math.abs(q)*thr*.5)return 'red';
+  if(r<-Math.abs(q)*thr*.5)return 'blue';
+  if(q>Math.abs(r)*thr*.5)return 'green';
+  if(q<-Math.abs(r)*thr*.5)return 'yell';
+  return null;
+}
+
+function drawHex(q,r){
+  const{x,y}=h2p(q,r);
+  const terr=GS.territory?.[`${q},${r}`];
+  const zone=zoneColor(q,r);
+  const hh=isHome(q,r);
+
+  let fill='#08101e', stroke='rgba(20,35,65,.35)';
+
+  if(terr){
+    const p=pd(terr);
+    fill=p.color+'22'; stroke=p.color+'55';
+    // Territory shimmer
+    ctx.save();hexPath(x,y,HS-1.8);ctx.fillStyle=fill;ctx.fill();
+    ctx.strokeStyle=stroke;ctx.lineWidth=.8;ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  if(hh){
+    const p=pd(hh);
+    fill=p.dk+'aa'; stroke=p.color+'66';
+    ctx.save();ctx.shadowColor=p.glow;ctx.shadowBlur=5;
+    hexPath(x,y,HS-1.5);ctx.fillStyle=fill;ctx.fill();
+    ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  if(zone){
+    const p=pd(zone);fill=p.dk+'44';stroke=p.color+'28';}
+
+  hexPath(x,y,HS-1.8);ctx.fillStyle=fill;ctx.fill();
+  ctx.strokeStyle=stroke;ctx.lineWidth=.55;ctx.stroke();
+}
+
+function drawPaths(){
+  ['red','blue','green','yell'].forEach(pid=>{
+    const p=pd(pid), path=PATHS[pid];
+    path.forEach((h,si)=>{
+      const{x,y}=h2p(h.q,h.r);
+      ctx.save();
+      ctx.globalAlpha=si<SAFE_STEPS?.25:.15;
+      hexPath(x,y,HS-2);ctx.fillStyle=p.color;ctx.fill();
+      ctx.restore();
+      // Safe indicator
+      if(si<SAFE_STEPS){
+        ctx.save();ctx.globalAlpha=.6;
+        ctx.font=(HS*.28)+'px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText('🛡',x,y+1);ctx.restore();
+      }
+      // Path connector lines
+      if(si>0){
+        const prev=path[si-1], {x:px,y:py}=h2p(prev.q,prev.r);
+        ctx.save();ctx.strokeStyle=p.color+'66';ctx.lineWidth=1.5;
+        ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(x,y);ctx.stroke();
+        ctx.restore();
+      }
+    });
+  });
+}
+
+function drawHomes(){
+  PD.filter(p=>!p.isCenter).forEach(p=>{
+    const hxs=HOMES[p.id];
+    hxs.forEach((h,i)=>{
+      const{x,y}=h2p(h.q,h.r);
+      // Count home pieces
+      const homePieces=GS.pieces?GS.pieces.filter(pc=>pc.pid===p.id&&pc.status==='home'):[];
+      ctx.save();ctx.shadowColor=p.glow;ctx.shadowBlur=8;
+      hexPath(x,y,HS-1.5);ctx.fillStyle=p.dk+'cc';ctx.fill();
+      ctx.strokeStyle=p.color+'99';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.restore();
+      if(i===2){// Label hex
+        ctx.save();ctx.fillStyle=p.color;ctx.font='bold '+(HS*.38)+'px Cairo';
+        ctx.textAlign='center';ctx.textBaseline='middle';ctx.shadowColor=p.glow;ctx.shadowBlur=8;
+        ctx.fillText(p.name[0],x,y);ctx.restore();
+      }
+    });
+    // Home piece count badge
+    if(GS.pieces){
+      const cnt=GS.pieces.filter(pc=>pc.pid===p.id&&pc.status==='home').length;
+      if(cnt>0){
+        const{x,y}=h2p(hxs[0].q,hxs[0].r);
+        ctx.save();ctx.fillStyle=p.color;
+        ctx.font='bold '+(HS*.36)+'px Cairo';ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText(cnt+'🏠',x,y);ctx.restore();
+      }
+    }
+  });
+}
+
+function drawCenter(){
+  const boss=pd('boss');
+  const rings=[0,1,2].reverse();
+  rings.forEach(ri=>{
+    const hexes=ri===0?[{q:0,r:0}]:HOMES.boss.filter((_,i)=>i>0);
+    if(ri===0){
+      const{x,y}=h2p(0,0);
+      ctx.save();ctx.shadowColor='rgba(160,40,200,.9)';ctx.shadowBlur=20;
+      hexPath(x,y,HS-1);ctx.fillStyle='#2a0840';ctx.fill();
+      ctx.strokeStyle='#c040e0';ctx.lineWidth=2;ctx.stroke();
+      ctx.fillStyle='#ff60ff';ctx.font='bold '+(HS*.55)+'px serif';
+      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('☠',x,y);
+      ctx.restore();
+    }
+  });
+}
+
+function drawTargets(){
+  (GS.tgts||[]).forEach(t=>{
+    const{x,y}=h2p(t.q,t.r), atk=t.action==='attack';
+    ctx.save();
+    ctx.globalAlpha=.4;hexPath(x,y,HS-2);
+    ctx.fillStyle=atk?'rgba(255,50,0,.5)':'rgba(50,255,50,.18)';ctx.fill();
+    ctx.globalAlpha=1;ctx.strokeStyle=atk?'#ff7020':'#50ff50';
+    ctx.lineWidth=2.2;ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=10;
+    hexPath(x,y,HS-2);ctx.stroke();ctx.restore();
+  });
+}
+
+function drawSel(){
+  if(!GS.sel||!GS.pieces)return;
+  const pc=GS.pieces.find(p=>p.id===GS.sel);if(!pc)return;
+  const pos=getPiecePos(pc);if(!pos)return;
+  const{x,y}=h2p(pos.q,pos.r);
+  ctx.save();ctx.strokeStyle='rgba(255,255,255,.95)';ctx.lineWidth=2.5;
+  ctx.shadowColor='#fff';ctx.shadowBlur=16;hexPath(x,y,HS-1);ctx.stroke();ctx.restore();
+}
+
+function getPiecePos(p){
+  if(p.status==='on'){const ph=PATHS[p.pid]?.[p.step];return ph||null;}
+  if(p.status==='home'){
+    const idx=(GS.pieces||[]).filter(pp=>pp.pid===p.pid&&pp.status==='home').indexOf(p);
+    return HOMES[p.pid]?.[idx]||HOMES[p.pid]?.[0];
+  }
+  return null;
+}
+
+function drawAllPieces(){
+  // Stack pieces at same position
+  const stacks={};
+  (GS.pieces||[]).forEach(p=>{
+    if(p.status==='dead')return;
+    const pos=getPiecePos(p);if(!pos)return;
+    const k=`${pos.q},${pos.r}`;
+    if(!stacks[k])stacks[k]=[];
+    stacks[k].push(p);
+  });
+  Object.entries(stacks).forEach(([k,pcs])=>{
+    const[q,r]=k.split(',').map(Number);
+    const{x,y}=h2p(q,r);
+    pcs.forEach((pc,i)=>{
+      const off=pcs.length>1?(i-pcs.length*.5+.5)*HS*.28:0;
+      drawPiece(pc,x+off,y,pc.id===GS.sel);
+    });
+  });
+}
+
+function drawPiece(pc,x,y,sel){
+  const p=pd(pc.pid);
+  const h=pc.rank==='cmd'?HS*.44:pc.rank==='ofc'?HS*.38:pc.rank==='sol'?HS*.28:HS*.33;
+  const boss=pc.pid==='boss';
+
+  ctx.save();
+  ctx.shadowColor=sel?'rgba(255,255,255,.95)':p.glow;ctx.shadowBlur=sel?18:8;
+
+  // Ground shadow
+  ctx.globalAlpha=.2;ctx.fillStyle='#000';
+  ctx.beginPath();ctx.ellipse(x,y+2,HS*.2,HS*.07,0,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=1;
+
+  // Base disc
+  const bg=ctx.createLinearGradient(x-HS*.2,y,x+HS*.2,y);
+  bg.addColorStop(0,p.dk);bg.addColorStop(.4,p.color);bg.addColorStop(.6,p.color);bg.addColorStop(1,p.dk);
+  ctx.fillStyle=bg;ctx.beginPath();ctx.ellipse(x,y,HS*.2,HS*.07,0,0,Math.PI*2);ctx.fill();
+
+  // Body
+  const bd=ctx.createLinearGradient(x-HS*.13,0,x+HS*.13,0);
+  bd.addColorStop(0,p.dk);bd.addColorStop(.3,boss?'#6a1088':p.color);bd.addColorStop(.7,boss?'#6a1088':p.color);bd.addColorStop(1,p.dk);
+  ctx.fillStyle=bd;ctx.beginPath();
+  ctx.moveTo(x-HS*.17,y);
+  ctx.bezierCurveTo(x-HS*.19,y-h*.35,x-HS*.1,y-h*.7,x-HS*.09,y-h);
+  ctx.lineTo(x+HS*.09,y-h);
+  ctx.bezierCurveTo(x+HS*.1,y-h*.7,x+HS*.19,y-h*.35,x+HS*.17,y);
+  ctx.closePath();ctx.fill();
+
+  // Symbol
+  ctx.fillStyle=boss?'#ff80ff':'rgba(255,255,255,.92)';
+  ctx.font='bold '+(HS*.28)+'px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(RSYM[pc.rank]||'●',x,y-h+1);
+  ctx.restore();
+}
+
+// ── UI ──
+function renderUI(){
+  if(!GS.phase)return;
+  const p=PD[GS.turn]; if(!p)return;
+  const nm=document.getElementById('tname');
+  nm.textContent=p.name+(p.isBot?' 🤖':'');nm.style.color=p.color;
+  const hints={roll:p.isBot?'البوت يفكر...':'اضغط الزهر — ٦ لإرسال جندي',
+    select:'اضغط قطعة لتحريكها',move:'اضغط على الهدف',
+    bot:p.name+' يلعب...',over:'انتهت اللعبة'};
+  document.getElementById('thint').textContent=hints[GS.phase]||'';
+  document.getElementById('tlog').textContent=GS.logs?.[0]||'';
+  const de=document.getElementById('dice');
+  if(GS.phase==='roll'&&!p.isBot)de.classList.add('rdy');else de.classList.remove('rdy');
+  document.getElementById('side').innerHTML=PD.filter(pp=>!pp.isCenter).map(pp=>{
+    const cnt=alive(pp.id).length,cur=pp.id===p.id;
+    return`<div class="pr" style="opacity:${cnt>0?1:.3}">
+      <div class="pd" style="background:${pp.color};${cur?'box-shadow:0 0 5px '+pp.color+'':''}"></div>
+      <span style="color:${pp.color};font-weight:${cur?900:600}">${cnt}</span>
+    </div>`;
+  }).join('');
+}
+
+function lg(m){if(GS.logs){GS.logs.unshift(m);if(GS.logs.length>40)GS.logs.pop();}renderUI();toast(m);}
+let tt;
+function toast(m){
+  const el=document.getElementById('toast');
+  el.textContent=m;el.classList.add('on');
+  clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('on'),2600);
+}
+
+// ── Resize ──
+function resize(){
+  const w=document.getElementById('cvWrap');
+  const sz=Math.min(w.clientWidth-4,w.clientHeight-4,720);
+  cv.width=720;cv.height=720;
+  cv.style.width=sz+'px';cv.style.height=sz+'px';
+  HS=Math.max(18,Math.round(sz/720*30));
+  CX=360;CY=360;
+  if(GS.pieces)draw();else drawBg();
+}
+window.addEventListener('resize',resize);
+resize();
+start();
+</script>
+</body>
+</html>

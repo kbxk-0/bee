@@ -40,6 +40,7 @@
       <input type="email" id="l-email" placeholder="البريد الإلكتروني..." class="auth-input">
       <input type="password" id="l-pass" placeholder="كلمة المرور..." class="auth-input"
              onkeydown="if(event.key==='Enter') doLogin()">
+      <input type="text" id="l-refcode" placeholder="كود الإحالة (اختياري)..." class="auth-input" style="display:none;text-transform:uppercase;letter-spacing:2px">
       <button class="auth-btn" onclick="doLogin()">دخول اللعبة</button>
       <span class="auth-switch" onclick="toggleAuthMode()">ليس لديك حساب؟ <span>أنشئ واحداً</span></span>
     </div>
@@ -94,7 +95,7 @@
   <section id="admin-panel" class="page" style="display:none;overflow-y:auto;padding-bottom:75px"></section>
 
   <!-- نافذة الملف الشخصي -->
-  <div id="profile-modal">
+  <div id="profile-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;padding:16px">
     <div class="modal-box">
       <h3 style="margin:0 0 16px;background:linear-gradient(135deg,var(--accent2),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:16px">ملف اللاعب</h3>
       <div id="profile-content">جاري التحميل...</div>
@@ -102,17 +103,63 @@
     </div>
   </div>
 
+  <!-- زر البطولات -->
+  <button onclick="openTournaments()" id="tourn-btn"
+    style="display:none;position:fixed;bottom:75px;left:150px;z-index:400;
+      width:38px;height:38px;border-radius:50%;
+      background:linear-gradient(135deg,#1c1500,#2a2000);
+      border:1px solid rgba(200,169,64,0.3);
+      color:#c8a940;font-size:16px;cursor:pointer;
+      box-shadow:0 4px 12px rgba(0,0,0,0.4)">
+    🏆
+  </button>
+
+  <!-- زر الرسائل الخاصة -->
+  <button onclick="openInbox()" id="inbox-btn"
+    style="display:none;position:fixed;bottom:75px;left:104px;z-index:400;
+      width:38px;height:38px;border-radius:50%;
+      background:linear-gradient(135deg,#1a1a28,#2a2a3f);
+      border:1px solid rgba(255,255,255,0.1);
+      color:#888;font-size:16px;cursor:pointer;
+      box-shadow:0 4px 12px rgba(0,0,0,0.4);position:relative">
+    💬
+    <div id="inbox-dot" style="display:none;position:absolute;top:6px;right:6px;
+      width:9px;height:9px;border-radius:50%;background:#ff4757;border:2px solid #0a0a14"></div>
+  </button>
+
+  <!-- زر البحث -->
+  <button onclick="openSearch()" id="search-btn"
+    style="display:none;position:fixed;bottom:75px;left:58px;z-index:400;
+      width:38px;height:38px;border-radius:50%;
+      background:linear-gradient(135deg,#1a1a28,#2a2a3f);
+      border:1px solid rgba(255,255,255,0.1);
+      color:#888;font-size:16px;cursor:pointer;
+      box-shadow:0 4px 12px rgba(0,0,0,0.4)">
+    🔍
+  </button>
+
+  <!-- زر الإعدادات -->
+  <button onclick="openSettings()" id="settings-btn"
+    style="display:none;position:fixed;bottom:75px;left:12px;z-index:400;
+      width:38px;height:38px;border-radius:50%;
+      background:linear-gradient(135deg,#1a1a28,#2a2a3f);
+      border:1px solid rgba(255,255,255,0.1);
+      color:#888;font-size:16px;cursor:pointer;
+      box-shadow:0 4px 12px rgba(0,0,0,0.4)">
+    ⚙️
+  </button>
+
   <!-- شريط التنقل -->
   <nav id="navbar" style="position:fixed;bottom:0;left:0;right:0;z-index:100;background:linear-gradient(to top,#0a0a14,#0d0d1e);border-top:1px solid rgba(200,169,64,0.15);display:flex;align-items:flex-end;justify-content:space-around;padding:0 4px 10px;height:65px;direction:ltr">
 
-    <button data-section="chat" onclick="showSection('chat')"
+    <button data-section="store" onclick="showSection('store')"
       style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:8px 6px;color:#555;font-family:inherit;font-size:10px;font-weight:700;min-width:52px">
-      <span style="font-size:22px">💬</span><span>الدردشة</span>
+      <span style="font-size:22px">🛒</span><span>المتجر</span>
     </button>
 
-    <button data-section="games" onclick="showSection('games');renderGames()"
+    <button data-section="clan" onclick="showSection('clan')"
       style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:8px 6px;color:#555;font-family:inherit;font-size:10px;font-weight:700;min-width:52px">
-      <span style="font-size:22px">♠️</span><span>الألعاب</span>
+      <span style="font-size:22px">🛡️</span><span>الأندية</span>
     </button>
 
     <div style="display:flex;flex-direction:column;align-items:center;margin-top:-22px;min-width:62px">
@@ -123,14 +170,14 @@
       <span style="font-size:9px;font-weight:700;color:#c8a940;margin-top:3px">الرئيسية</span>
     </div>
 
-    <button data-section="clan" onclick="showSection('clan')"
+    <button data-section="games" onclick="showSection('games');renderGames()"
       style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:8px 6px;color:#555;font-family:inherit;font-size:10px;font-weight:700;min-width:52px">
-      <span style="font-size:22px">🛡️</span><span>الأندية</span>
+      <span style="font-size:22px">♠️</span><span>الألعاب</span>
     </button>
 
-    <button data-section="store" onclick="showSection('store')"
+    <button data-section="chat" onclick="showSection('chat')"
       style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:8px 6px;color:#555;font-family:inherit;font-size:10px;font-weight:700;min-width:52px">
-      <span style="font-size:22px">🛒</span><span>المتجر</span>
+      <span style="font-size:22px">💬</span><span>الدردشة</span>
     </button>
 
   </nav>
@@ -140,13 +187,35 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/cards.js"></script>
   <script src="js/notifications.js"></script>
+  <script src="js/notifications-panel.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/search.js"></script>
+  <script src="js/pm.js"></script>
+  <script src="js/achievements.js"></script>
+  <script src="js/tournament.js"></script>
+  <script src="js/vip.js"></script>
+  <script src="js/referral.js"></script>
+  <script src="js/update.js"></script>
+  <script src="js/home.js"></script>
+  <script src="js/leaderboard.js"></script>
+  <script src="js/inventory.js"></script>
+  <script src="js/rewards.js"></script>
+  <script src="js/games.js"></script>
+  <script src="js/clan.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/profile.js"></script>
+  <script src="js/friends.js"></script>
+  <script src="js/admin.js"></script>
   <script src="js/app.js"></script>
   <script src="js/chat.js"></script>
   <script src="js/auth.js"></script>
 
   <script>
     window.addEventListener('load', () => {
+      setTimeout(() => { if(typeof checkForUpdate==='function') checkForUpdate(); }, 3000);
       setTimeout(() => {
         const s = document.getElementById('splash-screen');
         if (s) { s.classList.add('hidden'); setTimeout(() => s.remove(), 500); }
