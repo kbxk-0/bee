@@ -434,13 +434,19 @@ body::before {
   align-items: center;
 }
 .modal-box {
-  background: rgba(18,14,5,0.95);
+  background: rgba(12,10,3,0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   padding: 24px;
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(200,169,64,0.35);
-  box-shadow: 0 0 40px rgba(200,169,64,0.2), 0 20px 60px rgba(0,0,0,0.7);
+  border: 1px solid rgba(200,169,64,0.28);
+  box-shadow: 0 0 60px rgba(200,169,64,0.16),
+              0 24px 80px rgba(0,0,0,0.8),
+              inset 0 1px 0 rgba(200,169,64,0.1);
   width: 90%;
   max-width: 320px;
+  max-height: 80vh;
+  overflow-y: auto;
   color: white;
   text-align: center;
 }
@@ -548,4 +554,323 @@ body::before {
 @keyframes flash {
   from { border-color: var(--danger); }
   to   { border-color: transparent; }
+}
+/* ============================================================
+   إضافات style.css — قسم الشات
+   أضف هذا الكود في نهاية ملف style.css
+   ============================================================ */
+
+/* ===== تخطيط قسم الشات ===== */
+#chat {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== خلفية منطقة الرسائل ===== */
+#chat-messages {
+  background-color: rgba(8, 6, 2, 0.52);
+  background-image:
+    radial-gradient(ellipse at 50% 0%,   rgba(180,130,0,0.06) 0%, transparent 55%),
+    radial-gradient(ellipse at 0%   100%, rgba(140,100,0,0.04) 0%, transparent 45%),
+    radial-gradient(ellipse at 100% 100%, rgba(160,120,0,0.04) 0%, transparent 45%);
+}
+
+/* ===== شريط الإعلان داخل الشات ===== */
+#chat-announce-overlay {
+  flex-shrink: 0;
+  overflow: hidden;
+  animation: slideDownChat 0.35s ease;
+}
+
+/* ===== أنيميشن الإعلانات ===== */
+@keyframes slideDownChat {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+@keyframes slideDownAnnounce {
+  from { transform: translateY(-100%); }
+  to   { transform: translateY(0);     }
+}
+
+/* نص يتحرك من اليمين لليسار (RTL) */
+@keyframes scrollText {
+  from { transform: translateX(80%);   }
+  to   { transform: translateX(-120%); }
+}
+
+/* ===== إزالة الشريط القديم #admin-marquee ===== */
+#admin-marquee { display: none !important; }
+
+/* ================================================================
+   ✨ Phase 2 — تأثيرات 3D والحركة
+   ================================================================ */
+
+/* ── 3D press محسّن على الأزرار ──────────────────────────────── */
+.btn:active {
+  transform: scale(0.93) translateY(2px) !important;
+  transition: transform 0.08s ease !important;
+}
+button:not(#navbar button):not(.auth-btn):active {
+  transform: scale(0.93) translateY(2px) !important;
+}
+#navbar button:not([data-section="home"]):active {
+  transform: scale(0.86) !important;
+}
+#navbar button[data-section="home"]:active {
+  transform: scale(0.90) translateY(3px) !important;
+}
+.auth-btn:active {
+  transform: scale(0.96) translateY(1px) !important;
+  box-shadow: 0 2px 10px rgba(200,169,64,0.3) !important;
+}
+
+/* ── Ripple ────────────────────────────────────────────────────── */
+@keyframes ripple-expand {
+  from { transform: scale(0); opacity: 0.45; }
+  to   { transform: scale(5); opacity: 0;   }
+}
+.ripple-circle {
+  position: absolute;
+  border-radius: 50%;
+  width: 60px; height: 60px;
+  margin-top: -30px; margin-left: -30px;
+  background: rgba(255,255,255,0.22);
+  pointer-events: none;
+  animation: ripple-expand 0.55s linear forwards;
+  z-index: 1;
+}
+.ripple-circle.ripple-gold {
+  background: rgba(240,192,64,0.38);
+}
+
+/* ── انتقال الصفحات ────────────────────────────────────────────── */
+@keyframes pageSlideIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+.page-entering {
+  animation: pageSlideIn 0.26s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ── bounce لأيقونات navbar ────────────────────────────────────── */
+@keyframes navIconBounce {
+  0%   { transform: scale(1);    }
+  35%  { transform: scale(1.42); }
+  65%  { transform: scale(0.84); }
+  100% { transform: scale(1);    }
+}
+.nav-bouncing {
+  display: inline-block;
+  animation: navIconBounce 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+/* ── shimmer على العملات والذهب ────────────────────────────────── */
+@keyframes shimmerSlide {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+.shimmer-gold {
+  background: linear-gradient(
+    90deg,
+    var(--gold2) 0%, var(--gold) 25%,
+    #fff5b0 50%,
+    var(--gold) 75%, var(--gold2) 100%
+  ) !important;
+  background-size: 200% auto !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  animation: shimmerSlide 2.8s linear infinite;
+}
+
+/* ── glow pulse على الأزرار الرئيسية ──────────────────────────── */
+@keyframes mainBtnGlow {
+  0%,100% { box-shadow: 0 0 22px rgba(200,169,64,0.5), 0 0 44px rgba(200,169,64,0.2); }
+  50%     { box-shadow: 0 0 38px rgba(240,192,64,0.8), 0 0 76px rgba(200,169,64,0.38), 0 0 110px rgba(200,169,64,0.12); }
+}
+.glow-pulse {
+  animation: mainBtnGlow 2.5s ease-in-out infinite;
+}
+
+/* ── دخول البطاقات ─────────────────────────────────────────────── */
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+.card-entering {
+  opacity: 0;
+  animation: cardEnter 0.32s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* ── pop للعملات عند التغيير ───────────────────────────────────── */
+@keyframes coinPop {
+  0%   { transform: scale(1);    }
+  45%  { transform: scale(1.24); }
+  100% { transform: scale(1);    }
+}
+.coin-popping {
+  display: inline-block;
+  animation: coinPop 0.42s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+
+/* ================================================================
+   🎨 Phase 3 — الجو والخلفية الفخمة
+   ================================================================ */
+
+/* ── Glassmorphism محسّن للبطاقات ─────────────────────────────── */
+.card-premium {
+  background:      rgba(18,14,5,0.72) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border:     1px solid rgba(200,169,64,0.14) !important;
+  box-shadow: 0 4px 28px rgba(0,0,0,0.45),
+              inset 0 1px 0 rgba(200,169,64,0.08) !important;
+  transition: border-color .25s, box-shadow .25s !important;
+}
+.card-premium:hover {
+  border-color: rgba(200,169,64,0.38) !important;
+  box-shadow:   0 6px 36px rgba(0,0,0,0.5),
+                0 0 24px rgba(200,169,64,0.08),
+                inset 0 1px 0 rgba(200,169,64,0.12) !important;
+}
+
+.card-gold {
+  background:      rgba(22,18,2,0.78) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border:          1px solid rgba(240,192,64,0.22) !important;
+  box-shadow:      0 4px 28px rgba(0,0,0,0.45),
+                   0 0 20px rgba(200,169,64,0.06),
+                   inset 0 1px 0 rgba(240,192,64,0.1) !important;
+}
+
+/* ── خط علوي بتدرج ذهبي على البطاقات ────────────────────────── */
+.card-premium::before,
+.card-gold::before {
+  opacity: 0.7 !important;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(200,169,64,0.6) 40%,
+    rgba(240,192,64,0.9) 50%,
+    rgba(200,169,64,0.6) 60%,
+    transparent 100%) !important;
+}
+
+/* ── Modal glass ──────────────────────────────────────────────── */
+/* (دمجت هنا التعريف الثاني المكرر اللي كان يطغى صامت على الحدود
+   والعرض بسبب !important، وكان سبب ظهور النافذة بحجم كبير بدون تمرير) */
+.auth-card {
+  background:      rgba(255,255,255,0.03) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border:     1px solid rgba(200,169,64,0.12) !important;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5),
+              inset 0 1px 0 rgba(200,169,64,0.08) !important;
+}
+
+/* ── Navbar glass محسّن ──────────────────────────────────────── */
+#navbar {
+  background:      rgba(8,6,2,0.88) !important;
+  backdrop-filter: blur(28px) !important;
+  -webkit-backdrop-filter: blur(28px) !important;
+  border-top: 1px solid rgba(200,169,64,0.18) !important;
+  box-shadow: 0 -4px 32px rgba(0,0,0,0.5) !important;
+}
+
+/* ── Neon glow على زر الرئيسية (home) ────────────────────────── */
+#navbar button[data-section="home"] {
+  box-shadow:
+    0 0 22px rgba(200,169,64,0.55),
+    0 0 44px rgba(200,169,64,0.25),
+    0 -2px 12px rgba(200,169,64,0.18) !important;
+  animation: homeGlow 3s ease-in-out infinite;
+}
+@keyframes homeGlow {
+  0%,100% {
+    box-shadow: 0 0 22px rgba(200,169,64,0.55),
+                0 0 44px rgba(200,169,64,0.22);
+  }
+  50% {
+    box-shadow: 0 0 34px rgba(240,192,64,0.8),
+                0 0 68px rgba(200,169,64,0.38),
+                0 0 100px rgba(200,169,64,0.15);
+  }
+}
+
+/* ── VIP badge glow ───────────────────────────────────────────── */
+@keyframes vipGlow {
+  0%,100% { filter: drop-shadow(0 0 5px rgba(240,192,64,0.65)); }
+  50%     { filter: drop-shadow(0 0 14px rgba(240,192,64,1))
+                    drop-shadow(0 0 28px rgba(200,169,64,0.5)); }
+}
+[class*="vip"], [id*="vip"],
+[class*="VIP"], [id*="VIP"] {
+  animation: vipGlow 2.5s ease-in-out infinite;
+}
+
+/* ── Neon border على شريط XP ─────────────────────────────────── */
+.xp-bar-fill {
+  box-shadow: 0 0 10px rgba(200,169,64,0.6),
+              0 0 20px rgba(200,169,64,0.3) !important;
+}
+
+/* ── نجمة وذهب تتلألأ ────────────────────────────────────────── */
+@keyframes starTwinkle {
+  0%,100% { opacity: 1;    transform: scale(1);    }
+  50%     { opacity: 0.65; transform: scale(0.92); }
+}
+.twinkle { animation: starTwinkle 2s ease-in-out infinite; }
+
+
+/* ================================================================
+   💎 Phase 4 — التفاصيل الاحترافية
+   ================================================================ */
+
+/* ── Toast Notifications ────────────────────────────────────────── */
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-22px) scale(0.93); }
+  to   { opacity: 1; transform: translateY(0)     scale(1);    }
+}
+@keyframes toastOut {
+  from { opacity: 1; transform: translateY(0)     scale(1);    }
+  to   { opacity: 0; transform: translateY(-14px) scale(0.93); }
+}
+@keyframes toastBar {
+  from { width: 100%; }
+  to   { width: 0%;   }
+}
+
+/* ── Skeleton Loading ─────────────────────────────────────────── */
+@keyframes skeletonWave {
+  0%   { background-position:  200% 0; }
+  100% { background-position: -200% 0; }
+}
+.skeleton-pulse {
+  background: linear-gradient(
+    90deg,
+    rgba(200,169,64,0.05) 25%,
+    rgba(200,169,64,0.14) 50%,
+    rgba(200,169,64,0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeletonWave 1.6s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+/* ── Input focus ring محسّن ────────────────────────────────────── */
+.input-field:focus,
+.auth-input:focus {
+  border-color: var(--accent2) !important;
+  box-shadow: 0 0 0 3px rgba(200,169,64,0.2),
+              0 0 12px rgba(200,169,64,0.12) !important;
+}
+
+/* ── Active state للأقسام في الناف ──────────────────────────────── */
+#navbar button[data-active="true"] {
+  color: var(--accent2) !important;
+}
+#navbar button[data-active="true"] span:first-child {
+  filter: drop-shadow(0 0 8px rgba(200,169,64,0.85));
 }

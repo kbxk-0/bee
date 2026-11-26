@@ -68,6 +68,7 @@ function filterBtnStyle(active) {
 
 function setSearchFilter(filter) {
   searchFilter = filter;
+  Sounds.play('tap'); Haptic.light();
   ['all','players','clans'].forEach(f => {
     const btn = document.getElementById('filter-' + f);
     if (btn) btn.style.cssText = filterBtnStyle(f === filter);
@@ -244,6 +245,7 @@ function renderSearchResults(results, q) {
 
 function joinClanFromSearch(clanId, clanName) {
   if (typeof joinClan === 'function') {
+    Sounds.play('success'); Haptic.success();
     joinClan(clanId, clanName);
     document.getElementById('search-panel')?.remove();
   }

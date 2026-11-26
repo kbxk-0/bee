@@ -8,6 +8,7 @@ function viewProfile(uid) {
   const modal   = document.getElementById('profile-modal');
   const content = document.getElementById('profile-content');
   if (!modal || !content) return;
+  resetModalStack();
   modal.style.display = 'flex';
   content.innerHTML = '<div style="color:#705030;text-align:center;padding:20px">جاري التحميل...</div>';
 
@@ -121,7 +122,7 @@ function saveFullProfile() {
 
   db.ref('users/' + user.uid).update({ bio }, err => {
     if (!err) {
-      alert('✓ تم حفظ التغييرات!');
+      Toast.show('✓ تم حفظ التغييرات!', 'success'); Sounds.play('success'); Haptic.success();
       document.getElementById('profile-modal').style.display = 'none';
     }
   });
@@ -215,34 +216,61 @@ function saveProfile() {
   const user = auth.currentUser; if (!user) return;
   const newName = document.getElementById('edit-username-input')?.value.trim();
   if (!newName || newName.length < 3 || newName.length > 15) {
-    alert('الاسم بين 3 و15 حرفاً'); return;
+    Toast.show('الاسم بين 3 و15 حرفاً', 'error'); return;
   }
 
-  db.ref('users/' + user.uid + '/lastUsernameChange').once('value', snap => {
-    const last      = snap.val() || 0;
+  const nameChanging = newName !== currentUsername;
+
+  db.ref('users/' + user.uid).once('value', snap => {
+    const u         = snap.val() || {};
+    const last      = u.lastUsernameChange || 0;
     const daysSince = (Date.now() - last) / (1000 * 60 * 60 * 24);
 
-    if (newName !== currentUsername && daysSince < 7) {
-      alert(`يمكنك تغيير اسمك بعد ${Math.ceil(7 - daysSince)} يوم`);
+    if (nameChanging && daysSince < 7) {
+      Toast.show(`يمكنك تغيير اسمك بعد ${Math.ceil(7 - daysSince)} يوم`, 'error');
       return;
     }
 
-    const updates = {};
-    if (newName !== currentUsername) {
-      updates.username = newName;
-      updates.lastUsernameChange = Date.now();
+    // سعر تغيير الاسم يتضاعف كل مرة — يبدأ 50,000 ويثبت بعد 5 مرات (حداً أقصى 1,600,000)
+    const changeCount = u.nameChangeCount || 0;
+    const price        = nameChanging ? 50000 * Math.pow(2, Math.min(changeCount, 5)) : 0;
+
+    if (nameChanging && (u.coins || 0) < price) {
+      Toast.show(`تحتاج ${price.toLocaleString('ar')} 🪙 لتغيير اسمك (السعر يتضاعف كل مرة)`, 'error');
+      return;
     }
-    if (selectedAvatarColor) updates.avatarColor = selectedAvatarColor;
-    if (selectedPhotoBase64) updates.photoURL = selectedPhotoBase64;
 
-    if (Object.keys(updates).length === 0) { alert('لا يوجد تغييرات'); return; }
+    if (!nameChanging && !selectedAvatarColor && !pendingPhotoURL) {
+      Toast.show('لا يوجد تغييرات', 'error'); return;
+    }
 
-    db.ref('users/' + user.uid).update(updates, err => {
-      if (err) { alert('حدث خطأ، حاول مرة أخرى'); return; }
-      alert('✓ تم حفظ التغييرات!');
+    db.ref('users/' + user.uid).transaction(uu => {
+      if (!uu) return uu;
+      if (nameChanging) {
+        if ((uu.coins || 0) < price) return uu; // تأكيد أخير وقت التنفيذ الفعلي (تفادي تعارض لحظي)
+        uu.coins              -= price;
+        uu.username            = newName;
+        uu.lastUsernameChange  = Date.now();
+        uu.nameChangeCount     = (uu.nameChangeCount || 0) + 1;
+      }
+      if (selectedAvatarColor) uu.avatarColor = selectedAvatarColor;
+      if (pendingPhotoURL)     uu.photoURL    = pendingPhotoURL;
+      return uu;
+    }, (err, committed) => {
+      if (err || !committed) { Toast.show('حدث خطأ، حاول مرة أخرى', 'error'); return; }
+      Toast.show(nameChanging ? `✓ تم تغيير اسمك! (- ${price.toLocaleString('ar')} 🪙)` : '✓ تم حفظ التغييرات!', 'success');
+      Sounds.play('success'); Haptic.success();
+
+      if (nameChanging) {
+        db.ref('purchase_history/' + user.uid).push({
+          item: 'تغيير الاسم', category: 'profile', price,
+          timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+      }
+
       document.getElementById('profile-modal').style.display = 'none';
-      selectedAvatarColor  = null;
-      selectedPhotoBase64  = null;
+      selectedAvatarColor = null;
+      pendingPhotoURL  = null;
     });
   });
 }
@@ -277,7 +305,7 @@ function showProfilePopup() {
       </div>
 
       <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
-        <div onclick="showEditProfile()" style="cursor:pointer;position:relative">
+        <div id="profile-popup-avatar" onclick="showEditProfile()" style="cursor:pointer;position:relative">
           <div style="width:62px;height:62px;border-radius:50%;background:${getAvatarColor(currentUsername)};
             display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;
             color:white;border:2px solid rgba(168,85,247,0.6)">
@@ -395,24 +423,41 @@ function showProfilePopup() {
     </div>`;
 
   document.body.appendChild(popup);
+
+  // نحدّث الأفتار بالصورة الحقيقية لو موجودة (بدون ما نأخر فتح البوب أب نفسه)
+  const _u = auth.currentUser;
+  if (_u) {
+    db.ref('users/' + _u.uid + '/photoURL').once('value', snap => {
+      const photoURL = snap.val();
+      const avatarWrap = document.getElementById('profile-popup-avatar');
+      if (photoURL && avatarWrap) {
+        avatarWrap.innerHTML = `
+          <img src="${photoURL}" style="width:62px;height:62px;border-radius:50%;object-fit:cover;border:2px solid rgba(168,85,247,0.6)">
+          <div style="position:absolute;bottom:0;right:0;background:#7c3aed;border-radius:50%;
+            width:20px;height:20px;display:flex;align-items:center;justify-content:center;
+            font-size:10px;border:2px solid #08081a">✏️</div>`;
+      }
+    });
+  }
+
   if (typeof listenToPrivateMessages === 'function') listenToPrivateMessages();
 }
 
 // ============================================================
-//  رفع الصورة الشخصية — ضغط وتخزين في Firebase
+//  رفع الصورة الشخصية — ضغط ورفع لـ Firebase Storage
 // ============================================================
 
-let selectedPhotoBase64 = null;
+let pendingPhotoURL = null; // رابط الصورة من Storage بعد ما يخلص الرفع — يُحفظ بقاعدة البيانات عند الضغط على "حفظ"
 
 function handlePhotoUpload(input) {
   const file = input.files[0];
   if (!file) return;
 
-  // التحقق من النوع
   if (!file.type.startsWith('image/')) {
-    alert('يرجى اختيار صورة فقط'); return;
+    Toast.show('يرجى اختيار صورة فقط', 'error'); return;
   }
 
+  const user = auth.currentUser; if (!user) return;
   const status = document.getElementById('upload-status');
   if (status) status.textContent = '⏳ جاري المعالجة...';
 
@@ -432,48 +477,56 @@ function handlePhotoUpload(input) {
       const sy   = (img.height - size) / 2;
       ctx.drawImage(img, sx, sy, size, size, 0, 0, 200, 200);
 
-      // تحويل لـ base64 بجودة 75%
-      const base64 = canvas.toDataURL('image/jpeg', 0.75);
+      // معاينة فورية محلية (قبل ما يخلص الرفع الفعلي)
+      updateAvatarPreviewEl(canvas.toDataURL('image/jpeg', 0.85));
+      if (status) status.textContent = '⏳ جاري الرفع...';
 
-      // التحقق من الحجم (أقل من 150KB)
-      const sizeKB = Math.round((base64.length * 0.75) / 1024);
-      if (sizeKB > 150) {
-        // ضغط أكثر لو كبيرة
-        const base64Low = canvas.toDataURL('image/jpeg', 0.4);
-        selectedPhotoBase64 = base64Low;
-      } else {
-        selectedPhotoBase64 = base64;
-      }
-
-      // معاينة فورية
-      const preview = document.getElementById('avatar-preview');
-      if (preview) {
-        preview.src = selectedPhotoBase64;
-        if (!(preview instanceof HTMLImageElement)) {
-          // لو div حوّله لصورة
-          const img2 = document.createElement('img');
-          img2.id = 'avatar-preview';
-          img2.src = selectedPhotoBase64;
-          img2.style.cssText = preview.style.cssText + 'object-fit:cover';
-          preview.replaceWith(img2);
-        }
-      }
-
-      if (status) status.textContent = '✅ الصورة جاهزة — اضغط حفظ';
+      // تحويل الكانفاس لملف ورفعه لـ Firebase Storage
+      canvas.toBlob(blob => {
+        const fileRef = firebase.storage().ref('avatars/' + user.uid + '.jpg');
+        fileRef.put(blob, { contentType: 'image/jpeg' })
+          .then(snapshot => snapshot.ref.getDownloadURL())
+          .then(url => {
+            pendingPhotoURL = url;
+            updateAvatarPreviewEl(url); // نبدّل المعاينة لرابط الصورة الحقيقي من Storage
+            if (status) status.textContent = '✅ الصورة جاهزة — اضغط حفظ';
+          })
+          .catch(err => {
+            console.error(err);
+            if (status) status.textContent = '❌ فشل الرفع، حاول مرة ثانية';
+            Toast.show('فشل رفع الصورة', 'error');
+          });
+      }, 'image/jpeg', 0.8);
     };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
 
+// تحديث عنصر معاينة الصورة (يحوّل الدائرة الملوّنة لصورة فعلية أول مرة)
+function updateAvatarPreviewEl(src) {
+  const preview = document.getElementById('avatar-preview');
+  if (!preview) return;
+  if (preview instanceof HTMLImageElement) {
+    preview.src = src;
+  } else {
+    const img2 = document.createElement('img');
+    img2.id = 'avatar-preview';
+    img2.src = src;
+    img2.style.cssText = preview.style.cssText + 'object-fit:cover';
+    preview.replaceWith(img2);
+  }
+}
+
 function removePhoto() {
-  if (!confirm('حذف الصورة الشخصية؟')) return;
   const user = auth.currentUser; if (!user) return;
 
   db.ref('users/' + user.uid + '/photoURL').remove(err => {
     if (!err) {
-      selectedPhotoBase64 = null;
-      alert('تم حذف الصورة');
+      pendingPhotoURL = null;
+      // نحذف الملف من Storage كمان للتنظيف (لو فشل الحذف ما يهم، الملف يصير orphan بس مالها أثر)
+      firebase.storage().ref('avatars/' + user.uid + '.jpg').delete().catch(()=>{});
+      Toast.show('تم حذف الصورة', 'success');
       showEditProfile();
     }
   });
@@ -487,14 +540,12 @@ function showPlayerStats(uid) {
   const modal   = document.getElementById('profile-modal');
   const content = document.getElementById('profile-content');
   if (!modal || !content) return;
+  saveModalSnapshot();
   modal.style.display = 'flex';
   content.innerHTML = '<div style="text-align:center;color:#705030;padding:20px">جاري التحميل...</div>';
 
   const gameNames = {
-    coinflip: '🪙 قلب العملة',
-    dice:     '🎲 رمي النرد',
-    guess:    '🔢 خمّن الرقم',
-    redblack: '🃏 أحمر أو أسود'
+    million: '🃏 مليون'
   };
 
   db.ref('users/' + uid + '/gameStats').once('value', statsSnap => {

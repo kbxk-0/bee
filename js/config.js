@@ -56,6 +56,8 @@ function escapeHTML(str) {
 }
 
 // ===== دالة التنقل بين الصفحات =====
+let _navigatingViaPopstate = false; // يمنع تكرار تسجيل نفس الصفحة بسجل التصفح وقت الرجوع
+
 function showSection(id) {
   document.querySelectorAll('.page').forEach(p => { p.style.display = 'none'; });
   const target = document.getElementById(id);
@@ -65,6 +67,13 @@ function showSection(id) {
     btn.removeAttribute('data-active');
     if (btn.dataset.section === id) btn.setAttribute('data-active', 'true');
   });
+
+  // نسجّل بسجل تصفح المتصفح — يخلي زر الرجوع بالجهاز يرجعك للصفحة اللي قبلها
+  // بداخل التطبيق نفسه، بدل ما يقفل التطبيق كامل على طول
+  if (!_navigatingViaPopstate && id !== 'home') {
+    history.pushState({ section: id }, '', '');
+  }
+  _navigatingViaPopstate = false;
 
   if (id === 'chat') {
     if (typeof triggerMarquee       === 'function') triggerMarquee("القوانين تطبق على الجميع!");
@@ -79,3 +88,11 @@ function showSection(id) {
   if (id === 'inventory')   { if (typeof renderInventory     === 'function') renderInventory();     }
   if (id === 'admin-panel') { if (typeof renderAdminPanelPage === 'function') renderAdminPanelPage(); }
 }
+
+// زر الرجوع بالجهاز — يرجعك للصفحة اللي قبلها بداخل التطبيق نفسه
+// (بدل ما يقفل التطبيق كامل على طول من أي صفحة غير الرئيسية)
+window.addEventListener('popstate', e => {
+  _navigatingViaPopstate = true;
+  const targetSection = (e.state && e.state.section) || 'home';
+  showSection(targetSection);
+});

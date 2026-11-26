@@ -11,7 +11,8 @@ function activateVIP(uid) {
   }, err => {
     if (!err) {
       isVIP = true;
-      if (typeof showToast === 'function') showToast('⭐ تم تفعيل VIP! تمتع بالمزايا الحصرية');
+      Sounds.play('vip'); Haptic.success();
+      Toast.show('⭐ تم تفعيل VIP! تمتع بالمزايا الحصرية', 'gold');
       if (typeof sendNotification === 'function')
         sendNotification(uid, 'system', '⭐ VIP مفعّل!', 'تمتع بشارة VIP في الشات والملف الشخصي لمدة 30 يوم');
     }
@@ -98,6 +99,7 @@ function openLoadout() {
   const modal   = document.getElementById('profile-modal');
   const content = document.getElementById('profile-content');
   if (!modal || !content) return;
+  saveModalSnapshot();
   modal.style.display = 'flex';
 
   const user = auth.currentUser; if (!user) return;
@@ -175,6 +177,7 @@ function equipItem(type, name, color, uid) {
     if (!err) {
       if (type === 'titles') { currentTitle = name; currentTitleColor = color || '#a78bfa'; }
       if (typeof showToast === 'function') showToast('✅ تم التفعيل!');
+      Toast.show('✅ تم التفعيل!', 'success'); Sounds.play('success'); Haptic.light();
       openLoadout();
     }
   });
@@ -190,6 +193,7 @@ function unequipItem(type, uid) {
     if (!err) {
       if (type === 'titles') { currentTitle = ''; currentTitleColor = ''; }
       if (typeof showToast === 'function') showToast('تم الإيقاف');
+      Toast.show('تم الإيقاف', 'info'); Sounds.play('toggle'); Haptic.light();
       openLoadout();
     }
   });

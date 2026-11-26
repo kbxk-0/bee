@@ -18,11 +18,9 @@ function renderHome() {
   // تجهيز روابط نصوص الأونكليك مسبقاً لمنع تداخل علامات الاقتباس والباكتيكس
   let playOnclick = "";
   if (game) {
-    if (game.external) {
-      playOnclick = "window.location.href='games/million-game.html?name=" + encodeURIComponent(userName) + "&avatar=" + encodeURIComponent(typeof savedAvatarColor !== 'undefined' ? savedAvatarColor : '😎') + "'";
-    } else {
-      playOnclick = "typeof showFriendlyGamePopup === 'function' ? showFriendlyGamePopup('" + game.id + "') : null";
-    }
+    // كل الألعاب (حتى الخارجية زي مليون) تمر بنفس الدالة — هي اللي تتحقق من
+    // وجود صورة حقيقية مرفوعة وتمررها، بدل بناء رابط مباشر يتجاوزها
+    playOnclick = "typeof showFriendlyGamePopup === 'function' ? showFriendlyGamePopup('" + game.id + "') : null";
   } else {
     playOnclick = "typeof showSection === 'function' ? (showSection('games'), renderGames()) : null";
   }
@@ -88,7 +86,7 @@ function renderHome() {
 
     <div style="padding: 10px 5px 25px; display: flex; flex-direction: column; gap: 20px; font-family:'Cairo', sans-serif;">
       
-      <div style="background:rgba(14,11,4,0.82);border:1px solid rgba(200,169,64,0.22);border-radius:20px;padding:13px 14px;box-shadow:0 4px 20px rgba(0,0,0,0.4)">
+      <div class="card-premium" style="background:rgba(14,11,4,0.82);border:1px solid rgba(200,169,64,0.22);border-radius:20px;padding:13px 14px;box-shadow:0 4px 20px rgba(0,0,0,0.4)">
         <div style="display:flex;align-items:center;gap:12px;direction:ltr">
 
           <div id="home-avatar-wrap" onclick="if(auth.currentUser && typeof viewProfile==='function') viewProfile(auth.currentUser.uid); else if(typeof showProfilePopup==='function') showProfilePopup()" style="cursor:pointer;flex-shrink:0;position:relative">
@@ -110,7 +108,7 @@ function renderHome() {
 
           <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
             <div onclick="if(typeof showSection==='function') showSection('store')" style="background:rgba(200,169,64,0.12);border:1px solid rgba(200,169,64,0.3);padding:6px 12px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:5px">
-              <span style="font-size:14px;font-weight:900;color:#f0c040">${userCoins.toLocaleString('ar')}</span>
+              <span style="font-size:14px;font-weight:900;color:#f0c040" class="shimmer-gold">${userCoins.toLocaleString('ar')}</span>
               <span style="font-size:14px">🪙</span>
             </div>
             <div id="home-streak-badge" style="font-size:11px;color:#f0c040;font-weight:700;text-align:right">🔥 ...</div>
@@ -132,7 +130,7 @@ function renderHome() {
           <span style="text-align:center; line-height:1.4;">قائمة<br>الجلسات</span>
         </div>
 
-        <div onclick="${playOnclick}" class="play-btn-glow" style="width:155px; height:155px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #4ade80, #16a34a 60%, #14532d); border:4px solid #064e3b; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; position:relative; z-index:5;">
+        <div onclick="${playOnclick}" class="play-btn-glow glow-pulse" style="width:155px; height:155px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #4ade80, #16a34a 60%, #14532d); border:4px solid #064e3b; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; position:relative; z-index:5;">
           <div style="font-size:42px; margin-bottom:2px; filter:drop-shadow(0 4px 6px rgba(0,0,0,0.4));">🎲</div>
           <div style="font-size:22px; font-weight:900; color:white; text-shadow:0 3px 6px rgba(0,0,0,0.6);">لعب الآن</div>
           <div style="font-size:12px; color:#d1fae5; margin-top:4px; font-weight:bold; background:rgba(0,0,0,0.2); padding:2px 8px; border-radius:10px;">
@@ -172,6 +170,8 @@ function renderHome() {
   if (typeof onHomeOpen === 'function') onHomeOpen();
   if (typeof loadHomeDynamic === 'function') loadHomeDynamic();
   if (typeof loadTournamentCards === 'function') loadTournamentCards();
+  // تأثير دخول بطاقات الصفحة الرئيسية
+  setTimeout(() => { if (typeof Effects !== 'undefined') Effects.animateCards(sec, 80); }, 50);
 
   if (typeof auth !== 'undefined' && auth.currentUser) {
     db.ref('users/' + auth.currentUser.uid).once('value', snap => {
@@ -259,5 +259,6 @@ function showChallengeDetails() {
   db.ref('settings/challenge').once('value', snap => {
     const c = snap.val() || {title:'تحدي الأسبوع', desc:'العب 3 جولات وفوز بمكافأة خاصة', prize:'500'};
     if (typeof showToast === 'function') showToast('🏆 ' + (c.title||'تحدي الأسبوع'));
+    Toast.show('🏆 ' + (c.title||'تحدي الأسبوع'), 'gold');
   });
 }

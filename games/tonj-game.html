@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>طنج 🃏</title>
+<script src="../js/cards.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--gold:#c8a940;--gold2:#f0c040;--bg:#08080f;--green:#0d2a0d}
+html,body{height:100%;overflow:hidden;background:var(--bg);
+  font-family:'Cairo',sans-serif;color:#fff;direction:rtl;touch-action:manipulation}
+.sc{position:fixed;inset:0;display:none;flex-direction:column}
+.sc.on{display:flex}
+
+/* ══ LOBBY ══ */
+#lobby{background:radial-gradient(ellipse at 50% 30%,#0d1a0d 0%,var(--bg) 100%);
+  align-items:center;justify-content:center}
+.lobby-box{background:rgba(255,255,255,.04);border:1px solid rgba(200,169,64,.18);
+  border-radius:22px;padding:24px 20px;width:min(330px,92vw);
+  display:flex;flex-direction:column;align-items:center;gap:14px}
+.lobby-title{font-size:1.4rem;font-weight:900;color:var(--gold);text-align:center}
+.lobby-sub{font-size:.78rem;color:rgba(255,255,255,.35);text-align:center}
+.inp{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(200,169,64,.2);
+  border-radius:12px;padding:12px 14px;color:#fff;font-family:'Cairo',sans-serif;
+  font-size:.95rem;outline:none;text-align:right}
+.inp::placeholder{color:rgba(255,255,255,.25)}
+.inp:focus{border-color:rgba(200,169,64,.5)}
+.divider{width:100%;display:flex;align-items:center;gap:8px}
+.divider span{flex:1;height:1px;background:rgba(255,255,255,.08)}
+.divider p{font-size:.7rem;color:rgba(255,255,255,.3);white-space:nowrap}
+.btn{border:none;border-radius:13px;cursor:pointer;font-family:'Cairo',sans-serif;
+  font-weight:900;font-size:.96rem;padding:13px 18px;transition:all .18s;
+  display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.btn-g{background:linear-gradient(135deg,#a87e10,#f0c040,#a87e10);color:#1a0800;
+  box-shadow:0 4px 20px rgba(200,169,64,.4)}
+.btn-g:active{transform:scale(.97)}
+.btn-r{background:rgba(192,57,43,.12);color:#e74c3c;border:1.5px solid rgba(192,57,43,.3)}
+.btn-ghost{background:rgba(200,169,64,.08);color:var(--gold);border:1px dashed rgba(200,169,64,.4)}
+.room-card{width:100%;background:rgba(200,169,64,.06);border:1px solid rgba(200,169,64,.2);
+  border-radius:12px;padding:11px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;
+  transition:background .2s}
+.room-card:active{background:rgba(200,169,64,.14)}
+.room-join{background:linear-gradient(135deg,#a87e10,#f0c040);color:#1a0800;
+  border:none;border-radius:8px;padding:5px 14px;font-family:'Cairo',sans-serif;
+  font-weight:900;font-size:.8rem;cursor:pointer}
+#lobbyRooms{width:100%;display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto}
+
+/* ══ WAITING ══ */
+#waiting{background:radial-gradient(ellipse at 50% 40%,#0d1a0d 0%,var(--bg) 100%);
+  align-items:center;justify-content:center}
+.wait-box{background:rgba(255,255,255,.04);border:1px solid rgba(200,169,64,.18);
+  border-radius:22px;padding:24px 20px;width:min(330px,92vw);
+  display:flex;flex-direction:column;align-items:center;gap:14px}
+.wait-title{font-size:1.1rem;font-weight:900;color:var(--gold)}
+.wait-code{font-size:1.8rem;font-weight:900;letter-spacing:6px;color:var(--gold2);
+  background:rgba(200,169,64,.08);border:1px solid rgba(200,169,64,.2);
+  border-radius:12px;padding:8px 20px;text-align:center}
+.wait-players{width:100%;display:flex;flex-direction:column;gap:6px}
+.wp{background:rgba(255,255,255,.05);border-radius:10px;padding:9px 12px;
+  display:flex;align-items:center;gap:10px;font-size:.88rem}
+.wp-av{font-size:1.2rem;width:28px;text-align:center}
+.wp-name{flex:1;font-weight:700}
+.wp-you{font-size:.65rem;color:var(--gold);background:rgba(200,169,64,.12);
+  padding:2px 8px;border-radius:10px}
+.wp-empty{border:1px dashed rgba(255,255,255,.1);color:rgba(255,255,255,.25);font-size:.82rem}
+.pulse{animation:pulse2 1.5s ease-in-out infinite}
+@keyframes pulse2{0%,100%{opacity:1}50%{opacity:.4}}
+.wait-status{font-size:.8rem;color:rgba(255,255,255,.45);text-align:center}
+
+/* ══ GAME ══ */
+#game{background:var(--green);overflow:hidden;position:relative}
+#game::before{content:'';position:absolute;inset:0;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='69'%3E%3Cpath d='M30 1 L59 17 L59 52 L30 68 L1 52 L1 17Z' fill='none' stroke='rgba(200%2C169%2C64%2C0.05)' stroke-width='1'/%3E%3C/svg%3E");
+  background-size:60px 69px;pointer-events:none}
+
+.g-header{position:relative;z-index:30;background:rgba(0,0,0,.55);
+  padding:8px 12px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid rgba(200,169,64,.12);flex-shrink:0}
+.g-logo{font-size:1rem;font-weight:900;color:var(--gold)}
+#turnMsg{font-size:.78rem;font-weight:700;padding:3px 12px;border-radius:20px;
+  background:rgba(200,169,64,.1);border:1px solid rgba(200,169,64,.2);color:rgba(255,255,255,.7)}
+.g-exit-btn{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);
+  border-radius:8px;padding:4px 10px;font-size:.75rem;color:rgba(255,255,255,.5);
+  cursor:pointer;font-family:'Cairo',sans-serif}
+
+/* ── مناطق اللعب ── */
+.game-body{flex:1;display:flex;flex-direction:column;position:relative;z-index:1;overflow:hidden}
+
+/* ── لوحة الانتظار المدمجة (بدل شاشة لوبي منفصلة) ── */
+.tonj-wait-panel{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  z-index:50;background:rgba(8,8,16,.95);border:1px solid rgba(200,169,64,.4);
+  border-radius:16px;padding:18px 20px;width:min(260px,80vw);
+  display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;
+  box-shadow:0 10px 34px rgba(0,0,0,.65)}
+.tonj-wait-panel.hidden{display:none}
+.tonj-wait-title{font-size:1.1rem;font-weight:900;color:var(--gold)}
+.tonj-wait-status{font-size:.78rem;color:rgba(255,255,255,.65)}
+.tonj-wait-players{display:flex;flex-direction:column;gap:6px;width:100%}
+.tonj-wait-players .wp{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);
+  border-radius:10px;padding:7px 10px;font-size:.8rem}
+.tonj-wait-players .wp-av{font-size:1.1rem}
+.tonj-wait-players .wp-you{margin-right:auto;font-size:.65rem;color:var(--gold)}
+.tonj-wait-players .wp-empty{opacity:.5}
+.tonj-wait-btns{display:flex;gap:6px;width:100%}
+.tonj-wait-btns .btn{flex:1;padding:9px 4px;font-size:.75rem}
+
+/* ─ الخصم ─ */
+#oppZone{background:rgba(0,0,0,.3);padding:6px 8px 5px;border-bottom:1px solid rgba(255,255,255,.06)}
+.player-bar{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.pav{font-size:1.2rem;width:30px;height:30px;border-radius:50%;
+  background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center}
+.pav.active{box-shadow:0 0 0 2px var(--gold),0 0 10px rgba(200,169,64,.4)}
+.pname{font-size:.85rem;font-weight:700;flex:1}
+.cards-left{font-size:.7rem;color:rgba(200,169,64,.7);background:rgba(200,169,64,.08);
+  padding:2px 8px;border-radius:20px;border:1px solid rgba(200,169,64,.15)}
+
+/* ─ صف كومات (يد + مكشوف + نار) ─ */
+.hand-row{display:flex;align-items:center;justify-content:center;gap:10px}
+.pile-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;position:relative;cursor:pointer}
+.pile-label{font-size:.6rem;color:rgba(255,255,255,.35);text-align:center}
+.count-badge{font-size:.62rem;font-weight:700;color:var(--gold);
+  background:rgba(200,169,64,.12);border:1px solid rgba(200,169,64,.2);
+  border-radius:10px;padding:1px 6px;min-width:20px;text-align:center}
+.empty-slot{width:44px;height:62px;border-radius:8px;
+  border:1px dashed rgba(255,255,255,.18);
+  display:flex;align-items:center;justify-content:center;
+  color:rgba(255,255,255,.2);font-size:.8rem;background:rgba(255,255,255,.03)}
+.empty-slot.droppable{border-color:rgba(0,255,136,.6);
+  background:rgba(0,255,136,.06);box-shadow:0 0 8px rgba(0,255,136,.25)}
+
+/* ─ المنازل (4 أعمدة) ─ */
+.menazel-row{display:flex;gap:8px;justify-content:center;padding:5px 4px}
+.menazel-slot{display:flex;flex-direction:column;align-items:center;gap:2px}
+.menazel-slot .pcard{cursor:pointer}
+.menazel-slot .pcard.droppable{box-shadow:0 0 10px rgba(0,255,136,.5) !important;
+  border:2px solid rgba(0,255,136,.7) !important}
+
+/* ─ القواعد (foundations) ─ */
+#foundZone{padding:5px 8px;background:rgba(0,0,0,.2);
+  border-top:1px solid rgba(200,169,64,.1);border-bottom:1px solid rgba(200,169,64,.1)}
+.found-label{font-size:.62rem;color:rgba(200,169,64,.5);text-align:center;margin-bottom:3px}
+.found-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.found-slot{display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+.found-slot .pcard.droppable{box-shadow:0 0 10px rgba(0,255,136,.5) !important;
+  border:2px solid rgba(0,255,136,.7) !important}
+.found-slot .empty-slot{width:40px;height:56px;font-size:.75rem}
+.found-suit{font-size:.65rem;color:rgba(255,255,255,.3);text-align:center}
+
+/* ─ أنا ─ */
+#myZone{background:rgba(0,0,0,.3);padding:5px 8px 6px;
+  border-top:1px solid rgba(255,255,255,.06)}
+.spacer{flex:1}
+
+/* ─ ورقة مسحوبة (handDrawn) ─ */
+#drawnWrap{position:relative}
+#drawnWrap .pcard{animation:drawnPulse 1s ease-in-out infinite}
+@keyframes drawnPulse{0%,100%{box-shadow:0 0 0 0 rgba(200,169,64,.4)}
+  50%{box-shadow:0 0 0 6px rgba(200,169,64,0)}}
+
+/* ─ أزرار ─ */
+.btn-row{display:flex;gap:8px;padding:5px 10px}
+.btn-draw{background:linear-gradient(135deg,#1a5c1a,#2d8a2d);color:#fff;
+  border:none;border-radius:12px;padding:10px 0;font-family:'Cairo',sans-serif;
+  font-weight:900;font-size:.9rem;cursor:pointer;flex:1;
+  box-shadow:0 3px 12px rgba(0,100,0,.4);transition:all .15s}
+.btn-draw:active{transform:scale(.97)}
+.btn-draw:disabled{opacity:.35;cursor:not-allowed}
+.btn-tonj{background:linear-gradient(135deg,#8b0000,#d00000);color:#fff;
+  border:2px solid rgba(255,100,100,.4);border-radius:12px;padding:10px 18px;
+  font-family:'Cairo',sans-serif;font-weight:900;font-size:.9rem;cursor:pointer;
+  box-shadow:0 3px 14px rgba(180,0,0,.5);animation:tonjPulse 1s ease-in-out infinite;
+  transition:all .15s}
+@keyframes tonjPulse{0%,100%{box-shadow:0 3px 14px rgba(180,0,0,.5)}
+  50%{box-shadow:0 3px 20px rgba(255,0,0,.8)}}
+.btn-tonj:active{transform:scale(.97)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:rgba(10,10,20,.92);border:1px solid rgba(200,169,64,.35);
+  border-radius:14px;padding:9px 20px;font-size:.85rem;font-weight:700;
+  color:#fff;z-index:200;opacity:0;transition:all .3s;pointer-events:none;
+  text-align:center;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── OVER ── */
+#over{background:radial-gradient(ellipse at 50% 40%,#0d1a0d 0%,var(--bg) 100%);
+  align-items:center;justify-content:center;gap:16px}
+.over-icon{font-size:4rem;animation:bob 1s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.over-title{font-size:2rem;font-weight:900;color:var(--gold);text-align:center}
+.over-msg{font-size:1rem;color:rgba(255,255,255,.6);text-align:center}
+.btn-over{background:linear-gradient(135deg,#a87e10,#f0c040,#a87e10);color:#1a0800;
+  border:none;border-radius:13px;padding:14px 40px;font-family:'Cairo',sans-serif;
+  font-weight:900;font-size:1rem;cursor:pointer;box-shadow:0 4px 20px rgba(200,169,64,.4)}
+</style>
+</head>
+<body>
+
+<!-- ══ لوبي ══ -->
+<!-- ══ لعبة (فيها لوحة الانتظار المدمجة) ══ -->
+<div class="sc on" id="game">
+
+  <!-- هيدر -->
+  <div class="g-header">
+    <button class="g-exit-btn" onclick="leaveRoom()">خروج ✕</button>
+    <span id="turnMsg">انتظر...</span>
+    <span class="g-logo">طنج</span>
+  </div>
+
+  <div class="game-body">
+
+    <input type="hidden" id="inpName">
+
+    <div class="tonj-wait-panel" id="waitPanel">
+      <div class="tonj-wait-title">🃏 طنج</div>
+      <div class="tonj-wait-status" id="waitStatus">بانتظار الخصم...</div>
+      <div class="tonj-wait-players" id="waitPlayers"></div>
+      <div class="tonj-wait-btns">
+        <button class="btn btn-ghost" onclick="copyTonjInviteLink()">🔗 نسخ رابط الدعوة</button>
+        <button class="btn btn-g" onclick="startTonjNow()">▶ ابدأ الآن</button>
+      </div>
+    </div>
+
+    <!-- منطقة الخصم -->
+    <div id="oppZone">
+      <div class="player-bar">
+        <div class="pav" id="oppAv">😊</div>
+        <span class="pname" id="oppName">خصم</span>
+        <span class="cards-left" id="oppLeft">0 ورقة</span>
+      </div>
+      <div class="hand-row">
+        <!-- نار الخصم -->
+        <div class="pile-wrap">
+          <div id="oppFire" class="empty-slot" style="width:40px;height:56px">🔥</div>
+          <span class="count-badge" id="oppFireCnt">0</span>
+          <span class="pile-label">نار</span>
+        </div>
+        <!-- يد الخصم (مغلقة) -->
+        <div class="pile-wrap">
+          <div id="oppHandCard" class="pcard pcard-sm pcard-back" style="width:40px;height:56px"></div>
+          <span class="count-badge" id="oppHandCnt">0</span>
+          <span class="pile-label">يد</span>
+        </div>
+        <!-- مكشوف الخصم (13) -->
+        <div class="pile-wrap">
+          <div id="oppReserve" class="empty-slot" style="width:40px;height:56px">13</div>
+          <span class="count-badge" id="oppResCnt">0</span>
+          <span class="pile-label">مكشوف</span>
+        </div>
+      </div>
+      <!-- منازل الخصم -->
+      <div class="menazel-row" id="oppMenazel"></div>
+    </div>
+
+    <!-- القواعد (Foundations) -->
+    <div id="foundZone">
+      <div class="found-label">القواعد المشتركة</div>
+      <div class="found-row" id="foundRow"></div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <!-- منطقة اللاعب -->
+    <div id="myZone">
+      <!-- منازل اللاعب -->
+      <div class="menazel-row" id="myMenazel"></div>
+      <!-- صف الكومات -->
+      <div class="hand-row" style="margin-bottom:4px">
+        <!-- مكشوفي (13) -->
+        <div class="pile-wrap" id="myResWrap">
+          <div id="myReserve" class="empty-slot" style="width:40px;height:56px">13</div>
+          <span class="count-badge" id="myResCnt">0</span>
+          <span class="pile-label">مكشوف</span>
+        </div>
+        <!-- الورقة المسحوبة -->
+        <div class="pile-wrap" id="drawnWrap" style="display:none">
+          <div id="drawnCard"></div>
+          <span class="pile-label" style="color:var(--gold)">ضعها!</span>
+        </div>
+        <!-- يدي (مغلقة) -->
+        <div class="pile-wrap">
+          <div class="pcard pcard-sm pcard-back" style="width:40px;height:56px"></div>
+          <span class="count-badge" id="myHandCnt">0</span>
+          <span class="pile-label">يد</span>
+        </div>
+        <!-- ناري -->
+        <div class="pile-wrap">
+          <div id="myFire" class="empty-slot" style="width:40px;height:56px">🔥</div>
+          <span class="count-badge" id="myFireCnt">0</span>
+          <span class="pile-label">نار</span>
+        </div>
+      </div>
+      <!-- أزرار -->
+      <div class="btn-row">
+        <button class="btn-draw" id="btnDraw" onclick="doDraw()">سحب ↓</button>
+        <button class="btn-tonj" id="btnTonj" style="display:none" onclick="doTonj()">📢 طنج!</button>
+      </div>
+      <!-- بار اللاعب -->
+      <div class="player-bar" style="margin-top:4px">
+        <div class="pav" id="myAv">😊</div>
+        <span class="pname" id="myNameLabel">أنا</span>
+        <span class="cards-left" id="myLeft">0 ورقة</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ نهاية اللعبة ══ -->
+<div class="sc" id="over">
+  <div class="over-icon" id="overIcon">🏆</div>
+  <div class="over-title" id="overTitle">فاز!</div>
+  <div class="over-msg" id="overMsg"></div>
+  <button class="btn-over" onclick="goLobby()">العودة للرئيسية 🏠</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────────
+//  إعداد الاتصال — غيّر الرابط لو احتجت
+// ─────────────────────────────────────────────────
+const WS_URL = 'wss://million-server.onrender.com';
+
+let ws = null, myId = null;
+let botMode = null; // null=أونلاين، true=وضع بوت نشط، 'over'=خلصت اللعبة
+let myName = 'لاعب', myAv = '😊';
+let currentRid = null;
+let state = null;
+let selectedSrc = null; // {srcType, srcIdx, card}
+
+const RVAL = {A:1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,J:11,Q:12,K:13};
+function cardColor(suit){ return ['♥','♦'].includes(suit)?'red':'black'; }
+function canFoundation(card, topCard){
+  if(!topCard) return card.rank==='A';
+  return topCard.suit===card.suit && RVAL[card.rank]===RVAL[topCard.rank]+1;
+}
+function canMenazel(card, topCard){
+  if(!topCard) return true;
+  return cardColor(card.suit)!==cardColor(topCard.suit) && RVAL[card.rank]===RVAL[topCard.rank]-1;
+}
+// بناء فوق "كف" الخصم (ورقة مكشوفة فشلت تنمشي) — نفس النوع ورقم أقل بواحد.
+// فاضية = لا تُبنى من الصفر (بعكس المنازل)، لأنها ملك الخصم مو مكان عام.
+function canWaste(card, topCard){
+  if(!topCard) return false;
+  return card.suit===topCard.suit && RVAL[card.rank]===RVAL[topCard.rank]-1;
+}
+
+// ─────────────────────────────────────────────────
+//  استخراج params + اتصال
+// ─────────────────────────────────────────────────
+let desiredOpponentJoined = false;
+let oppInviteName = null, oppInviteAvatar = null;
+
+(function init(){
+  const p = new URLSearchParams(location.search);
+  const name = p.get('name'), avatar = p.get('avatar'), room = p.get('room');
+  if(name) myName = decodeURIComponent(name);
+  if(avatar) myAv = decodeURIComponent(avatar);
+  document.getElementById('inpName').value = myName;
+  document.getElementById('myAv').textContent = myAv;
+  document.getElementById('myNameLabel').textContent = myName;
+  updateWaitPanel();
+  connectWS(room);
+})();
+
+function go(id){
+  document.querySelectorAll('.sc').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+
+function send(obj){ if(!botMode && ws && ws.readyState===1) ws.send(JSON.stringify(obj)); }
+function send0(obj){ if(ws && ws.readyState===1) ws.send(JSON.stringify(obj)); }
+
+function connectWS(joinRid){
+  try{
+    ws = new WebSocket(WS_URL);
+    ws.onopen = ()=>{
+      send0({type:'set_name', name: myName});
+      if(joinRid) send0({type:'tonj_join_room', rid: joinRid, avatar: myAv});
+      else send0({type:'tonj_create_room', avatar: myAv});
+    };
+    ws.onmessage = e=>{ try{ handle(JSON.parse(e.data)); }catch(err){} };
+    ws.onclose = ()=>{ setTimeout(()=>connectWS(null), 3000); };
+    ws.onerror = ()=>{};
+  }catch(e){ setTimeout(()=>connectWS(null),2000); }
+}
+
+function updateWaitPanel(){
+  const statusEl = document.getElementById('waitStatus');
+  const playersEl = document.getElementById('waitPlayers');
+  if(!statusEl || !playersEl) return;
+  statusEl.textContent = desiredOpponentJoined
+    ? 'انضم خصم! تقدر تبدأ الآن'
+    : 'تقدر تبدأ الآن مع بوت 🤖 أو تنتظر خصم حقيقي';
+  playersEl.innerHTML = `
+    <div class="wp"><span class="wp-av">${myAv}</span><span>${myName}</span><span class="wp-you">أنت</span></div>
+    ${desiredOpponentJoined
+      ? `<div class="wp"><span class="wp-av">${oppInviteAvatar||'😊'}</span><span>${oppInviteName||'لاعب'}</span></div>`
+      : `<div class="wp wp-empty"><span class="wp-av">⌛</span><span>بانتظار خصم...</span></div>`}
+  `;
+}
+
+function copyTonjInviteLink(){
+  if(!currentRid){ toast('⏳ لسه ما اتصلنا، حاول بعد ثانية'); return; }
+  const link = location.origin + location.pathname + '?room=' + currentRid;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(link).then(()=>toast('🔗 تم نسخ رابط الدعوة!')).catch(()=>toast('الرابط: '+link));
+  } else toast('الرابط: '+link);
+}
+
+function startTonjNow(){
+  if(desiredOpponentJoined){ toast('🎮 اللعبة تبدأ تلقائياً مع خصمك...'); return; }
+  document.getElementById('waitPanel').classList.add('hidden');
+  startBotGame();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  محرك البوت المحلي — نفس منطق tonj-server.js بالضبط، بس
+//  يشتغل بالمتصفح مباشرة بدون سيرفر (لعبة فردية ضد بوت)
+// ═══════════════════════════════════════════════════════════
+const TONJ_BOT_NAMES = ['المنقود','نحلة','عطية','الحكيم','مزنه','زيتونة'];
+const TONJ_BOT_AVS   = ['🎩','🐝','🦅','🧠','👑','🫒'];
+const TONJ_SUITS_LOCAL = ['♠','♥','♦','♣'];
+const TONJ_RANKS_LOCAL = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const STALEMATE_THRESHOLD = 300; // عدد الحركات المتتالية بدون أي تحسّن حقيقي بأقل عدد أوراق قبل نعلن اللعبة محسومة/متعادلة
+
+let botSeats = [], botFoundations = [], botTurn = null, botTonjFlag = null;
+let botBestMinCardsLeft = Infinity, botNoImprove = 0;
+
+function buildLocalTonjDeck(deckIdx){
+  const d = [];
+  for(const s of TONJ_SUITS_LOCAL) for(const r of TONJ_RANKS_LOCAL)
+    d.push({id:`d${deckIdx}_${s}${r}`, suit:s, rank:r, val:RVAL[r], color:cardColor(s)});
+  for(let i=d.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [d[i],d[j]]=[d[j],d[i]]; }
+  return d;
+}
+
+function tonjTop(pile){ return pile && pile.length ? pile[pile.length-1] : null; }
+function localCardsLeft(seat){ return seat.reserve.length + seat.hand.length + seat.waste.length; }
+
+function localLegalDests(seat, opp, card){
+  const dests = [];
+  botFoundations.forEach((f,fi)=>{ if(canFoundation(card, tonjTop(f.cards))) dests.push({destType:'foundation', destIdx:fi}); });
+  if(card.rank==='A' && botFoundations.length<8) dests.push({destType:'newFoundation'});
+  seat.menazel.forEach((p,mi)=>{ if(canMenazel(card, tonjTop(p))) dests.push({destType:'ownMenazel', destIdx:mi}); });
+  opp.menazel.forEach((p,mi)=>{ if(canMenazel(card, tonjTop(p))) dests.push({destType:'oppMenazel', destIdx:mi}); });
+  if(canWaste(card, tonjTop(opp.waste))) dests.push({destType:'oppWaste'});
+  return dests;
+}
+function localHasSkippedFoundationMove(seat){
+  return seat.menazel.some(p=>{
+    const top = tonjTop(p);
+    return top && botFoundations.some(f=>canFoundation(top, tonjTop(f.cards)));
+  });
+}
+
+function startBotGame(){
+  if(ws){ try{ ws.close(); }catch(e){} ws=null; }
+  myId = myId || 'human';
+  const pick = Math.floor(Math.random()*TONJ_BOT_NAMES.length);
+  const bot = { name: TONJ_BOT_NAMES[pick], avatar: TONJ_BOT_AVS[pick] };
+  const botId = 'bot1';
+
+  const humanSeat = {id:myId, name:myName, avatar:myAv};
+  const botSeat   = {id:botId, name:bot.name, avatar:bot.avatar};
+  [humanSeat, botSeat].forEach((s,i)=>{
+    const deck = buildLocalTonjDeck(i);
+    s.menazel = [[deck.pop()],[deck.pop()],[deck.pop()],[deck.pop()]];
+    s.reserve = deck.splice(0,13);
+    s.hand = deck; // الباقي 35 ورقة
+    s.waste = []; // "كف" الورق المكشوف الفاشل — الخصم بس يقدر يبني عليه
+    s.handDrawn = null;
+  });
+  botSeats = [humanSeat, botSeat];
+  botFoundations = [];
+  botTonjFlag = null;
+  botMode = true;
+  botTurn = Math.random()<0.5 ? humanSeat.id : botSeat.id;
+  botBestMinCardsLeft = Math.min(localCardsLeft(humanSeat), localCardsLeft(botSeat));
+  botNoImprove = 0;
+
+  document.getElementById('myAv').textContent = myAv;
+  document.getElementById('myNameLabel').textContent = myName;
+  go('game');
+  toast('🤖 بدأت اللعبة مع ' + bot.name + '!');
+  syncLocalState();
+  maybeRunBotTurn();
+}
+
+function syncLocalState(){
+  state = {
+    type:'tonj_state', status:'playing', turn: botTurn,
+    tonjAvailable: !!botTonjFlag, tonjAgainst: botTonjFlag ? botTonjFlag.offenderId : null,
+    winnerId: null,
+    foundations: botFoundations.map(f=>({suit:f.suit, cards:f.cards})),
+    seats: botSeats.map(s=>({
+      id:s.id, name:s.name, avatar:s.avatar,
+      menazel: s.menazel,
+      reserveTop: tonjTop(s.reserve), reserveCount: s.reserve.length,
+      handCount: s.hand.length,
+      waste: s.waste,
+      handDrawn: s.handDrawn,
+      cardsLeft: localCardsLeft(s)
+    }))
+  };
+  renderBoard();
+}
+
+function localCheckWin(seat){
+  if(localCardsLeft(seat)===0){
+    botMode = 'over';
+    showOver(seat.id, seat.name);
+    return true;
+  }
+  return false;
+}
+
+// يُستدعى بعد أي حركة أو محاولة سحب — يتتبع هل صار تقدم حقيقي (أقل عدد أوراق
+// وصله أي طرف) ولا لأ. أدق من "هل نجحت حركة" لأن بناء ورقة فوق كف الخصم حركة
+// ناجحة تقنياً بس تزيد أوراقه — ممكن الطرفين يتبادلونها بدون أي تقدم فعلي.
+function localCheckImprovement(){
+  const m = Math.min(localCardsLeft(botSeats[0]), localCardsLeft(botSeats[1]));
+  if(m < botBestMinCardsLeft){ botBestMinCardsLeft = m; botNoImprove = 0; }
+  else botNoImprove++;
+}
+
+// لو ما فيه أي تقدم حقيقي نحو الفوز لفترة طويلة (حتى لو فيه حركات ناجحة)، ننهي
+// اللعبة بدل ما تدور بحلقة بلا نهاية — الفايز صاحب أقل أوراق متبقية، أو تعادل حقيقي
+function localCheckStalemate(){
+  if(botNoImprove < STALEMATE_THRESHOLD) return false;
+  const [s1, s2] = botSeats;
+  const c1 = localCardsLeft(s1), c2 = localCardsLeft(s2);
+  botMode = 'over';
+  if(c1 === c2){
+    showOver(null, null, 'stalemate_draw');
+  } else {
+    const winner = c1 < c2 ? s1 : s2;
+    showOver(winner.id, winner.name, 'stalemate');
+  }
+  return true;
+}
+
+function localDraw(pid){
+  if(botTurn!==pid) return;
+  const seat = botSeats.find(s=>s.id===pid), opp = botSeats.find(s=>s.id!==pid);
+  if(!seat||!opp||seat.handDrawn) return;
+
+  if(localHasSkippedFoundationMove(seat)) botTonjFlag = {offenderId:pid};
+  else botTonjFlag = null;
+
+  if(!seat.hand.length){
+    if(!seat.waste.length){ syncLocalState(); return; }
+    seat.hand = seat.waste.reverse(); // افتراض: الكف يرجع يد جديدة لو خلص ورق اليد
+    seat.waste = [];
+  }
+  const card = seat.hand.pop();
+  const dests = localLegalDests(seat, opp, card);
+  if(dests.length){
+    seat.handDrawn = card;
+  } else {
+    seat.waste.push(card);
+    botTurn = opp.id;
+    localCheckImprovement();
+    if(localCheckStalemate()) return;
+  }
+  syncLocalState();
+  maybeRunBotTurn();
+}
+
+function localMove(pid, move){
+  if(botTurn!==pid) return;
+  const seat = botSeats.find(s=>s.id===pid), opp = botSeats.find(s=>s.id!==pid);
+  if(!seat||!opp) return;
+
+  let card=null, removeFromSource=null;
+  if(move.srcType==='reserve'){ card=tonjTop(seat.reserve); removeFromSource=()=>seat.reserve.pop(); }
+  else if(move.srcType==='menazel'){ const pile=seat.menazel[move.srcIdx]; card=pile?tonjTop(pile):null; removeFromSource=()=>pile.pop(); }
+  else if(move.srcType==='handDrawn'){ card=seat.handDrawn; removeFromSource=()=>{seat.handDrawn=null;}; }
+  if(!card) return;
+
+  const legal = localLegalDests(seat, opp, card);
+  const match = legal.find(d=>
+    d.destType===move.destType &&
+    (move.destType!=='foundation' || d.destIdx===move.destIdx) &&
+    ((move.destType!=='ownMenazel'&&move.destType!=='oppMenazel') || d.destIdx===move.destIdx)
+  );
+  if(!match) return;
+
+  removeFromSource();
+  if(move.destType==='newFoundation') botFoundations.push({suit:card.suit, cards:[card]});
+  else if(move.destType==='foundation') botFoundations[move.destIdx].cards.push(card);
+  else if(move.destType==='ownMenazel') seat.menazel[move.destIdx].push(card);
+  else if(move.destType==='oppMenazel') opp.menazel[move.destIdx].push(card);
+  else if(move.destType==='oppWaste') opp.waste.push(card);
+
+  botTonjFlag = null;
+  localCheckImprovement();
+  if(localCheckWin(seat)) return;
+  if(localCheckStalemate()) return;
+  syncLocalState();
+  maybeRunBotTurn();
+}
+
+function localCallTonj(pid){
+  if(!botTonjFlag) return;
+  const caller = botSeats.find(s=>s.id===pid), offender = botSeats.find(s=>s.id===botTonjFlag.offenderId);
+  if(!caller||!offender||caller.id===offender.id) return;
+
+  outer: for(const pile of offender.menazel){
+    const top = tonjTop(pile);
+    if(!top) continue;
+    for(let fi=0; fi<botFoundations.length; fi++){
+      if(canFoundation(top, tonjTop(botFoundations[fi].cards))){
+        pile.pop();
+        botFoundations[fi].cards.push(top);
+        break outer;
+      }
+    }
+  }
+  if(offender.handDrawn){ offender.waste.push(offender.handDrawn); offender.handDrawn=null; }
+
+  botTonjFlag = null;
+  botTurn = caller.id;
+  localCheckImprovement();
+  toast(`📢 ${caller.name} نادى طنج على ${offender.name}!`, 2500);
+  if(localCheckWin(offender)) return;
+  if(localCheckStalemate()) return;
+  syncLocalState();
+  maybeRunBotTurn();
+}
+
+// ── ذكاء البوت: يفضّل القواعد دايماً، بعدين منازله، بعدين منازل الخصم، وآخر شي يسحب ──
+function pickBestDest(dests){
+  if(!dests.length) return null;
+  const order = ['foundation','newFoundation','ownMenazel','oppWaste','oppMenazel'];
+  for(const type of order){
+    const found = dests.find(d=>d.destType===type);
+    if(found) return found;
+  }
+  return dests[0];
+}
+function findBestFreeMove(seat, opp){
+  const sources = [];
+  if(seat.reserve.length) sources.push({srcType:'reserve', srcIdx:-1, card:tonjTop(seat.reserve)});
+  seat.menazel.forEach((p,i)=>{ if(p.length) sources.push({srcType:'menazel', srcIdx:i, card:tonjTop(p)}); });
+
+  const priority = {foundation:5, newFoundation:4, ownMenazel:3, oppWaste:2, oppMenazel:1};
+  let best=null, bestP=-1;
+  sources.forEach(src=>{
+    localLegalDests(seat, opp, src.card).forEach(d=>{
+      const p = priority[d.destType]||0;
+      if(p>bestP){ bestP=p; best={srcType:src.srcType, srcIdx:src.srcIdx, destType:d.destType, destIdx:d.destIdx}; }
+    });
+  });
+  return best;
+}
+
+function maybeRunBotTurn(){
+  if(!botMode || botMode==='over') return;
+  const botSeat = botSeats.find(s=>s.id!==myId);
+  if(!botSeat || botTurn!==botSeat.id) return;
+  setTimeout(()=>runBotTurn(botSeat.id), 700+Math.random()*500);
+}
+
+function runBotTurn(botId){
+  if(!botMode || botMode==='over' || botTurn!==botId) return;
+  const seat = botSeats.find(s=>s.id===botId), opp = botSeats.find(s=>s.id!==botId);
+  if(!seat||!opp) return;
+
+  // أولوية 1: فرصة طنج متاحة على الخصم؟
+  if(botTonjFlag && botTonjFlag.offenderId!==botId){
+    localCallTonj(botId);
+    return;
+  }
+  // أولوية 2: عنده ورقة مسحوبة بالانتظار؟ حطها بأفضل مكان
+  if(seat.handDrawn){
+    const best = pickBestDest(localLegalDests(seat, opp, seat.handDrawn));
+    if(best){
+      localMove(botId, {srcType:'handDrawn', srcIdx:-1, destType:best.destType, destIdx:best.destIdx});
+      setTimeout(()=>runBotTurn(botId), 650);
+      return;
+    }
+  }
+  // أولوية 3: أي حركة مجانية متاحة من الاحتياطي أو المنازل
+  const freeMove = findBestFreeMove(seat, opp);
+  if(freeMove){
+    localMove(botId, freeMove);
+    setTimeout(()=>runBotTurn(botId), 650);
+    return;
+  }
+  // ما فيه شي غير السحب
+  localDraw(botId);
+}
+
+
+
+// ─────────────────────────────────────────────────
+//  معالج الرسائل
+// ─────────────────────────────────────────────────
+function handle(msg){
+  switch(msg.type){
+    case 'hello':
+      myId = msg.pid;
+      break;
+
+    case 'tonj_room_created':
+      currentRid = msg.rid;
+      break;
+
+    case 'tonj_joined':
+      currentRid = msg.rid;
+      break;
+
+    case 'player_joined':
+      if(msg.players && msg.players.length >= 2 && !botMode){
+        const opp = msg.players.find(p=>p.id!==myId);
+        if(opp){
+          desiredOpponentJoined = true;
+          oppInviteName = opp.name; oppInviteAvatar = opp.avatar;
+          updateWaitPanel();
+        }
+      }
+      break;
+
+    case 'starting':
+      if(!botMode){
+        const statusEl = document.getElementById('waitStatus');
+        if(statusEl) statusEl.textContent = `اللعبة تبدأ خلال ${msg.cd}...`;
+      }
+      break;
+
+    case 'tonj_game_start':
+      if(botMode) break;
+      document.getElementById('waitPanel').classList.add('hidden');
+      document.getElementById('myAv').textContent = myAv;
+      document.getElementById('myNameLabel').textContent = myName;
+      break;
+
+    case 'tonj_state':
+      if(botMode) break;
+      state = msg;
+      renderBoard();
+      break;
+
+    case 'tonj_called':
+      toast(`📢 ${msg.byName} نادى طنج على ${msg.againstName}!`, 2500);
+      break;
+
+    case 'tonj_game_over':
+      if(botMode) break;
+      showOver(msg.wid, msg.wname, msg.reason);
+      break;
+
+    case 'err':
+      toast('⚠️ ' + msg.msg);
+      break;
+
+    case 'player_left':
+      if(!botMode && document.getElementById('game').classList.contains('on') && state)
+        toast(`⚠️ ${msg.name} خرج من اللعبة`);
+      break;
+  }
+}
+
+// ─────────────────────────────────────────────────
+//  خروج من اللعبة (حقيقية أو بوت) — يطلع للتطبيق الرئيسي
+// ─────────────────────────────────────────────────
+function leaveRoom(){
+  if(botMode){ botMode = null; }
+  if(ws) ws.close();
+  if(document.referrer && document.referrer.indexOf(location.origin) === 0){
+    window.location.href = document.referrer;
+  } else {
+    window.location.href = '../index.html';
+  }
+}
+
+// ─────────────────────────────────────────────────
+//  عرض اللوحة
+// ─────────────────────────────────────────────────
+function renderBoard(){
+  if(!state || !myId) return;
+  const me = state.seats.find(s=>s.id===myId);
+  const opp = state.seats.find(s=>s.id!==myId);
+  if(!me || !opp) return;
+
+  const isMyTurn = state.turn === myId;
+
+  // هيدر الدور
+  const tm = document.getElementById('turnMsg');
+  tm.textContent = isMyTurn ? '↩ دورك' : `دور ${opp.name}`;
+  tm.style.color = isMyTurn ? 'var(--gold)' : 'rgba(255,255,255,.5)';
+
+  // ── الخصم ──
+  document.getElementById('oppAv').textContent = opp.avatar||'😊';
+  document.getElementById('oppAv').className = 'pav' + (state.turn===opp.id?' active':'');
+  document.getElementById('oppName').textContent = opp.name;
+  document.getElementById('oppLeft').textContent = opp.cardsLeft + ' ورقة';
+
+  // كف الخصم — الحين وجهة تفاعلية أقدر أبني عليها (نفس النوع ورقم أقل بواحد)
+  renderPileTop('oppFire', opp.waste, opp.waste.length);
+  document.getElementById('oppFireCnt').textContent = opp.waste.length;
+  document.getElementById('oppFire').dataset.destType = 'oppWaste';
+  document.getElementById('oppFire').onclick = ()=> tryDrop('oppWaste', -1, document.getElementById('oppFire'));
+
+  // يد الخصم (مغلقة)
+  document.getElementById('oppHandCnt').textContent = opp.handCount;
+
+  // مكشوف الخصم (13)
+  renderPileTop('oppReserve', opp.reserveTop ? [opp.reserveTop] : [], opp.reserveCount);
+  document.getElementById('oppResCnt').textContent = opp.reserveCount;
+
+  // منازل الخصم
+  renderMenazel('oppMenazel', opp.menazel, false, opp.id);
+
+  // ── القواعد ──
+  renderFoundations(state.foundations);
+
+  // ── أنا ──
+  document.getElementById('myAv').className = 'pav' + (isMyTurn?' active':'');
+  document.getElementById('myLeft').textContent = me.cardsLeft + ' ورقة';
+
+  // منازلي
+  renderMenazel('myMenazel', me.menazel, true, me.id);
+
+  // مكشوفي (13)
+  renderPileTop('myReserve', me.reserveTop ? [me.reserveTop] : [], me.reserveCount, true, 'reserve', -1);
+  document.getElementById('myResCnt').textContent = me.reserveCount;
+
+  // ورقة مسحوبة
+  const drawnWrap = document.getElementById('drawnWrap');
+  if(me.handDrawn){
+    drawnWrap.style.display = '';
+    const dc = document.getElementById('drawnCard');
+    dc.innerHTML = '';
+    const cardEl = createCard(me.handDrawn.rank, me.handDrawn.suit, {size:'sm'});
+    cardEl.onclick = ()=> selectSrc('handDrawn', -1, me.handDrawn, cardEl);
+    if(selectedSrc && selectedSrc.srcType==='handDrawn') cardEl.classList.add('selected');
+    dc.appendChild(cardEl);
+  } else {
+    drawnWrap.style.display = 'none';
+  }
+
+  // يدي
+  document.getElementById('myHandCnt').textContent = me.handCount;
+
+  // ناري
+  renderPileTop('myFire', me.waste, me.waste.length);
+  document.getElementById('myFireCnt').textContent = me.waste.length;
+
+  // زر السحب
+  const btnDraw = document.getElementById('btnDraw');
+  btnDraw.disabled = !isMyTurn || !!me.handDrawn;
+
+  // زر طنج
+  const btnTonj = document.getElementById('btnTonj');
+  const showTonj = state.tonjAvailable && state.tonjAgainst !== myId;
+  btnTonj.style.display = showTonj ? '' : 'none';
+
+  // تحديث الـ highlights بعد العرض
+  if(selectedSrc) updateHighlights();
+}
+
+// ─────────────────────────────────────────────────
+//  رسم أعلى كومة (قاعدة مشتركة)
+// ─────────────────────────────────────────────────
+function renderPileTop(elId, cards, count, clickable, srcType, srcIdx){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const topCard = Array.isArray(cards) && cards.length ? cards[cards.length-1] : null;
+  el.innerHTML = '';
+  if(topCard){
+    el.className = '';
+    const cardEl = createCard(topCard.rank, topCard.suit, {size:'sm', selectable:false});
+    if(clickable && srcType){
+      cardEl.style.cursor = 'pointer';
+      cardEl.onclick = ()=> selectSrc(srcType, srcIdx, topCard, cardEl);
+      if(selectedSrc && selectedSrc.srcType===srcType) cardEl.classList.add('selected');
+    }
+    el.appendChild(cardEl);
+  } else {
+    el.className = 'empty-slot';
+    el.style.width = '40px'; el.style.height = '56px';
+    el.textContent = elId.includes('Fire') ? '🔥' : (elId.includes('Reserve')||elId.includes('reserve') ? '13' : '');
+  }
+}
+
+// ─────────────────────────────────────────────────
+//  رسم منازل (4 أعمدة)
+// ─────────────────────────────────────────────────
+function renderMenazel(containerId, menazel, isMe, ownerId){
+  const c = document.getElementById(containerId);
+  if(!c || !menazel) return;
+  c.innerHTML = '';
+  for(let i=0; i<4; i++){
+    const pile = menazel[i] || [];
+    const topCard = pile.length ? pile[pile.length-1] : null;
+    const slot = document.createElement('div');
+    slot.className = 'menazel-slot';
+
+    if(topCard){
+      const cardEl = createCard(topCard.rank, topCard.suit, {size:'sm', selectable:false});
+      cardEl.style.cursor = 'pointer';
+      if(isMe){
+        const isThisSelected = selectedSrc && selectedSrc.srcType==='menazel' && selectedSrc.srcIdx===i;
+        // العمود عندي فيه ورقة بالفعل — يصلح كمصدر (تحديد ورقة لنقلها) أو كوجهة
+        // (لو عندي ورقة ثانية محددة بالفعل وأبي أحطها فوق هذا العمود)
+        cardEl.dataset.destType = 'ownMenazel';
+        cardEl.dataset.destIdx = i;
+        cardEl.onclick = ()=>{
+          if(selectedSrc && !isThisSelected){
+            tryDrop('ownMenazel', i, cardEl);
+          } else {
+            selectSrc('menazel', i, topCard, cardEl);
+          }
+        };
+        if(isThisSelected) cardEl.classList.add('selected');
+      } else {
+        // منازل الخصم قابلة للاستقبال فقط
+        cardEl.dataset.destType = 'oppMenazel';
+        cardEl.dataset.destIdx = i;
+        cardEl.onclick = ()=> tryDrop('oppMenazel', i, cardEl);
+      }
+      // badge العدد
+      if(pile.length > 1){
+        const badge = document.createElement('span');
+        badge.className = 'count-badge';
+        badge.textContent = pile.length;
+        slot.appendChild(cardEl);
+        slot.appendChild(badge);
+      } else {
+        slot.appendChild(cardEl);
+      }
+    } else {
+      // خانة فاضية
+      const empty = document.createElement('div');
+      empty.className = 'empty-slot';
+      empty.style.width='44px'; empty.style.height='62px';
+      empty.textContent = (i+1);
+      if(isMe){
+        empty.dataset.destType = 'ownMenazel';
+        empty.dataset.destIdx = i;
+        empty.onclick = ()=> tryDrop('ownMenazel', i, empty);
+      } else {
+        empty.dataset.destType = 'oppMenazel';
+        empty.dataset.destIdx = i;
+        empty.onclick = ()=> tryDrop('oppMenazel', i, empty);
+      }
+      slot.appendChild(empty);
+    }
+    c.appendChild(slot);
+  }
+}
+
+// ─────────────────────────────────────────────────
+//  رسم القواعد (8 خانات)
+// ─────────────────────────────────────────────────
+function renderFoundations(foundations){
+  const c = document.getElementById('foundRow');
+  c.innerHTML = '';
+  for(let i=0; i<8; i++){
+    const f = foundations[i];
+    const slot = document.createElement('div');
+    slot.className = 'found-slot';
+
+    if(f){
+      const topCard = f.cards[f.cards.length-1];
+      const cardEl = createCard(topCard.rank, topCard.suit, {size:'sm', selectable:false});
+      cardEl.style.cursor = 'pointer';
+      cardEl.dataset.destType = 'foundation';
+      cardEl.dataset.destIdx = i;
+      cardEl.onclick = ()=> tryDrop('foundation', i, cardEl);
+      const badge = document.createElement('span');
+      badge.className = 'count-badge';
+      badge.textContent = f.cards.length;
+      slot.appendChild(cardEl);
+      slot.appendChild(badge);
+    } else {
+      const empty = document.createElement('div');
+      empty.className = 'empty-slot';
+      empty.textContent = 'A';
+      empty.dataset.destType = 'newFoundation';
+      empty.dataset.destIdx = i;
+      empty.onclick = ()=> tryDrop('newFoundation', i, empty);
+      slot.appendChild(empty);
+    }
+    c.appendChild(slot);
+  }
+}
+
+// ─────────────────────────────────────────────────
+//  اختيار المصدر
+// ─────────────────────────────────────────────────
+function selectSrc(srcType, srcIdx, card, el){
+  if(!state || state.turn !== myId) return;
+  const me = state.seats.find(s=>s.id===myId);
+  if(!me) return;
+
+  // نفس الورقة → الغِ الاختيار
+  if(selectedSrc && selectedSrc.srcType===srcType && selectedSrc.srcIdx===srcIdx){
+    selectedSrc = null;
+    renderBoard();
+    return;
+  }
+
+  selectedSrc = {srcType, srcIdx, card};
+  renderBoard();
+  updateHighlights();
+}
+
+// ─────────────────────────────────────────────────
+//  تحديث الـ highlights على الوجهات الشرعية
+// ─────────────────────────────────────────────────
+function updateHighlights(){
+  if(!selectedSrc || !state) return;
+  const me = state.seats.find(s=>s.id===myId);
+  const opp = state.seats.find(s=>s.id!==myId);
+  if(!me || !opp) return;
+  const card = selectedSrc.card;
+
+  // قواعد
+  document.querySelectorAll('#foundRow [data-dest-type]').forEach(el=>{
+    const destType = el.dataset.destType;
+    const destIdx = parseInt(el.dataset.destIdx);
+    let ok = false;
+    if(destType==='foundation'){
+      const f = state.foundations[destIdx];
+      ok = f && canFoundation(card, f.cards[f.cards.length-1]);
+    } else if(destType==='newFoundation'){
+      ok = card.rank==='A';
+    }
+    if(ok) el.classList.add('droppable');
+    else el.classList.remove('droppable');
+  });
+
+  // منازلي
+  document.querySelectorAll('#myMenazel [data-dest-type]').forEach(el=>{
+    const destIdx = parseInt(el.dataset.destIdx);
+    const pile = me.menazel[destIdx] || [];
+    const top = pile.length ? pile[pile.length-1] : null;
+    const ok = canMenazel(card, top);
+    if(ok) el.classList.add('droppable');
+    else el.classList.remove('droppable');
+  });
+
+  // منازل الخصم (بس في دوري)
+  document.querySelectorAll('#oppMenazel [data-dest-type]').forEach(el=>{
+    const destIdx = parseInt(el.dataset.destIdx);
+    const pile = opp.menazel[destIdx] || [];
+    const top = pile.length ? pile[pile.length-1] : null;
+    const ok = canMenazel(card, top);
+    if(ok) el.classList.add('droppable');
+    else el.classList.remove('droppable');
+  });
+
+  // كف الخصم
+  const oppFireEl = document.getElementById('oppFire');
+  if(oppFireEl && oppFireEl.dataset.destType==='oppWaste'){
+    const topWaste = opp.waste.length ? opp.waste[opp.waste.length-1] : null;
+    if(canWaste(card, topWaste)) oppFireEl.classList.add('droppable');
+    else oppFireEl.classList.remove('droppable');
+  }
+}
+
+// ─────────────────────────────────────────────────
+//  محاولة رمي الورقة على وجهة
+// ─────────────────────────────────────────────────
+function tryDrop(destType, destIdx, el){
+  if(!selectedSrc || !state || state.turn!==myId) return;
+  if(!el.classList.contains('droppable')){
+    toast('هذي الحركة غير شرعية ❌');
+    return;
+  }
+  const move = { srcType: selectedSrc.srcType, srcIdx: selectedSrc.srcIdx, destType, destIdx };
+  if(botMode) localMove(myId, move);
+  else send({ type:'tonj_move', ...move });
+  selectedSrc = null;
+}
+
+// ─────────────────────────────────────────────────
+//  سحب ورقة
+// ─────────────────────────────────────────────────
+function doDraw(){
+  if(!state || state.turn!==myId) return;
+  const me = state.seats.find(s=>s.id===myId);
+  if(me && me.handDrawn){ toast('ضع الورقة المسحوبة أولاً'); return; }
+  if(botMode) localDraw(myId);
+  else send({type:'tonj_draw'});
+}
+
+// ─────────────────────────────────────────────────
+//  نداء طنج
+// ─────────────────────────────────────────────────
+function doTonj(){
+  if(botMode) localCallTonj(myId);
+  else send({type:'tonj_call'});
+}
+
+// ─────────────────────────────────────────────────
+//  نهاية اللعبة
+// ─────────────────────────────────────────────────
+function showOver(wid, wname, reason){
+  if(reason==='stalemate_draw'){
+    document.getElementById('overIcon').textContent = '🤝';
+    document.getElementById('overTitle').textContent = 'تعادل!';
+    document.getElementById('overMsg').textContent = 'وصلت اللعبة لطريق مسدود بدون أي حركة ممكنة للطرفين';
+    go('over');
+    return;
+  }
+  const isWinner = wid === myId;
+  document.getElementById('overIcon').textContent = isWinner ? '🏆' : '💀';
+  document.getElementById('overTitle').textContent = isWinner ? 'فزت! 🎉' : 'خسرت 😞';
+  let msg = isWinner ? `أحسنت يا ${myName}!` : `فاز ${wname}`;
+  if(reason==='opponent_left') msg = `${wname} خرج من اللعبة — أنت الفائز!`;
+  if(reason==='stalemate') msg += ' (بسبب توقف اللعبة — أقل أوراق متبقية)';
+  document.getElementById('overMsg').textContent = msg;
+  go('over');
+}
+
+function goLobby(){
+  leaveRoom();
+}
+
+// ─────────────────────────────────────────────────
+//  toast
+// ─────────────────────────────────────────────────
+let toastTimer = null;
+function toast(msg, dur=2000){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), dur);
+}
+</script>
+</body>
+</html>

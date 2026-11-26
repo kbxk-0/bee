@@ -101,7 +101,7 @@ function filterStore(tabIndex) {
 
 function storeCard(name, desc, color, icon, price, actionClick) {
   return `
-    <div style="background:#161624; border:1px solid rgba(255,255,255,0.06); padding:12px; border-radius:16px; display:flex; justify-content:space-between; align-items:center; max-width:480px; margin-bottom:8px;">
+    <div class="card-premium" style="background:#161624; border:1px solid rgba(255,255,255,0.06); padding:12px; border-radius:16px; display:flex; justify-content:space-between; align-items:center; max-width:480px; margin-bottom:8px;">
       <div style="display:flex; align-items:center; gap:12px;">
         <div style="font-size:24px; width:44px; height:44px; background:rgba(255,255,255,0.03); border-radius:12px; display:flex; align-items:center; justify-content:center;">${icon}</div>
         <div>
@@ -116,63 +116,86 @@ function storeCard(name, desc, color, icon, price, actionClick) {
 }
 
 function buildTitleCard(title, color, price) {
-  return storeCard(`لقب [ ${title} ]`, 'يظهر بجانب اسمك في غرف الدردشة', color, '🏷️', price, `buyStoreItem('titles', '${title}', ${price})`);
+  return storeCard(`لقب [ ${title} ]`, 'يظهر بجانب اسمك في غرف الدردشة', color, '🏷️', price, `buyStoreItem('titles', '${title}', ${price}, '${color}')`);
 }
 
 function frameCard(name, gradient, price) {
-  return storeCard(name, 'إطار متحرك فخم يحيط بصورة حسابك', '#fff', '🖼️', price, `buyStoreItem('frames', '${name}', ${price})`);
+  return storeCard(name, 'إطار متحرك فخم يحيط بصورة حسابك', '#fff', '🖼️', price, `buyStoreItem('frames', '${name}', ${price}, '${gradient}')`);
 }
 
 function effectCard(name, emoji, desc, price) {
-  return storeCard(name, desc, '#a78bfa', emoji, price, `buyStoreItem('effects', '${name}', ${price})`);
+  return storeCard(name, desc, '#a78bfa', emoji, price, `buyStoreItem('effects', '${name}', ${price}, '${emoji}')`);
 }
 
 // ══ دالات عمليات الشراء والربط بالفايربيس ══
-
-function buyStoreItem(category, itemName, price) {
+// ملاحظة: وحّدت شكل بيانات inventory هنا ليطابق الشكل اللي تتوقعه صفحة الحقيبة
+// (inventory.js) — كانت قبل تُخزَّن بشكل مختلف تماماً فما تظهر صحيح بالحقيبة.
+function buyStoreItem(category, itemName, price, meta) {
   if (typeof auth === 'undefined' || !auth.currentUser) {
-    alert("يجب تسجيل الدخول أولاً لإتمام الشراء! 🔐");
-    return;
-  }
-  
-  if (typeof currentCoins !== 'undefined' && currentCoins < price) {
-    alert("رصيدك من الكوينز غير كافٍ! 🪙");
+    Toast.show("يجب تسجيل الدخول أولاً لإتمام الشراء! 🔐", 'error');
     return;
   }
 
-  if (confirm(`هل أنت متأكد من شراء [ ${itemName} ] مقابل 🪙 ${price}؟`)) {
-    const uid = auth.currentUser.uid;
-    
-    // سحب آمن ورسمي للعملات داخل الفايربيس عبر Transaction
-    db.ref(`users/${uid}`).transaction(userData => {
-      if (userData) {
-        if ((userData.coins || 0) >= price) {
-          userData.coins -= price;
-          if (!userData.inventory) userData.inventory = {};
-          if (!userData.inventory[category]) userData.inventory[category] = {};
-          
-          // إضافة المنتج لحقيبة اللاعب مع تاريخ الشراء
-          userData.inventory[category][itemName] = firebase.database.ServerValue.TIMESTAMP;
-          return userData;
-        }
-      }
-      return; // إلغاء العملية لو الرصيد بالسيرفر ناقص
-    }, (error, committed) => {
-      if (committed) {
-        alert(`🎉 مبروك! تم شراء [ ${itemName} ] وتفعيله في حسابك.`);
-        if (typeof renderStore === 'function') renderStore();
-      } else {
-        alert("❌ فشلت عملية الشراء، يرجى التحقق من استقرار الاتصال.");
-      }
-    });
+  if (typeof currentCoins !== 'undefined' && currentCoins < price) {
+    Toast.show("رصيدك من الكوينز غير كافٍ! 🪙", 'error');
+    return;
   }
+
+  const uid = auth.currentUser.uid;
+  Sounds.play('click');
+
+  const durations = { titles: 30, frames: 30, effects: 7 };
+  const days      = durations[category] || 30;
+  const key       = category === 'titles'  ? itemName
+                   : category === 'frames'  ? 'frame_'  + itemName
+                   :                           'effect_' + itemName;
+  const itemType  = category === 'titles' ? 'title' : category === 'frames' ? 'frame' : 'effect';
+  const now       = Date.now();
+  const expires   = now + days * 24 * 60 * 60 * 1000;
+
+  // سحب آمن ورسمي للعملات داخل الفايربيس عبر Transaction
+  db.ref(`users/${uid}`).transaction(userData => {
+    if (userData) {
+      if ((userData.coins || 0) >= price) {
+        userData.coins -= price;
+        if (!userData.inventory) userData.inventory = {};
+
+        const entry = { type: itemType, name: itemName, acquired: now, expires };
+        if (category === 'frames')  entry.gradient = meta;
+        if (category === 'effects') entry.icon     = meta;
+        userData.inventory[key] = entry;
+
+        if (category === 'titles') {
+          userData.title      = itemName;
+          userData.titleColor = meta;
+        }
+        return userData;
+      }
+    }
+    return; // إلغاء العملية لو الرصيد بالسيرفر ناقص
+  }, (error, committed) => {
+    if (committed) {
+      Toast.show(`🎉 مبروك! تم شراء [ ${itemName} ] وتفعيله في حسابك.`, 'gold');
+      Sounds.play('purchase'); Haptic.success();
+      setTimeout(() => Sounds.play('coins'), 350);
+
+      // سجل المشتريات — منفصل عن الحقيبة، يبقى محفوظ بالتاريخ حتى بعد انتهاء صلاحية المنتج
+      db.ref('purchase_history/' + uid).push({
+        item: itemName, category, price,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      });
+
+      if (typeof renderStore === 'function') renderStore();
+    } else {
+      Toast.show("❌ فشلت عملية الشراء، يرجى التحقق من استقرار الاتصال.", 'error');
+    }
+  });
 }
 
 // دالة شراء الـ VIP الخاصة
 function buyVIP() {
   const user = auth.currentUser; if(!user) return;
-  if(currentCoins < 50){alert('رصيدك غير كافٍ! تحتاج 50 🪙');return;}
-  if(!confirm('شراء عضوية VIP ذهبية لمدة 30 يوم مقابل 50 🪙؟'))return;
+  if(currentCoins < 50){Toast.show('رصيدك غير كافٍ! تحتاج 50 🪙', 'error');return;}
   db.ref('users/'+user.uid).transaction(u=>{
     if(u&&u.coins>=50){
       u.coins-=50;
@@ -186,8 +209,15 @@ function buyVIP() {
     if(ok){
       if(typeof activateVIP==='function')activateVIP(user.uid);
       else{if(typeof showToast==='function')showToast('⭐ تم تفعيل VIP!');}
+      db.ref('purchase_history/' + user.uid).push({
+        item: 'VIP ذهبي', category: 'memberships', price: 50,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      });
       if(typeof renderStore==='function')renderStore();
     }
   });
 }
 window.renderStore = renderStore;
+// بعد رندر المتجر نحرّك البطاقات
+const _origRenderStore = renderStore;
+window.renderStore = function() { _origRenderStore(); setTimeout(() => Effects.animateCards(document.getElementById('store')), 60); };

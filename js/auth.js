@@ -9,7 +9,7 @@ async function doLogin() {
   const email = document.getElementById('l-email').value.trim();
   const pass  = document.getElementById('l-pass').value;
 
-  if (!email || !pass) { alert("يرجى تعبئة البريد وكلمة المرور"); return; }
+  if (!email || !pass) { Toast.show("يرجى تعبئة البريد وكلمة المرور", 'error'); return; }
 
   try {
     await auth.signInWithEmailAndPassword(email, pass);
@@ -22,7 +22,7 @@ async function doLogin() {
       'auth/invalid-email':     'البريد الإلكتروني غير صحيح',
       'auth/too-many-requests': 'محاولات كثيرة، انتظر قليلاً'
     };
-    alert(errors[err.code] || 'خطأ: ' + err.message);
+    Toast.show(errors[err.code] || 'خطأ: ' + err.message, 'error');
   }
 }
 
@@ -32,10 +32,10 @@ async function doRegister() {
   const pass     = document.getElementById('l-pass').value;
   const username = document.getElementById('l-username')?.value.trim();
 
-  if (!email || !pass) { alert("يرجى تعبئة جميع الحقول"); return; }
-  if (pass.length < 6) { alert("كلمة المرور يجب أن تكون 6 أحرف على الأقل"); return; }
+  if (!email || !pass) { Toast.show("يرجى تعبئة جميع الحقول", 'error'); return; }
+  if (pass.length < 6) { Toast.show("كلمة المرور يجب أن تكون 6 أحرف على الأقل", 'error'); return; }
   if (username && (username.length < 3 || username.length > 15)) {
-    alert("اسم المستخدم بين 3 و15 حرفاً"); return;
+    Toast.show("اسم المستخدم بين 3 و15 حرفاً", 'error'); return;
   }
 
   try {
@@ -63,14 +63,14 @@ async function doRegister() {
     const refCode = document.getElementById('l-refcode')?.value?.trim();
     if (refCode && typeof applyReferralOnRegister === 'function')
       applyReferralOnRegister(uid, name, refCode);
-    alert(`مرحباً ${name}! تم إنشاء حسابك وحصلت على 100 🪙 هدية ترحيبية!`);
+    Toast.show(`مرحباً ${name}! تم إنشاء حسابك وحصلت على 100 🪙 هدية ترحيبية!`, 'gold');
   } catch (err) {
     const errors = {
       'auth/email-already-in-use': 'هذا البريد مسجل بالفعل',
       'auth/invalid-email':        'البريد الإلكتروني غير صحيح',
       'auth/weak-password':        'كلمة المرور ضعيفة جداً'
     };
-    alert(errors[err.code] || 'خطأ: ' + err.message);
+    Toast.show(errors[err.code] || 'خطأ: ' + err.message, 'error');
   }
 }
 
@@ -91,17 +91,51 @@ function toggleAuthMode() {
   if (rfc) rfc.style.display = isLogin ? 'block' : 'none';
 }
 
+// ===== سلسلة تسجيل الدخول اليومي + مكافآت متصاعدة (7 أيام، تتكرر) =====
+const DAILY_LOGIN_REWARDS = [20, 30, 40, 60, 80, 120, 200];
+
+function checkDailyLogin(uid) {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  let grantedReward = 0, grantedStreak = 0;
+
+  db.ref('users/' + uid).transaction(u => {
+    if (!u) return u;
+    if (u.lastLoginDate === todayStr) { grantedReward = 0; return u; } // دخل اليوم خلاص، ما نكرر المكافأة
+
+    const yesterdayStr = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    const continued = u.lastLoginDate === yesterdayStr;
+    const newStreak  = continued ? (u.dailyStreak || 0) + 1 : 1;
+    const reward     = DAILY_LOGIN_REWARDS[(newStreak - 1) % DAILY_LOGIN_REWARDS.length];
+
+    u.lastLoginDate = todayStr;
+    u.dailyStreak   = newStreak;
+    u.coins         = (u.coins || 0) + reward;
+
+    grantedReward = reward;
+    grantedStreak = newStreak;
+    return u;
+  }, (err, committed) => {
+    if (!err && committed && grantedReward > 0) {
+      if (typeof showDailyLoginPopup === 'function') showDailyLoginPopup(grantedStreak, grantedReward);
+      Sounds.play('coins'); Haptic.success();
+    }
+  });
+}
+
 // ===== مراقبة حالة تسجيل الدخول =====
 // هذه الدالة تُشغَّل تلقائياً عند:
 //   - فتح التطبيق (لو كان المستخدم مسجلاً)
 //   - تسجيل الدخول
 //   - تسجيل الخروج
+let _appSoundPlayed = false;
 auth.onAuthStateChanged((user) => {
   const overlay = document.getElementById('auth-overlay');
 
   if (user) {
+    if (!_appSoundPlayed) { _appSoundPlayed = true; setTimeout(() => Sounds.play('appOpen'), 600); }
     if (overlay) overlay.style.display = 'none';
     if (typeof checkForUpdate === 'function') checkForUpdate();
+    checkDailyLogin(user.uid);
 
     // ===== مستمع التحويلات الواردة =====
     db.ref('transfers/' + user.uid).on('child_added', snap => {
@@ -140,6 +174,7 @@ auth.onAuthStateChanged((user) => {
       // كشف الترقي — نتجاهل أول تحميل (prevLevel === 1 والمستوى ما تغير)
       if (prevLevel > 1 && currentLevel > prevLevel) {
         if (typeof showLevelUpPopup === 'function') showLevelUpPopup(currentLevel);
+        Sounds.play('levelUp'); Haptic.success();
         // مكافأة الترقي
         const rewards = [50,75,100,125,150,200,250,300,400,500];
         const bonus   = rewards[Math.min(currentLevel - 2, rewards.length - 1)] || 50;

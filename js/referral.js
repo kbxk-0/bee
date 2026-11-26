@@ -23,6 +23,7 @@ function openReferral() {
   const modal   = document.getElementById('profile-modal');
   const content = document.getElementById('profile-content');
   if (!modal || !content) return;
+  saveModalSnapshot();
   modal.style.display = 'flex';
   content.innerHTML = '<div style="text-align:center;color:#888;padding:20px">جاري التحميل...</div>';
 
@@ -152,7 +153,7 @@ function shareReferral(code) {
     navigator.share({ title: 'bee 🐝', text });
   } else {
     copyReferralCode(code);
-    if (typeof showToast === 'function') showToast('📋 تم نسخ رابط المشاركة');
+    Toast.show('📋 تم نسخ رابط المشاركة', 'success');
   }
 }
 
@@ -162,15 +163,15 @@ function useReferralCode() {
   const input = document.getElementById('ref-code-input');
   const code  = (input?.value || '').trim().toUpperCase();
 
-  if (!code || code.length < 7) { alert('كود غير صحيح'); return; }
-  if (!code.startsWith('BEE')) { alert('كود غير صحيح — يجب أن يبدأ بـ BEE'); return; }
+  if (!code || code.length < 7) { Toast.show('كود غير صحيح', 'error'); return; }
+  if (!code.startsWith('BEE')) { Toast.show('كود غير صحيح — يجب أن يبدأ بـ BEE', 'error'); return; }
 
   const myCode = generateReferralCode(user.uid);
-  if (code === myCode) { alert('لا يمكنك استخدام كودك الخاص! 😄'); return; }
+  if (code === myCode) { Toast.show('لا يمكنك استخدام كودك الخاص! 😄', 'error'); return; }
 
   // Check if already used
   db.ref('referrals/' + user.uid + '/usedCode').once('value', snap => {
-    if (snap.val()) { alert('استخدمت كود إحالة بالفعل!'); return; }
+    if (snap.val()) { Toast.show('استخدمت كود إحالة بالفعل!', 'error'); return; }
 
     // Find owner of this code
     db.ref('users').once('value', snap => {
@@ -179,8 +180,8 @@ function useReferralCode() {
         if (generateReferralCode(s.key) === code) { ownerUid = s.key; }
       });
 
-      if (!ownerUid) { alert('الكود غير صحيح أو منتهي!'); return; }
-      if (ownerUid === user.uid) { alert('لا يمكنك استخدام كودك الخاص!'); return; }
+      if (!ownerUid) { Toast.show('الكود غير صحيح أو منتهي!', 'error'); return; }
+      if (ownerUid === user.uid) { Toast.show('لا يمكنك استخدام كودك الخاص!', 'error'); return; }
 
       // Give invited user their bonus
       db.ref('users/' + user.uid + '/coins').transaction(c => (c || 0) + REFERRAL_BONUS_INVITED);
@@ -201,7 +202,7 @@ function useReferralCode() {
         sendNotification(ownerUid,    'system', '🎁 إحالة ناجحة!',  `${currentUsername} انضم بكودك! +${REFERRAL_BONUS_INVITER} 🪙`);
       }
 
-      alert(`🎉 تم! حصلت على ${REFERRAL_BONUS_INVITED} 🪙 مكافأة ترحيب!`);
+      Toast.show(`🎉 تم! حصلت على ${REFERRAL_BONUS_INVITED} 🪙 مكافأة ترحيب!`, 'gold'); Sounds.play('coins'); Haptic.success();
       openReferral();
     });
   });

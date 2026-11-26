@@ -4,7 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>مليون 🃏</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script src="../js/cards.js"></script>
+<script src="../js/quick-chat.js"></script>
+<script src="../js/stickers.js"></script>
+<script src="../js/table-layout.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -12,7 +19,7 @@
   --gold:#c8a940;--gold2:#f0c040;--bg:#08080f;
   --hex-stroke:rgba(200,169,64,0.12);
 }
-html,body{height:100%;overflow:hidden;background:var(--bg);\n  font-family:'Cairo',sans-serif;color:#fff;direction:rtl;touch-action:manipulation}
+html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'Cairo',sans-serif;color:#fff;direction:rtl;touch-action:manipulation}
 .sc{position:fixed;inset:0;display:none;flex-direction:column}
 .sc.on{display:flex}
 
@@ -70,7 +77,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);\n  font-family:'Cair
   border:1.5px solid rgba(192,57,43,.3)}
 
 /* ══ GAME ══ */
-#game{background:var(--bg);overflow:hidden;position:relative}
+#game{background:var(--bg);overflow:hidden}
 #game::before{
   content:'';position:absolute;inset:0;z-index:0;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='69'%3E%3Cpath d='M30 1 L59 17 L59 52 L30 68 L1 52 L1 17Z' fill='none' stroke='rgba(200%2C169%2C64%2C0.07)' stroke-width='1'/%3E%3C/svg%3E");
@@ -122,45 +129,78 @@ html,body{height:100%;overflow:hidden;background:var(--bg);\n  font-family:'Cair
   transition:transform .2s;transform:translateX(0)}
 .sm-toggle.on::after{transform:translateX(-18px)}
 
-/* ── TABLE ── */
+/* ── TABLE: فريم مزخرف مسطّح (مستوحى من تصميمك المرجعي) ── */
 .table-area{position:absolute;top:56px;bottom:155px;left:0;right:0;
   display:flex;align-items:center;justify-content:center}
-.hex-table{
+
+.ornate-frame{
   position:relative;
-  width:min(320px,85vw);
-  height:min(320px,85vw);
+  width:min(250px,68vw);
+  padding:11px;
+  border-radius:24px;
+  background:linear-gradient(165deg,#f0c040 0%,#caa030 14%,#7a5a10 42%,#2a1d02 78%,#0a0600 100%);
+  box-shadow:0 18px 40px rgba(0,0,0,.7);
 }
-.hex-table svg.table-svg{
-  position:absolute;inset:0;width:100%;height:100%;
+.ornate-frame::before{
+  content:'';position:absolute;inset:5px;border-radius:19px;
+  border:1px solid rgba(255,255,255,.18);pointer-events:none;
 }
-.pot-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  text-align:center;z-index:10}
-.pot-label{font-size:.58rem;letter-spacing:3px;color:rgba(200,169,64,.55);
+.ornate-inner{
+  border-radius:18px;
+  min-height:280px;
+  padding:24px 16px;
+  background:radial-gradient(ellipse 95% 75% at 50% 22%, #6a1212 0%, #3e0a0a 55%, #190404 100%);
+  box-shadow:inset 0 0 40px rgba(0,0,0,.6), inset 0 10px 24px rgba(0,0,0,.5);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  position:relative;
+}
+.gem-accent{
+  position:absolute;left:50%;transform:translateX(-50%);
+  width:18px;height:18px;line-height:16px;text-align:center;
+  color:#ff6050;font-size:15px;text-shadow:0 0 10px rgba(255,70,50,.8);
+  z-index:5;
+}
+.gem-top{top:-9px}
+.gem-bottom{bottom:-9px}
+
+.pot-center{text-align:center}
+.pot-label{font-size:.58rem;letter-spacing:3px;color:rgba(255,200,200,.6);
   text-transform:uppercase;margin-bottom:3px}
-.pot-chips{display:flex;justify-content:center;gap:3px;margin-bottom:3px}
-.chip{width:12px;height:12px;border-radius:50%;border:1.5px dashed rgba(255,255,255,.2)}
-.ch-r{background:#c0392b}.ch-b{background:#2980b9}.ch-g{background:#27ae60}
+.pot-chips{display:flex;justify-content:center;margin-bottom:3px}
+.chip{width:20px;height:20px;border-radius:50%;position:relative;margin-left:-7px;
+  border:2px solid rgba(255,255,255,.18);
+  box-shadow:0 3px 5px rgba(0,0,0,.55), inset 0 2px 3px rgba(255,255,255,.28), inset 0 -2px 3px rgba(0,0,0,.35);
+  background-image:repeating-conic-gradient(currentColor 0deg 16deg, transparent 16deg 32deg);}
+.chip:first-child{margin-left:0}
+.ch-r{background-color:#7a1414;color:#fff}
+.ch-b{background-color:#143a7a;color:#fff}
+.ch-g{background-color:#145a28;color:#fff}
 .pot-amount{font-size:clamp(1.1rem,4vw,1.5rem);font-weight:900;color:var(--gold2);
   text-shadow:0 0 16px rgba(240,192,64,.5)}
+.pot-center.hidden{display:none}
 
-/* ── SEATS ── */
-.seat{position:absolute;display:flex;flex-direction:column;align-items:center;gap:3px;z-index:20}
-.seat[data-pos="0"]{bottom:-10px;left:50%;transform:translateX(-50%)}
-.seat[data-pos="1"]{top:2%;left:50%;transform:translateX(-50%)}
-.seat[data-pos="2"]{top:20%;left:-2px}
-.seat[data-pos="3"]{top:20%;right:-2px}
-.seat[data-pos="4"]{bottom:20%;left:-2px}
-.seat[data-pos="5"]{bottom:20%;right:-2px}
-.seat[data-pos="6"]{top:2%;left:22%}
-.seat[data-pos="7"]{top:2%;right:22%}
-.seat[data-pos="8"]{top:50%;left:-6px;transform:translateY(-50%)}
-.seat[data-pos="9"]{top:50%;right:-6px;transform:translateY(-50%)}
-.seat[data-pos="10"]{bottom:2%;left:22%}
-.seat[data-pos="11"]{bottom:2%;right:22%}
+.wait-panel{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;text-align:center}
+.wait-panel.hidden{display:none}
+.wait-panel-status{font-size:.72rem;color:rgba(255,255,255,.75);line-height:1.4}
+.wait-panel-btns{display:flex;gap:6px;width:100%}
+.wp-gear{flex:0 0 38px;height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.08);color:#fff;font-size:16px;cursor:pointer;font-family:inherit}
+.wp-start{flex:1;height:38px;border-radius:10px;border:none;
+  background:linear-gradient(135deg,#a87e10,#f0c040);color:#1a0800;font-weight:900;
+  font-size:.8rem;cursor:pointer;font-family:inherit}
+.wp-start:active,.wp-gear:active{transform:scale(.95)}
+.wp-invite{margin-top:4px;width:100%;height:34px;border-radius:10px;border:1px dashed rgba(200,169,64,.4);
+  background:rgba(200,169,64,.08);color:#f0c040;font-size:.74rem;cursor:pointer;font-family:inherit}
+.wp-invite:active{transform:scale(.96);background:rgba(200,169,64,.18)}
+
+/* ── SEATS — حول الفريم بمواقع ثابتة مرتبة (زي التصميم المرجعي) ── */
+#oppSeats{position:absolute;inset:0;pointer-events:none}
+.seat{position:absolute;display:flex;flex-direction:column;align-items:center;gap:3px;z-index:20;pointer-events:auto}
 
 .oav{width:48px;height:48px;border-radius:50%;overflow:hidden;position:relative;
   border:2.5px solid rgba(150,120,50,.3);flex-shrink:0;
-  background:#111;box-shadow:0 4px 14px rgba(0,0,0,.7);
+  background:#111;
+  box-shadow:0 11px 16px -3px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.06) inset, 0 -3px 5px rgba(255,255,255,.05) inset;
   display:flex;align-items:center;justify-content:center;font-size:1.5rem}
 .oav.active{border-color:var(--gold)!important;
   box-shadow:0 0 0 3px rgba(200,169,64,.22),0 0 18px rgba(200,169,64,.5)!important}
@@ -177,6 +217,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);\n  font-family:'Cair
   background:rgba(200,169,64,.12);color:var(--gold);margin-top:1px}
 .bal-badge{font-size:.6rem;color:rgba(200,169,64,.6)}
 
+/* مقعد فاضي — بانتظار لاعب حقيقي ينضم، يتحول تلقائي لمقعد فعلي أو بوت */
+.oav-empty{width:48px;height:48px;border-radius:50%;
+  border:2px dashed rgba(255,255,255,.18);background:rgba(255,255,255,.02);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;color:rgba(255,255,255,.25)}
+
 .opp-cards{display:flex;gap:-4px;position:relative;height:36px;width:44px;margin-top:1px}
 .opp-card{position:absolute;width:24px;height:34px;border-radius:4px;
   background:linear-gradient(135deg,#1a3888,#0d2060);
@@ -188,10 +234,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);\n  font-family:'Cair
 
 .cards-strip{
   position:absolute;bottom:80px;left:0;right:0;z-index:22;
-  background:linear-gradient(to bottom,#b0b0b0,#e8e8e8);
-  padding:12px 8px 10px;
-  display:flex;align-items:flex-end;justify-content:center;gap:6px;
-  min-height:110px}
+  background:transparent;
+  padding:12px 8px 14px;
+  display:flex;align-items:flex-end;justify-content:center;gap:8px;
+  min-height:120px;
+  perspective:700px;
+  filter:drop-shadow(0 8px 24px rgba(0,0,0,0.8))}
 .cards-strip .pcard-lg{
   width:calc((min(100vw,480px) - 80px)/4);max-width:70px;
   height:auto;aspect-ratio:0.72}
@@ -228,6 +276,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);\n  font-family:'Cair
   box-shadow:0 3px 12px rgba(200,169,64,.4)}
 .my-bar.waiting-turn .bet-slider,.my-bar.waiting-turn .act-bet,
 .my-bar.waiting-turn .act-fold{opacity:.4;pointer-events:none}
+.my-bar.bankrupt-bar .bet-lbl,.my-bar.bankrupt-bar .my-bal{color:#e74c3c!important}
 
 /* ── OVERLAYS ── */
 .overlay{display:none;position:absolute;inset:0;z-index:80;
@@ -268,13 +317,165 @@ html,body{height:100%;overflow:hidden;background:var(--bg);\n  font-family:'Cair
   z-index:200;opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap}
 .toast.show{opacity:1}
 
+/* ── NO INTERNET OVERLAY (يعمل فوق كل الشاشات) ── */
+#offlineOverlay{position:fixed;inset:0;z-index:9999;
+  background:rgba(5,5,12,.97);backdrop-filter:blur(10px);
+  display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;
+  padding:24px;text-align:center}
+#offlineOverlay.show{display:flex;animation:fi .3s ease}
+.offline-icon{font-size:3rem;animation:pulse2 1.6s ease-in-out infinite}
+.offline-title{font-size:1.15rem;font-weight:900;color:var(--gold)}
+.offline-sub{font-size:.85rem;color:rgba(255,255,255,.5);max-width:280px;line-height:1.6}
+.offline-retry{margin-top:6px}
+
 #gameChat{display:none;position:absolute;bottom:160px;left:8px;right:8px;z-index:40;
   background:rgba(0,0,0,.88);border:1px solid rgba(255,255,255,.1);border-radius:14px;overflow:hidden}
+
+/* ════════════════════════════════════
+   3D EFFECTS — PHASE 2
+════════════════════════════════════ */
+
+/* ── الأوراق: ارتفاع 3D عند الضغط والتحديد ── */
+.cards-strip .pcard-lg {
+  cursor:pointer;
+  transform-style:preserve-3d;
+  transition:
+    transform 0.28s cubic-bezier(.34,1.56,.64,1),
+    box-shadow 0.28s ease,
+    filter 0.2s ease;
+  border-radius:8px !important;
+  box-shadow:0 6px 18px rgba(0,0,0,0.75), 0 2px 4px rgba(0,0,0,0.5) !important;
+  position:relative;
+}
+.cards-strip .pcard-lg:hover {
+  transform:translateY(-12px) scale(1.06) rotateX(5deg);
+  box-shadow:0 20px 45px rgba(0,0,0,0.85), 0 0 20px rgba(200,169,64,0.18) !important;
+  z-index:10;
+}
+.cards-strip .pcard-lg.selected {
+  transform:translateY(-26px) scale(1.08) rotateX(7deg) !important;
+  box-shadow:
+    0 28px 55px rgba(0,0,0,0.95),
+    0 0 0 2.5px var(--gold2),
+    0 0 35px rgba(240,192,64,0.5) !important;
+  filter:brightness(1.1);
+  z-index:20;
+}
+
+/* ── أوراق الخصم: أحسن تصميم ── */
+.opp-card {
+  background:linear-gradient(135deg,#0e2878,#1a3d99,#0a1a55) !important;
+  border:1px solid rgba(120,160,255,0.22) !important;
+  box-shadow:0 3px 9px rgba(0,0,0,0.7) !important;
+  position:relative;
+  overflow:hidden;
+}
+.opp-card::before {
+  content:'';
+  position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.07) 0%,transparent 60%);
+}
+.opp-card::after {
+  content:'';
+  position:absolute;inset:3px;
+  border-radius:2px;
+  background:repeating-linear-gradient(
+    45deg,
+    transparent,transparent 3px,
+    rgba(255,255,255,0.04) 3px,rgba(255,255,255,0.04) 4px
+  );
+}
+
+/* ── اللاعب النشط: نيون نابض ── */
+.oav.active {
+  border-color:var(--gold) !important;
+  box-shadow:
+    0 0 0 3px rgba(200,169,64,0.3),
+    0 0 22px rgba(200,169,64,0.65),
+    0 0 45px rgba(200,169,64,0.25) !important;
+  animation:seatGlow 1.4s ease-in-out infinite;
+}
+@keyframes seatGlow {
+  0%,100%{box-shadow:0 0 0 3px rgba(200,169,64,.3),0 0 22px rgba(200,169,64,.65),0 0 45px rgba(200,169,64,.25)}
+  50%{box-shadow:0 0 0 4px rgba(200,169,64,.55),0 0 35px rgba(200,169,64,.95),0 0 70px rgba(200,169,64,.45)}
+}
+
+/* ── البوت: توهج ذهبي دائم ── */
+.pot-amount {
+  animation:potGlow 2.2s ease-in-out infinite;
+}
+@keyframes potGlow {
+  0%,100%{text-shadow:0 0 18px rgba(240,192,64,0.45)}
+  50%{text-shadow:0 0 35px rgba(240,192,64,0.95),0 0 70px rgba(240,192,64,0.4)}
+}
+
+/* ── التوست: أحسن ── */
+.toast {
+  background:rgba(6,6,14,0.96) !important;
+  border:1px solid rgba(200,169,64,0.28) !important;
+  backdrop-filter:blur(18px) !important;
+  box-shadow:0 10px 35px rgba(0,0,0,0.65) !important;
+  padding:10px 24px !important;
+  font-weight:700 !important;
+  letter-spacing:0.3px;
+}
+
+/* ── نافذة النتيجة: دخول 3D ── */
+.overlay.show {
+  animation:overlayIn 0.3s ease !important;
+}
+@keyframes overlayIn {
+  from{opacity:0;backdrop-filter:blur(0px)}
+  to{opacity:1;backdrop-filter:blur(8px)}
+}
+.res-box {
+  animation:resBoxIn 0.48s cubic-bezier(.34,1.56,.64,1) !important;
+}
+@keyframes resBoxIn {
+  from{transform:scale(0.65) translateY(25px) rotateX(-20deg);opacity:0}
+  to{transform:scale(1) translateY(0) rotateX(0);opacity:1}
+}
+
+/* ── تاج الفائز: نبض ذهبي ── */
+.res-crown {
+  filter:drop-shadow(0 0 18px rgba(240,192,64,0.9));
+  animation:crownBob 1s ease-in-out infinite, crownGlow 1.5s ease-in-out infinite;
+}
+@keyframes crownBob {
+  0%,100%{transform:translateY(0) rotate(-3deg)}
+  50%{transform:translateY(-12px) rotate(3deg)}
+}
+@keyframes crownGlow {
+  0%,100%{filter:drop-shadow(0 0 14px rgba(240,192,64,0.7))}
+  50%{filter:drop-shadow(0 0 30px rgba(240,192,64,1)) drop-shadow(0 0 60px rgba(240,192,64,0.5))}
+}
+
+/* ── الأزرار: حس 3D عند الضغط ── */
+.btn-g:active, .act-bet:active {
+  transform:scale(0.94) translateY(2px) !important;
+  box-shadow:0 2px 8px rgba(200,169,64,0.3) !important;
+}
+.act-fold:active {
+  transform:scale(0.94) translateY(2px) !important;
+}
+
+/* ── شريط اللاعب: زجاجي ── */
+.my-bar {
+  background:linear-gradient(to top,rgba(0,0,0,0.97) 60%,rgba(5,5,18,0.85) 100%) !important;
+  border-top:1px solid rgba(200,169,64,0.1);
+  backdrop-filter:blur(8px);
+}
+
+/* ── أفاتار اللاعب الحالي: توهج ── */
+.my-av {
+  box-shadow:0 0 0 2px rgba(200,169,64,0.25), 0 0 20px rgba(200,169,64,0.2) !important;
+  transition:box-shadow 0.3s ease;
+}
 </style>
 </head>
 <body>
 
-<div id="lobby" class="sc on">
+<div id="lobby" class="sc">
   <div class="lobby-box">
     <div style="font-size:3rem">🃏</div>
     <div class="lobby-title">مليون</div>
@@ -304,7 +505,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);\n  font-family:'Cair
   </div>
 </div>
 
-<div id="game" class="sc">
+<div id="game" class="sc on">
 
   <div class="g-header">
     <div class="g-logo">🃏 مليون</div>
@@ -340,32 +541,32 @@ html,body{height:100%;overflow:hidden;background:var(--bg);\n  font-family:'Cair
   </div>
 
   <div class="table-area">
-    <div class="hex-table" id="hexTable">
-      <svg class="table-svg" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <radialGradient id="feltGrad" cx="50%" cy="45%">
-            <stop offset="0%" stop-color="#1a1400"/>
-            <stop offset="60%" stop-color="#0d0c00"/>
-            <stop offset="100%" stop-color="#060500"/>
-          </radialGradient>
-        </defs>
-        <polygon points="160,10 300,90 300,230 160,310 20,230 20,90" fill="none" stroke="#c8a940" stroke-width="3" opacity="0.6"/>
-        <polygon points="160,20 290,95 290,225 160,300 30,225 30,95" fill="none" stroke="#f0c040" stroke-width="1.5" opacity="0.3"/>
-        <polygon points="160,22 288,96 288,224 160,298 32,224 32,96" fill="url(#feltGrad)" />
-        <polygon points="160,50 270,110 270,210 160,270 50,210 50,110" fill="none" stroke="rgba(200,169,64,0.08)" stroke-width="1"/>
-        <polygon points="160,80 248,124 248,196 160,240 72,196 72,124" fill="none" stroke="rgba(200,169,64,0.06)" stroke-width="1"/>
-        <circle cx="160" cy="160" r="55" fill="rgba(200,169,64,0.03)"/>
-      </svg>
+    <div class="ornate-frame" id="ornateFrame">
+      <div class="gem-accent gem-top">◆</div>
+      <div class="ornate-inner" id="ornateInner">
 
-      <div class="pot-center">
-        <div class="pot-label">البوت</div>
-        <div class="pot-chips">
-          <div class="chip ch-r"></div><div class="chip ch-b"></div><div class="chip ch-g"></div>
+        <div class="pot-center" id="potCenter">
+          <div class="pot-label">البوت</div>
+          <div class="pot-chips">
+            <div class="chip ch-r"></div><div class="chip ch-b"></div><div class="chip ch-g"></div>
+          </div>
+          <div class="pot-amount" id="potV">0</div>
         </div>
-        <div class="pot-amount" id="potV">0</div>
+
+        <div class="wait-panel" id="waitPanel">
+          <div class="wait-panel-status" id="waitOvStatus">بانتظار اللاعبين...</div>
+          <div class="wait-panel-btns">
+            <button class="wp-gear" onclick="openSeatCountPicker()">⚙️</button>
+            <button class="wp-start" onclick="startNow()">▶ ابدأ الآن</button>
+          </div>
+          <button class="wp-invite" onclick="copyInviteLink()">🔗 نسخ رابط الدعوة</button>
+        </div>
+
       </div>
-      <div id="oppSeats"></div>
+      <div class="gem-accent gem-bottom">◆</div>
     </div>
+
+    <div id="oppSeats"></div>
   </div>
 
   <div class="cards-strip" id="cardsStrip"></div>
@@ -389,6 +590,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);\n  font-family:'Cair
     </div>
   </div>
 
+  <div class="qc-fab" id="quickChatFab" style="bottom:170px;left:14px" onclick="openQuickChatPanel(sendQuickChat)">💬</div>
+  <div class="stk-fab" id="stickerFab" style="bottom:226px;left:14px" onclick="openStickerPanel(sendSticker)">🎉</div>
+
   <div class="overlay" id="cdOverlay">
     <div style="color:rgba(255,255,255,.5);font-size:.9rem">اللعبة تبدأ في</div>
     <div class="cd-num" id="cdNum">3</div>
@@ -406,6 +610,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);\n  font-family:'Cair
         <div style="font-size:.65rem;color:rgba(255,255,255,.35);letter-spacing:3px;margin-bottom:8px">أوراق اللاعبين</div>
         <div id="resAllHands" style="display:flex;flex-direction:column;gap:6px"></div>
       </div>
+      <button class="btn" style="background:rgba(200,169,64,.12);color:var(--gold2);border:1px solid rgba(200,169,64,.3);margin-top:12px;padding:10px" onclick="dismissResultAndContinue()">تمام، فهمت ✓</button>
     </div>
   </div>
 
@@ -414,7 +619,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);\n  font-family:'Cair
     <div style="font-size:clamp(1.8rem,8vw,2.6rem);font-weight:900;color:var(--gold);text-shadow:0 0 50px rgba(200,169,64,.8)">الفائز بالمليون!</div>
     <div style="font-size:1.1rem;font-weight:700" id="goName"></div>
     <div style="font-size:.9rem;color:rgba(200,169,64,.7)" id="goPrize"></div>
-    <button class="btn btn-g" style="width:min(260px,80vw);padding:14px;margin-top:10px" onclick="confirmExit()">العودة للرئيسية 🏠</button>
+    <button class="btn btn-g" style="width:min(260px,80vw);padding:14px;margin-top:10px" onclick="doLeave()">العودة للرئيسية 🏠</button>
   </div>
 
   <div id="gameChat">
@@ -438,7 +643,128 @@ html,body{height:100%;overflow:hidden;background:var(--bg);\n  font-family:'Cair
   </div>
 </div>
 
+<!-- ── RULES OVERLAY (شاشة قوانين اللعبة الكاملة) ── -->
+<div id="rulesOverlay" style="display:none;position:fixed;inset:0;z-index:200;
+  background:rgba(5,5,12,.97);backdrop-filter:blur(12px);overflow-y:auto;padding:0 0 40px">
+  <div style="position:sticky;top:0;background:rgba(5,5,12,.95);z-index:1;
+    display:flex;align-items:center;justify-content:space-between;padding:16px 20px;
+    border-bottom:1px solid rgba(200,169,64,.2)">
+    <div style="font-size:1.1rem;font-weight:900;color:var(--gold)">📋 قوانين لعبة مليون</div>
+    <button onclick="closeRules()" style="background:rgba(255,255,255,.1);border:none;
+      color:#fff;border-radius:50%;width:36px;height:36px;font-size:1.1rem;cursor:pointer">✕</button>
+  </div>
+  <div style="padding:20px;max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:20px">
+
+    <!-- الهدف -->
+    <div style="background:rgba(200,169,64,.07);border:1px solid rgba(200,169,64,.2);border-radius:14px;padding:16px">
+      <div style="font-size:.9rem;font-weight:900;color:var(--gold);margin-bottom:8px">🎯 هدف اللعبة</div>
+      <div style="font-size:.82rem;color:rgba(255,255,255,.8);line-height:1.8">
+        الوصول إلى <span style="color:var(--gold);font-weight:900">1,000,000 نقطة</span> قبل بقية اللاعبين.
+        كل لاعب يبدأ بـ 100,000 نقطة.
+      </div>
+    </div>
+
+    <!-- سير الجولة -->
+    <div style="background:rgba(255,255,255,.04);border-radius:14px;padding:16px">
+      <div style="font-size:.9rem;font-weight:900;color:var(--gold);margin-bottom:12px">🔄 سير الجولة</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="background:var(--gold);color:#000;border-radius:50%;width:22px;height:22px;
+            display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:900;flex-shrink:0">1</div>
+          <div style="font-size:.82rem;color:rgba(255,255,255,.8);line-height:1.6">كل لاعب يحصل على <strong style="color:#fff">4 ورقات</strong> سرية.</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="background:var(--gold);color:#000;border-radius:50%;width:22px;height:22px;
+            display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:900;flex-shrink:0">2</div>
+          <div style="font-size:.82rem;color:rgba(255,255,255,.8);line-height:1.6">كل لاعب يختار: <strong style="color:#fff">راهن</strong> (يضع مبلغ بالبوت) أو <strong style="color:#fff">انسحب</strong> (يخسر الجولة).</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="background:var(--gold);color:#000;border-radius:50%;width:22px;height:22px;
+            display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:900;flex-shrink:0">3</div>
+          <div style="font-size:.82rem;color:rgba(255,255,255,.8);line-height:1.6">اللاعب <strong style="color:#fff">الأقوى يد</strong> يأخذ كل البوت.</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="background:var(--gold);color:#000;border-radius:50%;width:22px;height:22px;
+            display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:900;flex-shrink:0">4</div>
+          <div style="font-size:.82rem;color:rgba(255,255,255,.8);line-height:1.6">تستمر الجولات حتى يصل لاعب للمليون أو يخسر الآخرون رصيدهم.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ترتيب الأيدي -->
+    <div style="background:rgba(255,255,255,.04);border-radius:14px;padding:16px">
+      <div style="font-size:.9rem;font-weight:900;color:var(--gold);margin-bottom:12px">🃏 ترتيب الأيدي (من الأقوى للأضعف)</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;
+          background:rgba(200,169,64,.12);border-radius:10px;padding:10px 14px">
+          <div>
+            <div style="font-size:.85rem;font-weight:900;color:var(--gold)">أربع متشابهة 🔥</div>
+            <div style="font-size:.72rem;color:rgba(255,255,255,.5)">مثال: K♠ K♥ K♦ K♣</div>
+          </div>
+          <div style="font-size:1.3rem">💎</div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;
+          background:rgba(255,255,255,.05);border-radius:10px;padding:10px 14px">
+          <div>
+            <div style="font-size:.85rem;font-weight:900;color:#fff">ثلاثة متشابهة</div>
+            <div style="font-size:.72rem;color:rgba(255,255,255,.5)">مثال: Q♠ Q♥ Q♦ 7♣</div>
+          </div>
+          <div style="font-size:1.3rem">🥇</div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;
+          background:rgba(255,255,255,.05);border-radius:10px;padding:10px 14px">
+          <div>
+            <div style="font-size:.85rem;font-weight:900;color:#fff">متشابهتان</div>
+            <div style="font-size:.72rem;color:rgba(255,255,255,.5)">مثال: J♠ J♦ 9♥ 9♣</div>
+          </div>
+          <div style="font-size:1.3rem">🥈</div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;
+          background:rgba(255,255,255,.05);border-radius:10px;padding:10px 14px">
+          <div>
+            <div style="font-size:.85rem;font-weight:900;color:#fff">متشابهان</div>
+            <div style="font-size:.72rem;color:rgba(255,255,255,.5)">مثال: A♠ A♥ 5♦ 2♣</div>
+          </div>
+          <div style="font-size:1.3rem">🥉</div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;
+          background:rgba(255,255,255,.03);border-radius:10px;padding:10px 14px;
+          border:1px solid rgba(255,255,255,.06)">
+          <div>
+            <div style="font-size:.85rem;font-weight:700;color:rgba(255,255,255,.6)">أعلى ورقة</div>
+            <div style="font-size:.72rem;color:rgba(255,255,255,.4)">لا يوجد تطابق — الأعلى قيمة يفوز</div>
+          </div>
+          <div style="font-size:1.3rem">🃏</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- قيم الورق -->
+    <div style="background:rgba(255,255,255,.04);border-radius:14px;padding:16px">
+      <div style="font-size:.9rem;font-weight:900;color:var(--gold);margin-bottom:10px">🔢 قيم الورق</div>
+      <div style="font-size:.82rem;color:rgba(255,255,255,.7);line-height:1.8;text-align:center">
+        <span style="color:var(--gold);font-weight:900">A</span> (أكك) ›
+        <span style="font-weight:700;color:#fff">K</span> (شيبه) ›
+        <span style="font-weight:700;color:#fff">Q</span> (بنت) ›
+        <span style="font-weight:700;color:#fff">J</span> (ولد) ›
+        10 › 9 › 8 › 7 › 6 › 5 › 4 › 3 › 2
+      </div>
+    </div>
+
+    <button onclick="closeRules()" class="btn btn-g" style="width:100%;margin-top:4px">
+      ✅ فهمت القوانين
+    </button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
+
+<div id="offlineOverlay">
+  <div class="offline-icon">📡</div>
+  <div class="offline-title">لا يوجد اتصال بالإنترنت</div>
+  <div class="offline-sub">تحتاج اتصال بالإنترنت للعب. تحقق من الشبكة وحاول مرة ثانية.</div>
+  <button class="btn btn-g offline-retry" style="width:min(220px,75vw)" onclick="retryConnection()">🔄 إعادة المحاولة</button>
+</div>
 
 <script>
 const WS_URL = 'wss://million-server.onrender.com';
@@ -447,8 +773,109 @@ let ws = null, myId = null;
 let myName = 'لاعب', myAv = '😈';
 let currentRoom = null, isHost = false, roomCfg = {};
 let seats = [], myCards = [], betAmt = 5000;
+// ═══════════════════════════════════════
+// ربط حساب حقيقي — نفس مشروع Firebase للتطبيق الرئيسي
+// عشان جولات مليون توصّل خبرة لحسابك الحقيقي (بدون لمس كوينزك الحقيقية)
+// ═══════════════════════════════════════
+const firebaseConfig = {
+  apiKey:            "AIzaSyAL5WoxOv0aVh9knoUEVduVt6E5IPmADos",
+  authDomain:        "zero-reality.firebaseapp.com",
+  databaseURL:       "https://zero-reality-default-rtdb.firebaseio.com",
+  projectId:         "zero-reality",
+  storageBucket:     "zero-reality.firebasestorage.app",
+  messagingSenderId: "238024144517",
+  appId:             "1:238024144517:web:1b75964bb68b424b4ddbec",
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.database();
+
+// نفس صيغة xpForLevel/checkLevelUp بملف utils.js بالتطبيق الرئيسي — مكرّرة هنا
+// بشكل مستقل (مو مستوردة) عشان هذي صفحة قائمة بنفسها وما تعتمد على متغيرات/دوال
+// الصفحة الرئيسية الموجودة بملفات ثانية (utils.js) اللي ما تتحمّل هنا
+function millionXpForLevel(level) { return Math.floor(100 * Math.pow(1.6, level - 1)); }
+function millionCheckLevelUp(u) {
+  while (u.xp >= millionXpForLevel(u.level || 1)) {
+    u.xp   -= millionXpForLevel(u.level || 1);
+    u.level = (u.level || 1) + 1;
+  }
+  return u;
+}
+
+// حد أعلى يومي/أسبوعي للخبرة — حماية من الاستغلال (نفس فلسفة جواكر)
+const XP_DAILY_CAP  = 300;
+const XP_WEEKLY_CAP = 1500;
+
+function _todayKey() { return new Date().toISOString().slice(0, 10); } // 'YYYY-MM-DD'
+function _weekKey() {
+  const d = new Date();
+  const onejan = new Date(d.getFullYear(), 0, 1);
+  const week = Math.ceil((((d - onejan) / 86400000) + onejan.getDay() + 1) / 7);
+  return d.getFullYear() + '-W' + week;
+}
+
+// يضيف خبرة لكائن المستخدم مع احترام الحد اليومي/الأسبوعي — يرجع الكمية الفعلية المضافة
+function addCappedXP(u, amount) {
+  const tKey = _todayKey(), wKey = _weekKey();
+  if (u.xpDayKey  !== tKey) { u.xpDayKey  = tKey; u.xpToday    = 0; }
+  if (u.xpWeekKey !== wKey) { u.xpWeekKey = wKey; u.xpThisWeek = 0; }
+
+  const dayLeft  = Math.max(0, XP_DAILY_CAP  - (u.xpToday    || 0));
+  const weekLeft = Math.max(0, XP_WEEKLY_CAP - (u.xpThisWeek || 0));
+  const grant    = Math.max(0, Math.min(amount, dayLeft, weekLeft));
+
+  u.xp          = (u.xp || 0) + grant;
+  u.xpToday     = (u.xpToday    || 0) + grant;
+  u.xpThisWeek  = (u.xpThisWeek || 0) + grant;
+  return grant;
+}
+
+// خبرة الجولة — بنفس فلسفة جواكر بالضبط: حتى لو خسرت تاخذ خبرة، بس 10%
+// بس من قيمة الفوز (مو صفر) — يحفّزك تكمل تلعب حتى بخسارة
+const MILLION_XP_WIN = 20;
+const MILLION_XP_LOSE = Math.round(MILLION_XP_WIN * 0.10);
+
+function reportMillionXP(isWin) {
+  const user = auth.currentUser;
+  if (!user) return; // اللاعب مسجل دخول بحساب حقيقي؟ لو لا (تجربة محلية بدون حساب) نتجاهل
+  db.ref('users/' + user.uid).transaction(u => {
+    if (!u) return u;
+    addCappedXP(u, isWin ? MILLION_XP_WIN : MILLION_XP_LOSE);
+    if (u.xp >= millionXpForLevel(u.level || 1)) u = millionCheckLevelUp(u);
+    if (!u.gameStats) u.gameStats = {};
+    if (!u.gameStats.million) u.gameStats.million = { wins: 0, losses: 0 };
+    if (isWin) u.gameStats.million.wins  = (u.gameStats.million.wins  || 0) + 1;
+    else       u.gameStats.million.losses = (u.gameStats.million.losses || 0) + 1;
+    return u;
+  });
+}
+
 let myTurn = false, timerInterval = null, timerMax = 15;
+let amBankrupt = false; // أفلست؟ — يبقى مقعدي محفوظ بس ما أقدر ألعب لين تنتهي اللعبة
 let soundOn = true;
+
+// حماية: لو ملف cards.js ما تحمّل (مسار خاطئ / 404)، لا نكسر اللعبة بالكامل —
+// نرسم كرت بسيط بديل بدل التعليق/التوقف.
+if (typeof createCard !== 'function') {
+  console.warn('⚠️ createCard غير موجودة — تأكد من مسار ../js/cards.js. سيتم استخدام رسم كروت بديل مؤقت.');
+  window.createCard = function(val, suit, opts) {
+    opts = opts || {};
+    const isRed = (suit === '♥' || suit === '♦');
+    const sizeMap = { sm:{w:30,h:42,f:'.7rem'}, lg:{w:54,h:76,f:'1.05rem'} };
+    const sz = sizeMap[opts.size] || sizeMap.lg;
+    const el = document.createElement('div');
+    el.className = 'pcard-lg fallback-card';
+    el.style.cssText = `width:${sz.w}px;height:${sz.h}px;background:#fff;border-radius:7px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      color:${isRed?'#c0392b':'#111'};font-weight:900;font-size:${sz.f};line-height:1.1;
+      box-shadow:0 6px 18px rgba(0,0,0,.5);border:1px solid rgba(0,0,0,.08);flex-shrink:0`;
+    el.innerHTML = `<span>${val}</span><span style="font-size:1.15em">${suit}</span>`;
+    return el;
+  };
+}
+
+let desiredSeatCount = 4; // عدد المقاعد الكلي (يُغيّر من زر ⚙️ بلوحة الانتظار)
+let realOthersJoined = []; // آيدي أي لاعب حقيقي انضم فعلياً (مو من أول رد قديم محتمل من السيرفر)
 
 (function() {
   const p = new URLSearchParams(location.search);
@@ -458,9 +885,20 @@ let soundOn = true;
   const isTourney = p.get('tournament') === '1';
   if (name) myName = decodeURIComponent(name);
   if (avatar) myAv = decodeURIComponent(avatar);
-  document.getElementById('myAv').textContent = myAv;
+  if (myAv && (myAv.startsWith('http') || myAv.startsWith('data:'))) {
+    document.getElementById('myAv').innerHTML = `<img src="${myAv}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`;
+  } else {
+    document.getElementById('myAv').textContent = myAv;
+  }
   document.getElementById('myNm').textContent = myName;
   document.getElementById('waitType').textContent = isTourney ? '🏆 مسابقة' : '🎮 لعبة ودية';
+
+  // ادخل اللعبة على طول واجلس بمقعدك فوراً — بدون أي شاشة اختيار قبلها
+  go('game');
+  renderTablePreSeats();
+  showWaitPanel();
+  updateWaitOverlay();
+
   connectWS(roomId);
 })();
 
@@ -479,25 +917,16 @@ function connectWS(autoJoinRoom) {
       if (autoJoinRoom) {
         send({type:'join_room', rid:autoJoinRoom, avatar:myAv});
       } else {
-        // Request available rooms
-        setTimeout(() => send({type:'get_rooms'}), 400);
-        setTimeout(() => { if(!lobbyReady) showLobbyReady([]); }, 3500);
+        // ننشئ غرفة تلقائياً بالخلفية بدون ما نطلب من اللاعب يختار شي
+        send({type:'create_room', avatar:myAv, cfg:{maxPlayers:desiredSeatCount, minBet:1000, startBal:100000}});
       }
     };
     ws.onmessage = e => { try { handle(JSON.parse(e.data)); } catch(err){} };
-    ws.onclose = () => {
-      setTimeout(() => connectWS(null), 3000);
-      if(document.getElementById('lobby').classList.contains('on'))
-        showLobbyReady([]);
-    };
-    ws.onerror = () => {
-      if(document.getElementById('lobby').classList.contains('on'))
-        setTimeout(()=>showLobbyReady([]), 1500);
-    };
-  } catch(e) {
-    setTimeout(()=>showLobbyReady([]), 1000);
-  }
+    ws.onclose = () => { setTimeout(() => connectWS(null), 3000); };
+    ws.onerror = () => {}; // تقدر تلعب مع بوتات محلياً حتى لو فشل الاتصال بالسيرفر
+  } catch(e) {}
 }
+
 
 function showLobbyReady(rooms) {
   lobbyReady = true;
@@ -510,13 +939,18 @@ function showLobbyReady(rooms) {
   if (rooms && rooms.length > 0) {
     document.getElementById('lobbyStatus').textContent = `وجدنا ${rooms.length} غرفة مفتوحة 🎮`;
     list.innerHTML = rooms.map(r => `
-      <div class="room-card" onclick="joinRoom('${r.id}')">
+      <div class="room-card" data-rid="${esc(r.id)}">
         <div style="flex:1">
-          <div style="font-size:.9rem;font-weight:700;color:var(--gold)">غرفة ${r.id.slice(-4)}</div>
-          <div class="room-players">👤 ${r.players}/${r.max} لاعبين</div>
+          <div style="font-size:.9rem;font-weight:700;color:var(--gold)">غرفة ${esc(String(r.id).slice(-4))}</div>
+          <div class="room-players">👤 ${esc(r.players)}/${esc(r.max)} لاعبين</div>
         </div>
         <button class="room-join">انضم</button>
       </div>`).join('');
+    // نستخدم addEventListener بدل onclick المضمّن بالنص — أأمن، لأن قيمة rid
+    // ما تدخل أبداً داخل سطر JS كنص، فمستحيل تنفّذ كأكواد حتى لو فيها رموز خاصة
+    list.querySelectorAll('.room-card').forEach(card => {
+      card.addEventListener('click', () => joinRoom(card.dataset.rid));
+    });
     divider.style.display = 'flex';
     newBtn.style.display = '';
     botsBtn.style.display = '';
@@ -550,66 +984,165 @@ function startBotTimer() {
 // ═══════════════════════════════════════
 // BOT GAME MODE — local simulation
 // ═══════════════════════════════════════
-const BOT_NAMES = ['ابو سالم 🤖','الشيخ بوت 🤖','لاعب الظل 🤖'];
-const BOT_AVS   = ['🎭','👾','🦊'];
-const VALS = ['7','8','9','10','J','Q','K','A'];
+// ═══════════════════════════════════════
+// شخصيات البوتات — كل بوت له طابع ثابت يأثر على قرارات الرهان والبلف
+// ═══════════════════════════════════════
+const BOT_PROFILES = [
+  { name:'عطية',   avatar:'🦅', personality:'bold',          bluff:0.45 },
+  { name:'نحلة',   avatar:'🐝', personality:'bold',          bluff:0.40 },
+  { name:'المنقود', avatar:'🎩', personality:'cautious',      bluff:0.05 },
+  { name:'مزنه',   avatar:'👑', personality:'balanced',      bluff:0.15 },
+  { name:'الصياد', avatar:'🎯', personality:'balanced',      bluff:0.15 },
+  { name:'زيتونة', avatar:'🫒', personality:'bold',          bluff:0.35 },
+  { name:'الحكيم', avatar:'🧠', personality:'very_cautious', bluff:0.03 },
+  { name:'نملة',   avatar:'🐜', personality:'bold',          bluff:0.45 },
+  { name:'مجننهم', avatar:'🤪', personality:'random',        bluff:0.30 },
+  { name:'باتمان', avatar:'🦇', personality:'cautious',      bluff:0.08 },
+];
+
+function shuffleArray(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ترتيب كل قيم الورق من الأقوى للأضعف — يُستخدم لتحديد القيم النشطة حسب عدد اللاعبين
+const RANK_ORDER = ['A','K','Q','J','10','9','8','7','6','5','4','3','2'];
 const SUITS = ['♠','♥','♦','♣'];
 let botGame = null;
 
-function startBotGame() {
+// ═══════════════════════════════════════
+// توزيع الورق الديناميكي حسب عدد اللاعبين:
+// 4 لاعبين = آكك + شيبان + بنات + أولاد (4 قيم فقط)
+// 5 لاعبين = + عشرات … 6 لاعبين = + تسعات … وهكذا، كل لاعب إضافي يزيد قيمة أضعف
+// هالطريقة تضمن دايم: عدد ورق الطاولة = عدد اللاعبين × 4 بالضبط (بدون نواقص ولا فايض)
+// ═══════════════════════════════════════
+function activeRanksFor(playerCount) {
+  const n = Math.max(4, Math.min(playerCount || 4, RANK_ORDER.length));
+  return RANK_ORDER.slice(0, n);
+}
+
+// ═══════════════════════════════════════
+// قرار البوت بالرهان — يقرأ قوة يده الفعلية، وشخصيته تحدد جرأته وميله للبلف
+// ═══════════════════════════════════════
+function botDecide(p, str, minBet) {
+  let mood = p.personality || 'balanced';
+  if (mood === 'random') mood = Math.random() < 0.5 ? 'bold' : 'cautious'; // مجننهم: يتقلب كل جولة
+
+  const bluffChance = p.bluff != null ? p.bluff : 0.15;
+  const bluffing = Math.random() < bluffChance;     // يبلف برهان قوي مع ورقة ضعيفة بعض الأوقات
+
+  const handType = Math.floor(str / 1e6);           // 1=أعلى ورقة، 3=زوج، 4=متشابهتان، 5=ثلاثة، 7=أربعة
+  const hasPair = handType >= 3;                     // عنده تشابه (زوج فأكثر)
+  // قوة تفصيلية من 0 إلى 1 (تفرّق بين زوج آكك وزوج 7 مثلاً) تُستخدم بحجم الرهان
+  const normStrength = Math.min(1, (str % 1e6) / 30000);
+  const highCard = hasPair ? 1 : normStrength;       // قوة أعلى ورقة لو ما عنده تشابه
+
+  let willBet, mult;
+  if (mood === 'very_cautious') {
+    willBet = (hasPair && handType >= 4) || bluffing;             // إلا متشابهتان فأكثر أو بلفة نادرة جداً
+    mult = hasPair ? 1.2 + normStrength * 0.6 : 0.6;
+  } else if (mood === 'cautious') {
+    willBet = hasPair || highCard > 0.75 || bluffing;        // زوج، أو ورقة عالية جداً
+    mult = hasPair ? 1.3 + normStrength * 0.7 : 0.7;
+  } else if (mood === 'bold') {
+    willBet = hasPair || highCard > 0.3 || bluffing || Math.random() > 0.35; // يراهن كثير حتى بورق متوسط
+    mult = hasPair ? 1.8 + normStrength * 0.9 : 1.1 + highCard * 0.6;
+  } else { // balanced
+    willBet = hasPair || highCard > 0.55 || bluffing;
+    mult = hasPair ? 1.4 + normStrength * 0.8 : 0.85 + highCard * 0.4;
+  }
+
+  const amount = Math.max(minBet, Math.round(minBet * mult));
+  return { willBet, amount };
+}
+
+function startBotGame(totalPlayers) {
   clearTimeout(botTimer);
-  const bots = BOT_NAMES.map((n,i) => ({
-    id:'bot_'+i, name:n, avatar:BOT_AVS[i],
+  if (!myId) myId = 'human'; // لازم يتعيّن — وإلا كل مقارنة "هل أنا الفائز" بالكود تنكسر
+  const n = Math.max(4, Math.min(totalPlayers || 4, BOT_PROFILES.length + 1));
+  const chosen = shuffleArray(BOT_PROFILES).slice(0, n - 1);
+  const bots = chosen.map((b,i) => ({
+    id:'bot_'+i, name:b.name, avatar:b.avatar,
+    personality:b.personality, bluff:b.bluff,
     bal:100000, status:'in', isBot:true
   }));
-  const me = {id:myId||'human', name:myName, avatar:myAv, bal:100000, status:'in', isBot:false};
+  const me = {id:myId, name:myName, avatar:myAv, bal:100000, status:'in', isBot:false};
   seats = [me, ...bots];
-  botGame = {round:1, pot:0, minBet:1000, phase:'deal'};
-  roomCfg = {maxPlayers:4, minBet:1000, startBal:100000};
+  botGame = {round:1, pot:0, minBet:1000, phase:'deal', totalPlayers: seats.length};
+  roomCfg = {maxPlayers:seats.length, minBet:1000, startBal:100000};
   initGameScreen();
   go('game');
-  showToast('🤖 بدأت اللعبة مع البوتات!');
+  showToast('🤖 بدأت اللعبة! قيم الورق المستخدمة: ' + activeRanksFor(seats.length).join(' '));
   setTimeout(runBotRound, 600);
 }
 
-function buildDeck() {
+function buildDeck(playerCount) {
+  const ranks = activeRanksFor(playerCount || (botGame && botGame.totalPlayers) || 4);
   const d=[];
-  SUITS.forEach(s=>VALS.forEach(v=>d.push({val:v,suit:s})));
+  SUITS.forEach(s=>ranks.forEach(v=>d.push({val:v,suit:s})));
   return d.sort(()=>Math.random()-.5);
 }
 
 function handStrength(cards) {
-  const vals = cards.map(c=>VALS.indexOf(c.val));
+  // RANK_ORDER مرتب من الأقوى (A، فهرس 0) للأضعف
+  // نحول كل كرت لـ"قوة" بحيث الأعلى = رقم أكبر (A=12, 2=0) عشان المقارنة تبقى منطقية
+  const top = RANK_ORDER.length - 1;
+  const strengths = cards.map(c => top - RANK_ORDER.indexOf(c.val));
+
   const counts = {};
-  vals.forEach(v=>counts[v]=(counts[v]||0)+1);
-  const freq = Object.values(counts).sort((a,b)=>b-a);
-  if(freq[0]===4) return 7; // four of a kind
-  if(freq[0]===3) return 5; // three of a kind
-  if(freq[0]===2 && freq[1]===2) return 4; // two pair
-  if(freq[0]===2) return 3; // pair
-  return Math.max(...vals)/13; // high card normalized
+  strengths.forEach(s => counts[s] = (counts[s]||0) + 1);
+
+  // مجموعات الكروت: الأكبر تكرار أول، وعند تساوي التكرار الأقوى رتبة هو الأول
+  // هذا يضمن إن "زوج آكك" يتفوق على "زوج 7" دايم
+  const groups = Object.entries(counts)
+    .map(([rank, count]) => ({rank:+rank, count}))
+    .sort((a,b) => b.count - a.count || b.rank - a.rank);
+
+  const freq = groups.map(g => g.count);
+  let typeScore;
+  if (freq[0] === 4) typeScore = 7;       // أربع متشابهة
+  else if (freq[0] === 3) typeScore = 5;  // ثلاثة متشابهة
+  else if (freq[0] === 2 && freq[1] === 2) typeScore = 4; // متشابهتان
+  else if (freq[0] === 2) typeScore = 3;  // متشابهان
+  else typeScore = 1;                     // أعلى ورقة
+
+  // كسر التعادل: نرص رتب المجموعات (بالترتيب فوق) كأرقام أساس-13 — يفرّق بدقة
+  // بين أي هاندين من نفس النوع (زوج آكك > زوج 7، وأيضاً يقارن باقي الورق "kickers")
+  let tiebreak = 0;
+  groups.forEach(g => { tiebreak = tiebreak * 13 + g.rank; });
+
+  return typeScore * 1e6 + tiebreak;
 }
 
 function handName(cards) {
   const s = handStrength(cards);
-  if(s===7) return 'أربع متشابهة 🔥';
-  if(s===5) return 'ثلاثة متشابهة';
-  if(s===4) return 'زوجان';
-  if(s===3) return 'زوج';
+  const type = Math.floor(s / 1e6);
+  if(type===7) return 'أربع متشابهة 🔥';
+  if(type===5) return 'ثلاثة متشابهة';
+  if(type===4) return 'متشابهتان';
+  if(type===3) return 'متشابهان';
   return 'أعلى ورقة';
 }
 
 function runBotRound() {
   if(!botGame) return;
-  const deck = buildDeck();
-  const activePlayers = seats.filter(s=>s.status!=='out'&&s.bal>0);
+  botGame.resultShown = false;
+  // تحديث حالة الإفلاس لأي لاعب رصيده صفر من الجولة السابقة
+  seats.forEach(checkBankruptcy);
+
+  const deck = buildDeck(botGame.totalPlayers);
+  const activePlayers = seats.filter(s=>s.status!=='out'&&s.status!=='bankrupt'&&s.bal>0);
   if(activePlayers.length<2){endBotGame();return;}
 
   botGame.pot = 0;
   botGame.phase = 'betting';
   document.getElementById('gRound').textContent = 'جولة '+botGame.round;
   updatePotDisplay(0);
-  activePlayers.forEach(p=>{p.status='in'; setSeatStatus(p.id,'in');});
+  activePlayers.forEach(p=>{p.status='in'; p.betAmt=0; setSeatStatus(p.id,'in');});
 
   // Deal 4 cards each
   const hands = {};
@@ -618,27 +1151,34 @@ function runBotRound() {
     for(let i=0;i<4;i++) hands[p.id].push(deck.pop());
   });
 
-  // Show my cards
+  // Show my cards — أو حالة الإفلاس لو ما عندي مقعد فعّال هذي الجولة
   const me = activePlayers.find(p=>!p.isBot);
-  if(me) { myCards=hands[me.id]; renderMyCards(hands[me.id]); }
-
-  document.getElementById('myBar').classList.remove('waiting-turn');
-  updateBetUI(me?me.bal:100000, botGame.minBet);
+  if (me) {
+    myCards = hands[me.id];
+    renderMyCards(hands[me.id]);
+    playSound('deal');
+    document.getElementById('myBar').classList.remove('waiting-turn');
+    updateBetUI(me.bal, botGame.minBet);
+  } else {
+    myCards = [];
+    document.getElementById('cardsStrip').innerHTML = '';
+    setMyBankruptState(true);
+  }
 
   // Store hands for end
   botGame.hands = hands;
   botGame.activePlayers = activePlayers;
 
-  // Bot turns first (all bots bet or fold)
+  // Bot turns first (all bots بيتصرفون بشخصياتهم: بلف + قرارات أذكى)
   let delay = 800;
   activePlayers.filter(p=>p.isBot).forEach(p=>{
     setTimeout(()=>{
       if(!botGame)return;
       const str = handStrength(hands[p.id]||[]);
-      const willBet = str >= 3 || Math.random() > 0.4;
-      const betAmt2 = willBet ? Math.min(p.bal, botGame.minBet*(1+Math.floor(str*1.5))) : 0;
-      if(willBet && betAmt2>0){
-        p.bal -= betAmt2; botGame.pot += betAmt2;
+      const decision = botDecide(p, str, botGame.minBet);
+      const betAmt2 = decision.willBet ? Math.min(p.bal, decision.amount) : 0;
+      if(decision.willBet && betAmt2>0){
+        p.bal -= betAmt2; p.betAmt = betAmt2; botGame.pot += betAmt2;
         updateSeatBal(p.id, p.bal);
         showBetBadge(p.id, betAmt2);
         updatePotDisplay(botGame.pot);
@@ -651,13 +1191,19 @@ function runBotRound() {
     delay += 900;
   });
 
-  // Show my turn prompt
-  setTimeout(()=>{
-    if(!botGame)return;
-    myTurn=true;
-    document.getElementById('myBar').classList.remove('waiting-turn');
-    showToast('⏱ دورك!'); playSound('turn');
-  }, delay);
+  // Show my turn prompt — فقط لو أنا فعلياً ألعب هذي الجولة
+  if (me) {
+    setTimeout(()=>{
+      if(!botGame)return;
+      myTurn=true;
+      document.getElementById('myBar').classList.remove('waiting-turn');
+      showToast('⏱ دورك!'); playSound('turn');
+    }, delay);
+  } else {
+    // أفلست واستثنيت من الجولة — ما فيه رهان/انسحاب مني يشغّل تحديد النتيجة،
+    // فنحدّدها تلقائياً بعد ما يخلص البوتات رهانهم عشان اللعبة ما تتجمد
+    setTimeout(showBotResult, delay + 200);
+  }
 
   // Store delay for result
   botGame.resultDelay = delay + 200;
@@ -666,7 +1212,8 @@ function runBotRound() {
 // sendBet & sendFold defined below (combined online+bot)
 
 function showBotResult() {
-  if(!botGame) return;
+  if(!botGame || botGame.resultShown) return;
+  botGame.resultShown = true;
   const active = botGame.activePlayers.filter(p=>p.status==='in');
   if(!active.length){ botGame.round++; setTimeout(runBotRound,1500); return; }
 
@@ -678,31 +1225,65 @@ function showBotResult() {
   });
 
   if(winner){
-    winner.bal += botGame.pot;
+    const winnerProfit = winner.betAmt || 0;
+    winner.bal += winnerProfit * 2;   // يرجع رهانه + نفس المبلغ كربح
     updateSeatBal(winner.id, winner.bal);
     const isMe = !winner.isBot;
     showRoundResult({
       winners:[{id:winner.id, name:winner.name, hand:handName(botGame.hands[winner.id]||[]), cards:botGame.hands[winner.id]||[]}],
-      share:botGame.pot,
+      share: winnerProfit,
       allHands: botGame.activePlayers.map(p=>({id:p.id,name:p.isBot?p.name:'أنت',hand:handName(botGame.hands[p.id]||[]),cards:botGame.hands[p.id]||[]}))
     });
     if(isMe) playSound('win');
+
+    // فحص الإفلاس: لاعب راهن بكل رصيده وخسر — يحتفظ بمقعده بس يصير متفرج
+    botGame.activePlayers.forEach(p => { if (p.id !== winner.id) checkBankruptcy(p); });
+
+    // خبرة الحساب الحقيقي — بس لو أنا فعلياً لعبت هذي الجولة (مو مستبعد بسبب الإفلاس)
+    const humanPlayedThisRound = botGame.activePlayers.some(p => !p.isBot);
+    if (humanPlayedThisRound) reportMillionXP(isMe);
   }
 
-  // Check game over
+  // فحص إذا أحد وصل المليون بعد هذي الجولة
+  const millionWinner = seats.find(s => s.bal >= 1000000);
+  if (millionWinner) {
+    document.getElementById('goName').textContent = millionWinner.isBot ? millionWinner.name : 'أنت 🎉';
+    document.getElementById('goPrize').textContent = 'وصل المليون! 🎉';
+    showOverlay('goOverlay');
+    playSound('win');
+    botGame = null;
+    return;
+  }
+
+  // فحص إذا تبقى لاعب واحد فقط
   const stillIn = seats.filter(s=>s.bal>0);
   if(stillIn.length<=1){
     endBotGame(); return;
   }
   botGame.round++;
-  setTimeout(runBotRound, 5800);
+  botGame.nextRoundTimer = setTimeout(runBotRound, 8000);
+}
+
+// ═══════════════════════════════════════
+// "تمام، فهمت" — لو ضغطها اللاعب (بوضع البوتات)، نبدأ الجولة الجاية فوراً
+// بدل ما ننتظر المؤقت الكامل (8 ثواني) لأنه خلص من المراجعة أصلاً
+// ═══════════════════════════════════════
+function dismissResultAndContinue() {
+  hideOverlay('resOverlay');
+  if (botGame && botGame.nextRoundTimer) {
+    clearTimeout(botGame.nextRoundTimer);
+    botGame.nextRoundTimer = null;
+    setTimeout(runBotRound, 350); // إزاحة بسيطة بس عشان الانتقال يبان سلس
+  }
 }
 
 function endBotGame() {
   if(!botGame) return;
   const winner = seats.sort((a,b)=>b.bal-a.bal)[0];
   document.getElementById('goName').textContent = winner.isBot ? winner.name : 'أنت 🎉';
-  document.getElementById('goPrize').textContent = 'وصل المليون! 🎉';
+  document.getElementById('goPrize').textContent = winner.bal >= 1000000
+    ? 'وصل المليون! 🎉'
+    : 'آخر لاعب متبقي بالطاولة! 🏆 (' + fmt(winner.bal) + ')';
   showOverlay('goOverlay');
   playSound('win');
   botGame = null;
@@ -725,24 +1306,30 @@ function handle(msg) {
       isHost = msg.isHost;
       roomCfg = msg.cfg;
       seats = msg.players;
-      renderWaiting(msg.players, msg.rid);
-      go('waiting');
-      startBotTimer();
+      // ما نثق بلاعبين موجودين بأول رد من السيرفر (ممكن تكون حالة قديمة عالقة) —
+      // realOthersJoined تتعبى فقط من انضمام حقيقي يصير فعلياً قدامنا بعد كذا
+      updateWaitOverlay();
       break;
     case 'player_joined':
       seats = msg.players;
-      renderWaiting(msg.players, currentRoom);
-      if (msg.pid !== myId) showToast('👤 ' + (msg.name||'لاعب') + ' انضم');
+      if (msg.pid !== myId && !realOthersJoined.includes(msg.pid)) {
+        realOthersJoined.push(msg.pid);
+        showToast('👤 ' + (msg.name||'لاعب') + ' انضم'); playSound('join');
+      }
+      updateWaitOverlay();
       break;
     case 'player_left':
       showToast('🚪 ' + msg.name + ' غادر');
       seats = seats.filter(s => s.id !== msg.pid);
-      renderWaiting(seats, currentRoom);
+      realOthersJoined = realOthersJoined.filter(id => id !== msg.pid);
+      updateWaitOverlay();
       break;
     case 'starting':
+      hideWaitPanel();
       startCountdown(msg.cd);
       break;
     case 'game_start':
+      hideWaitPanel();
       seats = msg.players;
       initGameScreen();
       go('game');
@@ -763,6 +1350,11 @@ function handle(msg) {
       break;
     case 'your_turn':
       if (msg.pid === myId) {
+        if (amBankrupt) {
+          // أفلست — أبقى متفرج بمقعدي، أرسل انسحاب تلقائي بدون تفعيل الواجهة
+          send({type:'fold'});
+          break;
+        }
         myTurn = true;
         document.getElementById('myBar').classList.remove('waiting-turn');
         startMyTimer(msg.timeLeft);
@@ -774,6 +1366,13 @@ function handle(msg) {
         highlightSeat(msg.pid);
         const tr = document.querySelector('#av_'+msg.pid+' .tring circle');
         if (tr) startOppTimer(tr, msg.timeLeft);
+      }
+      break;
+    case 'quick_chat':
+      // رسالة جاهزة من لاعب ثاني (مو أنا) — أعرض الفقاعة فوق صورته
+      if (msg.pid !== myId) {
+        const el = document.getElementById('av_'+msg.pid);
+        if (el) showQuickChatBubble(el, msg.text);
       }
       break;
     case 'did_bet':
@@ -792,6 +1391,8 @@ function handle(msg) {
       break;
     case 'round_end':
       showRoundResult(msg);
+      // خبرة الحساب الحقيقي بوضع اللاعبين الحقيقيين — حسب رد السيرفر
+      if (msg.winners) reportMillionXP(msg.winners.some(w => w.id === myId));
       break;
     case 'player_out':
       setSeatStatus(msg.pid, 'out');
@@ -802,7 +1403,7 @@ function handle(msg) {
       document.getElementById('goName').textContent = msg.wname + (msg.wid===myId?' 🎉 (أنت!)':'');
       document.getElementById('goPrize').textContent = msg.isTournament ? 'جائزة: '+fmt(msg.prize)+' كوينز' : 'وصل المليون! 🎉';
       showOverlay('goOverlay');
-      playSound('win');
+      playSound(msg.winners && msg.winners[0]?.id !== myId ? 'lose' : 'win');
       break;
     case 'chat_msg':
       addGameChatMsg(msg.name, msg.text, msg.av);
@@ -818,8 +1419,8 @@ function renderWaiting(players, rid) {
   const el = document.getElementById('waitPlayers');
   let html = players.map(p => `
     <div class="wp">
-      <div class="wp-av">${p.avatar||'😊'}</div>
-      <div class="wp-name">${p.name}</div>
+      <div class="wp-av">${esc(p.avatar)||'😊'}</div>
+      <div class="wp-name">${esc(p.name)}</div>
       ${p.id===myId?'<div class="wp-you">أنت</div>':''}
     </div>`).join('');
   for (let i = players.length; i < max; i++)
@@ -847,34 +1448,115 @@ function initGameScreen() {
   const me = seats.find(s => s.id === myId);
   if (me) {
     document.getElementById('myBalDisp').textContent = '💰 ' + fmt(me.bal);
+    if (me.bal <= 0) setMyBankruptState(true);
   }
   updateBetUI(roomCfg.startBal||100000, roomCfg.minBet||1000);
   renderOppSeats();
 }
 
-const POSITIONS = [1,2,3,4,5,6,7,8,9,10,11];
-
+// ═══════════════════════════════════════
+// توزيع المقاعد حول الطاولة — يحسب مكان كل لاعب رياضياً حسب
+// عدد الخصوم الفعلي (بدل مواقع ثابتة كانت تطلع غلط مع أي عدد غير المتوقع)
+// ═══════════════════════════════════════
+// مواقع/رسم المقاعد — منطقها صار بملف مشترك js/table-layout.js
+// (تقدر تستخدمه بأي لعبة ثانية بنفس الطريقة)
+// ═══════════════════════════════════════
 function renderOppSeats() {
-  const opps = seats.filter(s => s.id !== myId);
-  let html = '';
-  opps.forEach((p, i) => {
-    const pos = POSITIONS[i] || i+1;
-    html += `
-      <div class="seat" data-pos="${pos}" id="seat_${p.id}">
-        <div class="oav" id="av_${p.id}">
-          <div class="tring"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29"/></svg></div>
-          <span>${p.avatar||'😊'}</span>
-        </div>
-        <div class="npill" id="np_${p.id}">${p.name}</div>
-        <div class="bal-badge" id="bal_${p.id}">${fmt(p.bal||0)}</div>
-        <div class="nbadge" id="nb_${p.id}" style="display:none"></div>
-        <div class="opp-cards">
-          <div class="opp-card"></div><div class="opp-card"></div>
-          <div class="opp-card"></div><div class="opp-card"></div>
-        </div>
-      </div>`;
-  });
-  document.getElementById('oppSeats').innerHTML = html;
+  renderTableSeats(document.getElementById('oppSeats'), seats, myId, {showBalance:true, showCards:true});
+}
+
+function renderTablePreSeats() {
+  // نعرض بالمقاعد بس اللاعبين المؤكدين فعلياً (realOthersJoined) — مو أي حالة قديمة جاية من السيرفر
+  const confirmedSeats = [
+    {id: myId},
+    ...seats.filter(s => realOthersJoined.includes(s.id))
+  ];
+  renderTablePlaceholders(document.getElementById('oppSeats'), desiredSeatCount, confirmedSeats, myId);
+}
+
+// ═══════════════════════════════════════
+// تحديث لوحة الانتظار (الروستر + المقاعد) — تستدعى أول ما تنضم/يطلع/يدخل لاعب
+// ═══════════════════════════════════════
+function showWaitPanel() {
+  document.getElementById('waitPanel').classList.remove('hidden');
+  document.getElementById('potCenter').classList.add('hidden');
+}
+function hideWaitPanel() {
+  document.getElementById('waitPanel').classList.add('hidden');
+  document.getElementById('potCenter').classList.remove('hidden');
+  const sp = document.getElementById('seatCountPanel');
+  if (sp) sp.remove();
+}
+
+function updateWaitOverlay() {
+  renderTablePreSeats();
+  const statusEl = document.getElementById('waitOvStatus');
+  if (statusEl) {
+    statusEl.textContent = realOthersJoined.length > 0
+      ? `بانتظار اللاعبين... (${realOthersJoined.length + 1}/${desiredSeatCount})`
+      : `تقدر تبدأ الآن مع بوتات 🤖 (${desiredSeatCount} مقاعد)`;
+  }
+}
+
+// ═══════════════════════════════════════
+// زر "ابدأ الآن" — يبدأ فوراً مع بوتات لو لحالك، أو أونلاين لو انضم لاعب حقيقي
+// (نعتمد على realOthersJoined لأنه موثوق، عكس أول رد من السيرفر اللي ممكن يحمل حالة قديمة)
+// ═══════════════════════════════════════
+function startNow() {
+  hideWaitPanel();
+  if (realOthersJoined.length > 0 && currentRoom) {
+    showToast('🎮 يبدأ مع اللاعبين المنضمين...');
+    startGame();
+  } else {
+    startBotGame(desiredSeatCount);
+  }
+}
+
+// ═══════════════════════════════════════
+// زر ⚙️ — تخصيص عدد المقاعد بالطاولة (4 إلى 10) من نفس لوحة الانتظار
+// ═══════════════════════════════════════
+// ═══════════════════════════════════════
+// نسخ رابط دعوة الغرفة — يفتحه لاعب ثاني فينضم لنفس غرفتك مباشرة
+// (هذا هو نفس الرابط تستخدمه للتجربة بحساب/جهاز ثاني)
+// ═══════════════════════════════════════
+function copyInviteLink() {
+  if (!currentRoom) {
+    showToast('⏳ لسه ما اتصلنا بالغرفة، حاول بعد ثانية');
+    return;
+  }
+  const link = location.origin + location.pathname + '?room=' + currentRoom;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(link)
+      .then(() => showToast('🔗 تم نسخ رابط الدعوة!'))
+      .catch(() => showToast('الرابط: ' + link));
+  } else {
+    showToast('الرابط: ' + link);
+  }
+}
+
+function openSeatCountPicker() {
+  const existing = document.getElementById('seatCountPanel');
+  if (existing) { existing.remove(); return; }
+  const panel = document.createElement('div');
+  panel.id = 'seatCountPanel';
+  panel.style.cssText = `position:absolute;bottom:64px;left:50%;transform:translateX(-50%);
+    background:rgba(10,10,20,.97);border:1px solid rgba(200,169,64,.35);border-radius:14px;
+    padding:10px;display:flex;gap:6px;flex-wrap:wrap;z-index:90;width:236px;justify-content:center`;
+  for (let n = 4; n <= 10; n++) {
+    const b = document.createElement('button');
+    b.textContent = n;
+    const active = n === desiredSeatCount;
+    b.style.cssText = `width:34px;height:34px;border-radius:8px;border:1px solid rgba(200,169,64,.3);
+      background:${active ? 'linear-gradient(135deg,#a87e10,#f0c040)' : 'rgba(255,255,255,.06)'};
+      color:${active ? '#1a0800' : '#fff'};font-weight:900;cursor:pointer;font-family:inherit`;
+    b.onclick = () => {
+      desiredSeatCount = n;
+      panel.remove();
+      updateWaitOverlay();
+    };
+    panel.appendChild(b);
+  }
+  document.getElementById('waitPanel').appendChild(panel);
 }
 
 function renderMyCards(cards) {
@@ -882,17 +1564,70 @@ function renderMyCards(cards) {
   if (!strip) return;
   strip.innerHTML = '';
   const valMap = {'أكك':'A','شيبه':'K','بنت':'Q','ولد':'J','10':'10','9':'9','8':'8','7':'7'};
-  cards.forEach((c, i) => {
+
+  const cardEls = [];
+  cards.forEach((c) => {
     const val = valMap[c.val] || c.val;
-    const el = createCard(val, c.suit, { size:'lg', selectable:true, dealDelay: i*0.12 });
+    const el = createCard(val, c.suit, { size:'lg', selectable:true, dealDelay:0 });
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(50px) rotateX(-35deg) scale(0.75)';
+    el.style.transition = 'none';
     strip.appendChild(el);
+    cardEls.push(el);
+  });
+
+  // GSAP deal — كل ورقة تطير من أسفل
+  if (window.gsap) {
+    gsap.to(cardEls, {
+      opacity:1, y:0, rotateX:0, scale:1,
+      duration:0.5,
+      stagger:0.1,
+      ease:'back.out(2.2)',
+      clearProps:'transform,opacity'
+    });
+  } else {
+    cardEls.forEach((el, i) => {
+      setTimeout(() => {
+        el.style.transition = 'all 0.45s cubic-bezier(.34,1.56,.64,1)';
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+      }, i * 110);
+    });
+  }
+
+  // اختيار الورقة بالضغط
+  cardEls.forEach(el => {
+    el.addEventListener('click', () => {
+      const wasSelected = el.classList.contains('selected');
+      cardEls.forEach(c => c.classList.remove('selected'));
+      if (!wasSelected) {
+        el.classList.add('selected');
+        if (window.gsap) gsap.fromTo(el,
+          {rotateZ:-4, scale:1.06},
+          {rotateZ:0, scale:1.08, duration:0.3, ease:'back.out(3)'}
+        );
+      }
+    });
   });
 }
 
 function updateBetUI(bal, minBet) {
   const slider = document.getElementById('betSlider');
+  if (bal <= 0) {
+    // الرصيد صفر — يمكن لسبب مؤقت (رهنت بكل رصيدك وبانتظار نتيجة الجولة)
+    // الإفلاس الفعلي الدائم يتقرر فقط بعد ما تنتهي الجولة عبر checkBankruptcy، مو هنا
+    slider.min = 0; slider.max = 0; slider.value = 0;
+    betAmt = 0;
+    if (!amBankrupt) {
+      document.getElementById('betDisp').textContent = '—';
+      document.getElementById('betBtn').textContent = '💰 راهنت بكل رصيدك، بانتظار النتيجة...';
+    }
+    return;
+  }
+  // الرصيد رجع إيجابي (مثلاً فزت بعد ما كنت all-in) — نشيل أي حالة إفلاس معلّقة
+  if (amBankrupt) setMyBankruptState(false);
   slider.min = minBet; slider.max = bal;
-  slider.value = Math.max(minBet, Math.floor(bal*0.05));
+  slider.value = minBet;           // يبدأ بالحد الأدنى دايم
   betAmt = +slider.value;
   document.getElementById('betDisp').textContent = fmt(betAmt);
   document.getElementById('betBtn').textContent = '💰 راهن ' + fmt(betAmt);
@@ -904,13 +1639,14 @@ function onSlider(v) {
 }
 function sendBet() {
   if (!myTurn) return;
+  if (amBankrupt) { showToast('💸 أفلست! ما تقدر تراهن'); return; }
   if (botGame) {
     const bet2 = betAmt || botGame.minBet;
     const me = seats.find(s=>!s.isBot);
     if (!me || me.bal < bet2) { showToast('رصيدك غير كافٍ!'); return; }
-    me.bal -= bet2; botGame.pot += bet2;
+    me.bal -= bet2; me.betAmt = bet2; botGame.pot += bet2;
     updateSeatBal(me.id, me.bal); updatePotDisplay(botGame.pot);
-    showBetBadge(me.id, bet2); showToast('راهنت '+fmt(bet2));
+    showBetBadge(me.id, bet2); showToast('راهنت '+fmt(bet2)); playSound('bet');
     myTurn = false;
     document.getElementById('myBar').classList.add('waiting-turn');
     setTimeout(showBotResult, 1200);
@@ -922,10 +1658,11 @@ function sendBet() {
 }
 function sendFold() {
   if (!myTurn) return;
+  if (amBankrupt) return;
   if (botGame) {
     const me = seats.find(s=>!s.isBot);
     if (me) { me.status='fold'; setSeatStatus(me.id,'fold'); }
-    showToast('انسحبت');
+    showToast('انسحبت'); playSound('fold');
     myTurn = false;
     document.getElementById('myBar').classList.add('waiting-turn');
     setTimeout(showBotResult, 800);
@@ -934,6 +1671,27 @@ function sendFold() {
   myTurn = false; stopMyTimer();
   document.getElementById('myBar').classList.add('waiting-turn');
   send({type:'fold'});
+}
+
+// ═══════════════════════════════════════
+// إرسال رسالة جاهزة — تظهر كفقاعة فوق صورتي وتنتشر لباقي اللاعبين
+// ═══════════════════════════════════════
+function sendQuickChat(text) {
+  showQuickChatBubble(document.getElementById('myAv'), text);
+  playSound('chat');
+  if (!botGame) {
+    send({type:'quick_chat', text});
+  }
+}
+
+// ═══════════════════════════════════════
+// إرسال ستيكر متحرك — يظهر فوق صورتي وينتشر لباقي اللاعبين
+// ═══════════════════════════════════════
+function sendSticker(id) {
+  playSticker(id, document.getElementById('myAv'));
+  if (!botGame) {
+    send({type:'sticker', id});
+  }
 }
 
 function startMyTimer(sec) {
@@ -973,9 +1731,38 @@ function setSeatStatus(pid, status) {
   } else if (status==='out') {
     av.style.opacity='.3';
     if (nb) { nb.textContent='خرج'; nb.style.display=''; }
+  } else if (status==='bankrupt') {
+    av.style.opacity='.35';
+    if (nb) { nb.textContent='أفلس 💸'; nb.style.display=''; nb.style.color='#e74c3c'; }
   } else {
+    av.style.opacity='';
     if (nb) nb.style.display='none';
   }
+}
+
+// ═══════════════════════════════════════
+// نظام الإفلاس — رصيد = 0 يعني خسارة دائمة بهذي اللعبة
+// المقعد يبقى محفوظ على الطاولة، بس ما يقدر يراهن أو يلعب بعد
+// ═══════════════════════════════════════
+function setMyBankruptState(bankrupt) {
+  amBankrupt = bankrupt;
+  const bar = document.getElementById('myBar');
+  if (!bar) return;
+  if (bankrupt) {
+    bar.classList.add('waiting-turn', 'bankrupt-bar');
+    const betDisp = document.getElementById('betDisp');
+    const betBtn = document.getElementById('betBtn');
+    if (betDisp) betDisp.textContent = 'أفلست 💸';
+    if (betBtn) betBtn.textContent = '💸 أفلست — تتفرج';
+  } else {
+    bar.classList.remove('bankrupt-bar');
+  }
+}
+function checkBankruptcy(p) {
+  if (!p || p.bal > 0 || p.status === 'bankrupt') return;
+  p.status = 'bankrupt';
+  if (p.id === myId) setMyBankruptState(true);
+  else setSeatStatus(p.id, 'bankrupt');
 }
 function clearSeatActive() {
   document.querySelectorAll('.oav').forEach(a => {
@@ -1016,11 +1803,41 @@ function updatePotDisplay(pot) {
   document.getElementById('gPotMini').textContent = 'البوت: '+fmt(pot);
 }
 
-const SUIT_C = {'♥':'#c0392b','♦':'#c0392b','♠':'#111','♣':'#111'};
 const VAL_MAP = {'أكك':'A','شيبه':'K','بنت':'Q','ولد':'J'};
 function showRoundResult(msg) {
   const w = msg.winners[0];
   const isMe = w.id===myId;
+
+  // ── احتفال الفوز بجسيمات ──
+  if (isMe && window.gsap) {
+    const game = document.getElementById('game');
+    const colors = ['#FFD700','#FFF','#FF6B35','#f0c040','#A855F7','#00C2FF'];
+    for (let i = 0; i < 32; i++) {
+      const dot = document.createElement('div');
+      const size = 7 + Math.random() * 9;
+      dot.style.cssText =
+        `position:absolute;width:${size}px;height:${size}px;border-radius:50%;
+         background:${colors[i % colors.length]};pointer-events:none;z-index:9999;
+         left:50%;bottom:45%;`;
+      game.appendChild(dot);
+      const angle = (i / 32) * 360;
+      const rad   = (angle * Math.PI) / 180;
+      const dist  = 90 + Math.random() * 130;
+      gsap.fromTo(dot,
+        {x:0, y:0, scale:0, opacity:1, rotateZ:0},
+        {x:Math.cos(rad)*dist,
+         y:-(Math.sin(rad)*dist + Math.random()*80),
+         scale:0.7 + Math.random()*1.3,
+         rotateZ:Math.random()*540 - 270,
+         opacity:0,
+         duration:1.1 + Math.random()*0.6,
+         ease:'power3.out',
+         delay:Math.random()*0.22,
+         onComplete:()=>dot.remove()}
+      );
+    }
+  }
+
   document.getElementById('resTitle').textContent = isMe ? '🎉 فزت!' : 'نتيجة الجولة';
   document.getElementById('resWinner').textContent = isMe ? 'أنت الفائز' : w.name+' فاز';
   document.getElementById('resHand').textContent = w.hand;
@@ -1035,30 +1852,31 @@ function showRoundResult(msg) {
 
   const allEl = document.getElementById('resAllHands');
   if (allEl && msg.allHands) {
-    allEl.innerHTML = msg.allHands.map(p => {
+    allEl.innerHTML = '';
+    msg.allHands.forEach(p => {
       const win = msg.winners.some(w2 => w2.id===p.id);
       const me2 = p.id===myId;
-      return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;
+      const row = document.createElement('div');
+      row.style.cssText = `display:flex;align-items:center;gap:8px;padding:7px 10px;
         background:${win?'rgba(200,169,64,.08)':'rgba(255,255,255,.03)'};border-radius:10px;
-        border:1px solid ${win?'rgba(200,169,64,.25)':'rgba(200,169,64,.06)'}">
+        border:1px solid ${win?'rgba(200,169,64,.25)':'rgba(200,169,64,.06)'}`;
+      row.innerHTML = `
         <div style="font-size:.78rem;font-weight:700;flex:1;color:${win?'var(--gold2)':'#ccc'}">
-          ${me2?'أنت':p.name}${win?' 👑':''}
+          ${me2?'أنت':esc(p.name)}${win?' 👑':''}
         </div>
-        <div style="font-size:.68rem;color:rgba(255,255,255,.4)">${p.hand}</div>
-        <div style="display:flex;gap:2px">
-          ${(p.cards||[]).map(c=>`
-            <div style="background:#fff;border-radius:3px;width:22px;height:30px;
-              display:flex;flex-direction:column;align-items:center;justify-content:center;
-              border:1px solid #ddd;font-size:.55rem;font-weight:900;color:${SUIT_C[c.suit]||'#111'}">
-              <span>${VAL_MAP[c.val]||c.val}</span>
-              <span style="font-size:.7rem">${c.suit}</span>
-            </div>`).join('')}
-        </div>
-      </div>`;
-    }).join('');
+        <div style="font-size:.68rem;color:rgba(255,255,255,.4)">${esc(p.hand)}</div>`;
+      const cardsWrap = document.createElement('div');
+      cardsWrap.style.cssText = 'display:flex;gap:2px';
+      (p.cards||[]).forEach(c => {
+        const cardEl = createCard(VAL_MAP[c.val]||c.val, c.suit, {size:'sm', selectable:false, dealDelay:0});
+        cardsWrap.appendChild(cardEl);
+      });
+      row.appendChild(cardsWrap);
+      allEl.appendChild(row);
+    });
   }
   showOverlay('resOverlay');
-  setTimeout(() => hideOverlay('resOverlay'), 5500);
+  setTimeout(() => hideOverlay('resOverlay'), 7800);
 }
 
 function openMenu() {
@@ -1080,16 +1898,67 @@ function toggleSound() {
 function playSound(type) {
   if (!soundOn) return;
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    const freqs = {turn:440, win:880, fold:220};
-    osc.frequency.value = freqs[type] || 440;
-    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.3);
-    osc.start(); osc.stop(ctx.currentTime+0.3);
-  } catch(e){}
+    if (!playSound._ctx) {
+      playSound._ctx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    const ctx = playSound._ctx;
+    if (ctx.state === 'suspended') ctx.resume();
+
+    const t = ctx.currentTime;
+    const tone = (freq, wave, vol, start, dur, endFreq) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = wave; osc.frequency.setValueAtTime(freq, start);
+      if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, start + dur);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(vol, start + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      osc.start(start); osc.stop(start + dur + 0.02);
+    };
+
+    if (type === 'turn') {
+      // دورك — نبضتان صاعدتان
+      tone(660,  'sine', 0.35, t,       0.12);
+      tone(880,  'sine', 0.40, t + 0.14, 0.18);
+    } else if (type === 'win') {
+      // فوز — سلّم تصاعدي احتفالي
+      [[523,0],[659,0.09],[784,0.18],[1047,0.27],[1319,0.37],[1568,0.48]].forEach(([f,d]) => {
+        tone(f,     'sine',     0.50, t+d, 0.35);
+        tone(f*2,   'triangle', 0.15, t+d, 0.22);
+      });
+    } else if (type === 'lose') {
+      // خسارة — هبوط حزين
+      [[440,0],[370,0.13],[311,0.27],[220,0.42]].forEach(([f,d]) => {
+        tone(f, 'sawtooth', 0.28, t+d, 0.22);
+      });
+    } else if (type === 'fold') {
+      // انسحاب — نغمة هابطة خفيفة
+      tone(400, 'sine', 0.22, t, 0.18, 220);
+    } else if (type === 'deal') {
+      // توزيع الأوراق — صوت ورقة
+      for (let i = 0; i < 4; i++) {
+        tone(500 + i*60, 'triangle', 0.22, t + i*0.07, 0.06);
+      }
+    } else if (type === 'bet') {
+      // مراهنة — عملات
+      for (let i = 0; i < 5; i++) {
+        tone(700 + i*150, 'sine', 0.30, t + i*0.05, 0.10);
+      }
+    } else if (type === 'join') {
+      // دخول لاعب
+      tone(660, 'sine', 0.25, t,       0.09);
+      tone(880, 'sine', 0.25, t + 0.10, 0.12);
+    } else if (type === 'card') {
+      // وضع ورقة
+      tone(600, 'triangle', 0.20, t, 0.05);
+      tone(400, 'triangle', 0.12, t + 0.04, 0.05);
+    } else if (type === 'chat') {
+      // فقاعة رسالة جاهزة — نقّة لطيفة قصيرة
+      tone(720, 'sine', 0.20, t, 0.07);
+      tone(960, 'sine', 0.15, t + 0.06, 0.07);
+    }
+  } catch(e) {}
 }
 
 function confirmExit() {
@@ -1105,17 +1974,12 @@ function doLeave() {
   currentRoom = null; isHost = false;
   hideOverlay('goOverlay'); hideOverlay('resOverlay'); hideOverlay('cdOverlay');
   document.getElementById('exitConfirm').classList.remove('show');
-  // Go back to lobby and refresh rooms
-  lobbyReady = false;
-  document.getElementById('lobbySpinner').style.display = '';
-  document.getElementById('lobbyStatus').textContent = 'جارٍ البحث عن غرف...';
-  document.getElementById('roomsList').innerHTML = '';
-  document.getElementById('newRoomBtn').style.display = 'none';
-  document.getElementById('botsDirectBtn').style.display = 'none';
-  document.getElementById('newRoomBtn').disabled = false;
-  go('lobby');
-  setTimeout(()=>send({type:'get_rooms'}), 500);
-  setTimeout(()=>{ if(!lobbyReady) showLobbyReady([]); }, 3500);
+  // اخرج برا اللعبة تماماً — رجوع للصفحة اللي جتنا منها بالتطبيق (أو الرئيسية لو ما فيها)
+  if (document.referrer && document.referrer.indexOf(location.origin) === 0) {
+    window.location.href = document.referrer;
+  } else {
+    window.location.href = '../index.html';
+  }
 }
 
 window.addEventListener('popstate', e => {
@@ -1148,11 +2012,11 @@ function addGameChatMsg(name, text, av) {
   const div = document.createElement('div');
   div.style.cssText = `display:flex;align-items:flex-start;gap:5px;${isMe?'flex-direction:row-reverse':''}`;
   div.innerHTML = `
-    <span style="font-size:.9rem">${av||'😊'}</span>
+    <span style="font-size:.9rem">${esc(av)||'😊'}</span>
     <div style="background:${isMe?'rgba(200,169,64,.15)':'rgba(255,255,255,.07)'};
       border-radius:8px;padding:4px 8px;max-width:75%}">
-      <div style="font-size:.6rem;color:rgba(255,255,255,.4)">${isMe?'أنت':name}</div>
-      <div style="font-size:.75rem">${text}</div>
+      <div style="font-size:.6rem;color:rgba(255,255,255,.4)">${isMe?'أنت':esc(name)}</div>
+      <div style="font-size:.75rem">${esc(text)}</div>
     </div>`;
   box.appendChild(div);
   box.scrollTop = box.scrollHeight;
@@ -1165,7 +2029,12 @@ function addGameChatMsg(name, text, av) {
 
 function showRules() {
   closeMenu();
-  showToast('📋 الأقوى: 4 متشابهة > 3 > زوجان > زوج > أعلى ورقة');
+  document.getElementById('rulesOverlay').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+function closeRules() {
+  document.getElementById('rulesOverlay').style.display = 'none';
+  document.body.style.overflow = '';
 }
 
 function showOverlay(id) { document.getElementById(id).classList.add('show'); }
@@ -1179,6 +2048,41 @@ function showToast(msg) {
 }
 
 function fmt(n) { return (+n||0).toLocaleString('ar-SA'); }
+
+// ═══════════════════════════════════════
+// حماية من XSS — أي نص يجي من لاعب (اسم/رسالة/رقم غرفة) يمر من هنا
+// قبل لا يدخل بـ innerHTML
+// ═══════════════════════════════════════
+function esc(str) {
+  return String(str ?? '').replace(/[&<>"']/g, ch => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[ch]));
+}
+
+// ═══════════════════════════════════════
+// فحص الاتصال بالإنترنت
+// ═══════════════════════════════════════
+function showOffline() {
+  document.getElementById('offlineOverlay').classList.add('show');
+}
+function hideOffline() {
+  document.getElementById('offlineOverlay').classList.remove('show');
+}
+function retryConnection() {
+  if (navigator.onLine) {
+    hideOffline();
+    location.reload(); // نعيد تحميل الصفحة عشان يتصل الـWebSocket من جديد بشكل نظيف
+  } else {
+    showToast('❌ لسا ما فيه اتصال بالإنترنت');
+  }
+}
+window.addEventListener('offline', showOffline);
+window.addEventListener('online', () => {
+  showToast('🌐 رجع الاتصال بالإنترنت');
+  hideOffline();
+});
+// فحص أولي عند فتح الصفحة
+if (!navigator.onLine) showOffline();
 </script>
 </body>
 </html>

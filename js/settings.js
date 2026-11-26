@@ -31,12 +31,33 @@ function openSettings() {
           <h2 style="margin:0;font-size:17px;color:#f0e8d0">⚙️ الإعدادات</h2>
         </div>
 
+        <!-- الملف الشخصي -->
+        <div onclick="document.getElementById('settings-panel').remove();showEditProfile()"
+          style="background:rgba(14,11,4,0.8);border:1px solid rgba(200,169,64,0.2);
+          border-radius:16px;padding:16px;margin-bottom:16px;display:flex;align-items:center;
+          gap:12px;cursor:pointer">
+          ${renderAvatarHTML(u, 50)}
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:800;color:#f0e8d0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+              ${escapeHTML(u.username || 'لاعب')}
+            </div>
+            <div style="font-size:11px;color:#705030;margin-top:2px">👤 تعديل الاسم والصورة الشخصية</div>
+          </div>
+          <div style="color:#705030;font-size:20px;flex-shrink:0">‹</div>
+        </div>
+
         <!-- بطاقة الحساب -->
         <div style="background:rgba(14,11,4,0.8);border:1px solid rgba(200,169,64,0.2);
           border-radius:16px;padding:16px;margin-bottom:16px">
           <div style="font-size:11px;color:#705030;margin-bottom:10px;font-weight:700">👤 الحساب</div>
           <div style="font-size:13px;color:#888;margin-bottom:4px">البريد الإلكتروني</div>
           <div style="font-size:14px;color:#f0e8d0;margin-bottom:12px">${user.email}</div>
+          <div style="font-size:13px;color:#888;margin-bottom:4px">عضو منذ</div>
+          <div style="font-size:14px;color:#f0e8d0;margin-bottom:12px">
+            ${user.metadata && user.metadata.creationTime
+              ? new Date(user.metadata.creationTime).toLocaleDateString('ar', { day:'numeric', month:'long', year:'numeric' })
+              : '—'}
+          </div>
           <button onclick="changePassword()"
             style="width:100%;padding:10px;background:rgba(108,99,255,0.15);color:#a78bfa;
               border:1px solid rgba(108,99,255,0.3);border-radius:10px;font-size:13px;
@@ -137,6 +158,7 @@ function toggleSwitch(id) {
   input.checked = !input.checked;
   if (sw)   sw.style.background   = input.checked ? 'linear-gradient(135deg,#c8a940,#f0c040)' : '#2a2a3f';
   if (knob) knob.style.transform  = input.checked ? 'translateX(20px)' : 'translateX(0)';
+  Sounds.play('toggle'); Haptic.light();
 }
 
 // ===== حفظ الإعدادات =====
@@ -158,10 +180,11 @@ function saveSettings() {
 
   db.ref('users/' + user.uid).update(updates, err => {
     if (!err) {
-      if (typeof showToast === 'function') showToast('✅ تم حفظ الإعدادات');
+      Toast.show('✅ تم حفظ الإعدادات', 'success');
+      Sounds.play('success'); Haptic.light();
       document.getElementById('settings-panel').remove();
     } else {
-      alert('حدث خطأ، حاول مرة أخرى');
+      Toast.show('حدث خطأ، حاول مرة أخرى', 'error');
     }
   });
 }
@@ -170,13 +193,12 @@ function saveSettings() {
 function changePassword() {
   const user = auth.currentUser; if (!user) return;
   auth.sendPasswordResetEmail(user.email).then(() => {
-    alert(`📧 تم إرسال رابط تغيير كلمة المرور إلى:\n${user.email}`);
-  }).catch(err => alert('خطأ: ' + err.message));
+    Toast.show(`📧 تم إرسال رابط تغيير كلمة المرور إلى:\n${user.email}`, 'success');
+  }).catch(err => Toast.show('خطأ: ' + err.message));
 }
 
 // ===== تسجيل الخروج =====
 function doLogout() {
-  if (!confirm('تسجيل الخروج؟')) return;
   auth.signOut().then(() => {
     document.getElementById('settings-panel')?.remove();
   });
@@ -196,13 +218,13 @@ function confirmDeleteAccount() {
     db.ref('game_history/' + uid).remove();
     return user.delete();
   }).then(() => {
-    alert('تم حذف الحساب.');
+    Toast.show('تم حذف الحساب.', 'success');
   }).catch(err => {
     if (err.code === 'auth/requires-recent-login') {
-      alert('لحذف الحساب يجب تسجيل الدخول مجدداً أولاً.');
+      Toast.show('لحذف الحساب يجب تسجيل الدخول مجدداً أولاً.', 'info');
       auth.signOut();
     } else {
-      alert('خطأ: ' + err.message);
+      Toast.show('خطأ: ' + err.message, 'error');
     }
   });
 }

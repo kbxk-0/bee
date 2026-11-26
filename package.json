@@ -20,6 +20,9 @@
   },
   "homepage": "https://github.com/kbxk-0/bee#readme",
   "dependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/core": "^8.3.4",
     "ws": "^8.20.1"
   }
 }

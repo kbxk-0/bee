@@ -135,6 +135,7 @@ function createCard(value, suit, options = {}) {
   if (selectable) {
     el.addEventListener('click', () => {
       el.classList.toggle('selected');
+      Sounds.play('cardPlay');
       if (onClick) onClick(el, value, suit);
     });
   } else if (onClick) {
@@ -152,6 +153,7 @@ function renderCards(container, cardsData, options = {}) {
   container.style.gap = gap;
   container.style.alignItems = 'flex-end';
   container.innerHTML = '';
+  if (cardsData.length > 0) setTimeout(() => Sounds.play('cardDeal'), 50);
   cardsData.forEach((c, i) => {
     const val = c.val || c.value || c[0];
     const suit = c.suit || c[1];

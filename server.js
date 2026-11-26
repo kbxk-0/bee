@@ -1,20 +1,28 @@
-// server.js — مليون لعبة الورق
+// server.js — سيرفر BEE (مليون + طنج)
 // تثبيت: npm install ws
 // تشغيل: node server.js
 
 const WebSocket = require('ws');
 const http = require('http');
+// لو tonj-server.js ناقص أو فيه خطأ، السيرفر يكمل بدون طنج (ما يوقع مليون)
+let Tonj = null;
+try { Tonj = require('./tonj-server.js')(WebSocket); }
+catch (e) { console.error('⚠️ tonj-server.js ما تحمّل:', e.message); }
+// لو minute-server.js ناقص أو فيه خطأ، السيرفر يكمل شغل مليون وطنج عادي (بدون تحدّي الدقيقة)
+let Minute = null;
+try { Minute = require('./minute-server.js')(WebSocket); }
+catch (e) { console.error('⚠️ minute-server.js ما تحمّل:', e.message); }
 
 const server = http.createServer((req, res) => {
   res.writeHead(200, {'Content-Type': 'text/plain'});
-  res.end('مليون سيرفر شغال ✓');
+  res.end('سيرفر شغال ✓');
 });
 const wss = new WebSocket.Server({ server });
 
 const rooms = new Map();
 const players = new Map();
 
-// ─── الورق ───────────────────────────────────────────
+// ─── الورق (مليون) ───────────────────────────────────────────
 const SUITS = ['♥','♦','♠','♣'];
 const SUIT_COLOR = {'♥':'red','♦':'red','♠':'black','♣':'black'};
 const BASE_VALS = [
@@ -58,14 +66,15 @@ function cmpHand(a,b) {
   return a.rank !== b.rank ? a.rank-b.rank : a.high-b.high;
 }
 
-// ─── غرفة ────────────────────────────────────────────
+// ─── غرفة مليون ────────────────────────────────────────────
 class Room {
   constructor(id, cfg, hostId, isTournament=false) {
     this.id = id; this.hostId = hostId;
     this.isTournament = isTournament;
+    this.type = 'million';
     this.entryCost = cfg.entryCost || 0;
     this.cfg = cfg;
-    this.seats = [];   // {id, name, bal, cards, bet, rs, ws, avatar}
+    this.seats = [];
     this.status = 'waiting';
     this.pot = 0; this.round = 0;
     this.timer = null; this.timeLeft = 0;
@@ -87,13 +96,9 @@ class Room {
   }
   bcastAll(msg) { this.bcast(msg); }
 
-  // ── شروع لعبة ──
   start() {
     this.status = 'playing';
-    this.seats.forEach(s => {
-      s.bal = this.cfg.startBal;
-      s.status = 'in';
-    });
+    this.seats.forEach(s => { s.bal = this.cfg.startBal; s.status = 'in'; });
     this.bcastAll({type:'game_start', players: this.publicSeats()});
     this.newRound();
   }
@@ -110,14 +115,9 @@ class Room {
     this.pot = 0;
     const active = this.seats.filter(s => s.status==='in');
     active.forEach(s => { s.bet=0; s.rs='wait'; s.cards=[]; });
-
     const deck = buildDeck(active.length);
     active.forEach((s,i) => { s.cards = deck.slice(i*4, i*4+4); });
-
-    this.bcastAll({
-      type:'round_start', round:this.round,
-      players: this.publicSeats()
-    });
+    this.bcastAll({ type:'round_start', round:this.round, players: this.publicSeats() });
     active.forEach(s => this.send(s.id, {type:'your_cards', cards:s.cards}));
     this.advance();
   }
@@ -164,17 +164,12 @@ class Room {
     this.clearTimer();
     const bettors = this.seats.filter(s=>s.status==='in'&&s.rs==='bet');
     if (!bettors.length) { setTimeout(()=>this.newRound(),3000); return; }
-
     const evaled = bettors.map(s=>({...s, hand:evalHand(s.cards)}));
     evaled.sort((a,b)=>cmpHand(b.hand,a.hand));
     const top = evaled[0].hand;
     const winners = evaled.filter(s=>cmpHand(s.hand,top)===0);
     const share = Math.floor(this.pot/winners.length);
-    winners.forEach(w=>{
-      const s=this.seats.find(s=>s.id===w.id);
-      if(s) s.bal+=share;
-    });
-
+    winners.forEach(w=>{ const s=this.seats.find(s=>s.id===w.id); if(s) s.bal+=share; });
     this.bcastAll({
       type:'round_end',
       winners: winners.map(w=>({id:w.id,name:w.name,hand:w.hand.name,cards:w.cards})),
@@ -182,16 +177,12 @@ class Room {
       pot:this.pot, share,
       balances: this.seats.map(s=>({id:s.id,bal:s.bal}))
     });
-
-    // إفلاس
     this.seats.forEach(s=>{
       if(s.bal<=0&&s.status==='in'){
         s.status='out';
         this.bcastAll({type:'player_out',pid:s.id,name:s.name});
       }
     });
-
-    // فوز
     const gWinner = this.seats.find(s=>s.bal>=this.cfg.winTarget);
     const remaining = this.seats.filter(s=>s.status==='in');
     if (gWinner || remaining.length<=1) {
@@ -206,16 +197,14 @@ class Room {
   }
 }
 
-// ─── WebSocket ───────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+//  WebSocket — اتصال موحّد
+// ═══════════════════════════════════════════════════════════
 wss.on('connection', ws => {
   const pid = 'p'+Date.now()+Math.random().toString(36).slice(2,6);
   players.set(pid, {id:pid, ws, rid:null, name:'لاعب'});
   ws.send(JSON.stringify({type:'hello',pid}));
-
-  ws.on('message', raw => {
-    try { handle(pid, JSON.parse(raw)); }
-    catch(e){ console.error(e); }
-  });
+  ws.on('message', raw => { try { handle(pid, JSON.parse(raw)); } catch(e){ console.error(e); } });
   ws.on('close', () => disconnect(pid));
 });
 
@@ -227,15 +216,25 @@ function handle(pid, msg) {
 
   if (msg.type==='chat') {
     const room = rooms.get(p.rid);
-    if (room) room.bcastAll({
-      type: 'chat_msg',
-      name: p.name,
-      text: String(msg.text||'').slice(0, 80),
-      av:   msg.av || '😊'
-    });
+    if (room) room.bcastAll({ type:'chat_msg', name:p.name, text:String(msg.text||'').slice(0,80), av:msg.av||'😊' });
     return;
   }
 
+  // ── تفويض رسائل طنج لموديول منفصل ──
+  if (msg.type.startsWith('tonj_')) {
+    if (Tonj) Tonj.handleTonjMessage(pid, p, msg, rooms);
+    else p.ws.send(JSON.stringify({type:'err',msg:'لعبة طنج غير متاحة الحين'}));
+    return;
+  }
+
+  // ── تفويض رسائل تحدّي الدقيقة ──
+  if (msg.type.startsWith('minute_')) {
+    if (Minute) Minute.handleMinuteMessage(pid, p, msg, rooms);
+    else p.ws.send(JSON.stringify({type:'err',msg:'لعبة تحدّي الدقيقة غير متاحة الحين'}));
+    return;
+  }
+
+  // ── مليون ──
   if (msg.type==='create_room') {
     const rid='R'+Math.random().toString(36).slice(2,6).toUpperCase();
     const cfg={
@@ -248,11 +247,9 @@ function handle(pid, msg) {
     };
     const room=new Room(rid,cfg,pid,!!msg.isTournament);
     rooms.set(rid,room);
-    room.seat({id:pid,name:p.name,bal:cfg.startBal,cards:[],bet:0,
-               rs:'wait',status:'in',ws:p.ws,avatar:msg.avatar||'😊'});
+    room.seat({id:pid,name:p.name,bal:cfg.startBal,cards:[],bet:0,rs:'wait',status:'in',ws:p.ws,avatar:msg.avatar||'😊'});
     p.rid=rid;
-    p.ws.send(JSON.stringify({type:'room_created',rid,cfg,
-      players:room.publicSeats(), isHost:true}));
+    p.ws.send(JSON.stringify({type:'room_created',rid,cfg,players:room.publicSeats(),isHost:true}));
     return;
   }
 
@@ -261,17 +258,11 @@ function handle(pid, msg) {
     if(!room){p.ws.send(JSON.stringify({type:'err',msg:'الغرفة غير موجودة'}));return;}
     if(room.status!=='waiting'){p.ws.send(JSON.stringify({type:'err',msg:'اللعبة بدأت'}));return;}
     if(room.seats.length>=room.cfg.maxPlayers){p.ws.send(JSON.stringify({type:'err',msg:'الغرفة ممتلئة'}));return;}
-    room.seat({id:pid,name:p.name,bal:room.cfg.startBal,cards:[],bet:0,
-               rs:'wait',status:'in',ws:p.ws,avatar:msg.avatar||'😊'});
+    room.seat({id:pid,name:p.name,bal:room.cfg.startBal,cards:[],bet:0,rs:'wait',status:'in',ws:p.ws,avatar:msg.avatar||'😊'});
     p.rid=msg.rid;
-    room.bcast({type:'player_joined',pid,name:p.name,avatar:msg.avatar||'😊',
-      players:room.publicSeats()},pid);
-    p.ws.send(JSON.stringify({type:'joined',rid:msg.rid,cfg:room.cfg,
-      players:room.publicSeats(),isHost:false}));
-    if(room.seats.length>=room.cfg.maxPlayers){
-      room.bcastAll({type:'starting',cd:3});
-      setTimeout(()=>room.start(),3000);
-    }
+    room.bcast({type:'player_joined',pid,name:p.name,avatar:msg.avatar||'😊',players:room.publicSeats()},pid);
+    p.ws.send(JSON.stringify({type:'joined',rid:msg.rid,cfg:room.cfg,players:room.publicSeats(),isHost:false}));
+    if(room.seats.length>=room.cfg.maxPlayers){ room.bcastAll({type:'starting',cd:3}); setTimeout(()=>room.start(),3000); }
     return;
   }
 
@@ -284,25 +275,14 @@ function handle(pid, msg) {
     return;
   }
 
-  if (msg.type==='bet') {
-    const room=rooms.get(p.rid);
-    if(room) room.bet(pid,+msg.amt);
-    return;
-  }
-
-  if (msg.type==='fold') {
-    const room=rooms.get(p.rid);
-    if(room) room.fold(pid);
-    return;
-  }
+  if (msg.type==='bet') { const room=rooms.get(p.rid); if(room) room.bet(pid,+msg.amt); return; }
+  if (msg.type==='fold') { const room=rooms.get(p.rid); if(room) room.fold(pid); return; }
 
   if (msg.type==='rooms_list') {
     const list=[];
     rooms.forEach((r,id)=>{
-      if(r.status==='waiting')
-        list.push({id,count:r.seats.length,max:r.cfg.maxPlayers,
-          minBet:r.cfg.minBet, isTournament:r.isTournament,
-          entryCost:r.entryCost});
+      if(r.type==='million'&&r.status==='waiting')
+        list.push({id,count:r.seats.length,max:r.cfg.maxPlayers,minBet:r.cfg.minBet,isTournament:r.isTournament,entryCost:r.entryCost});
     });
     p.ws.send(JSON.stringify({type:'rooms',list}));
     return;
@@ -314,6 +294,8 @@ function disconnect(pid) {
   if(p?.rid){
     const room=rooms.get(p.rid);
     if(room){
+      if(Tonj && room.type==='tonj') Tonj.handleTonjDisconnect(pid, p, room);
+      if(Minute && room.type==='minute') { try { Minute.handleMinuteDisconnect(pid, p, room); } catch(e) { console.error(e); } }
       room.unseat(pid);
       room.bcast({type:'player_left',pid,name:p.name});
       if(!room.seats.length) rooms.delete(p.rid);
@@ -323,4 +305,4 @@ function disconnect(pid) {
 }
 
 const PORT = process.env.PORT||3001;
-server.listen(PORT,()=>console.log(`✓ مليون سيرفر شغال على البورت ${PORT}`));
+server.listen(PORT,()=>console.log(`✓ سيرفر BEE شغال على البورت ${PORT}`));

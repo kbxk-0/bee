@@ -11,6 +11,24 @@ function renderAdminPanelPage() {
     <div style="padding:14px;color:white;max-height:calc(100vh - 70px);overflow-y:auto">
       <h2 style="color:#ff4757;margin-top:0">⚙️ لوحة التحكم</h2>
 
+      <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:14px;scrollbar-width:none">
+        ${[
+          ['general', '🎯', 'عام'],
+          ['users',   '👤', 'المستخدمين'],
+          ['update',  '🔄', 'التحديث'],
+          ['clans',   '🛡️', 'النوادي'],
+          ['reports', '🚩', 'الإبلاغات'],
+        ].map(([id, icon, label], i) => `
+          <button onclick="switchAdminTab('${id}')" id="admin-tab-btn-${id}"
+            style="flex-shrink:0;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:800;
+              cursor:pointer;font-family:inherit;white-space:nowrap;border:1px solid;
+              ${i===0 ? 'background:rgba(255,71,87,0.15);color:#ff4757;border-color:rgba(255,71,87,0.4)'
+                      : 'background:rgba(255,255,255,0.04);color:#888;border-color:rgba(255,255,255,0.1)'}">
+            ${icon} ${label}
+          </button>`).join('')}
+      </div>
+
+      <div class="admin-tab-panel" data-tab="general" style="display:block">
       <!-- البانر الرئيسي -->
       <div style="background:#1a1a28;border-radius:12px;border:1px solid #c8a940;padding:14px;margin-bottom:12px">
         <h4 style="margin:0 0 10px;color:#c8a940;font-size:13px">🎯 البانر الرئيسي</h4>
@@ -32,6 +50,9 @@ function renderAdminPanelPage() {
             border:none;border-radius:8px;font-weight:bold;cursor:pointer">حفظ التحدي</button>
       </div>
 
+      </div>
+
+      <div class="admin-tab-panel" data-tab="users" style="display:none">
       <!-- منح كوينز -->
       <div style="background:#1a1a28;border-radius:12px;border:1px solid #ffd700;padding:14px;margin-bottom:12px">
         <h4 style="margin:0 0 10px;color:#ffd700;font-size:13px">🪙 منح كوينز</h4>
@@ -56,6 +77,9 @@ function renderAdminPanelPage() {
         </div>
       </div>
 
+      </div>
+
+      <div class="admin-tab-panel" data-tab="update" style="display:none">
       <!-- نظام التحديث -->
       <div style="background:#1a1a28;border-radius:12px;border:1px solid #2ed573;padding:14px;margin-bottom:12px">
         <h4 style="margin:0 0 10px;color:#2ed573;font-size:13px">🚀 إدارة التحديث</h4>
@@ -88,16 +112,35 @@ function renderAdminPanelPage() {
         </div>
       </div>
 
-      <!-- تعديل كلان -->
+      </div>
+
+      <div class="admin-tab-panel" data-tab="clans" style="display:none">
+      <!-- تعديل اسم نادي -->
       <div style="background:#1a1a28;border-radius:12px;border:1px solid var(--accent);padding:14px">
-        <h4 style="margin:0 0 10px;color:var(--accent);font-size:13px">⚔️ تعديل اسم كلان</h4>
-        <input type="text" id="admin-clan-target"   placeholder="اسم الكلان الحالي..." class="input-field" style="margin-bottom:8px">
+        <h4 style="margin:0 0 10px;color:var(--accent);font-size:13px">🛡️ تعديل اسم نادي</h4>
+        <input type="text" id="admin-clan-target"   placeholder="اسم النادي الحالي..." class="input-field" style="margin-bottom:8px">
         <input type="text" id="admin-clan-new-name" placeholder="الاسم الجديد..."       class="input-field" style="margin-bottom:8px">
         <button onclick="adminModifyClanName()"
           style="width:100%;padding:9px;background:#6c63ff;color:white;
             border:none;border-radius:8px;font-weight:bold;cursor:pointer">تطبيق التغيير</button>
       </div>
 
+      <!-- تصفير النوادي (مرة واحدة، إجراء مدمّر) -->
+      <div style="background:#1a1a28;border-radius:12px;border:1px solid #ff4757;padding:14px;margin-top:12px">
+        <h4 style="margin:0 0 8px;color:#ff4757;font-size:13px">🗑️ تصفير كل النوادي</h4>
+        <p style="font-size:11px;color:#888;margin:0 0 10px">
+          يحذف كل النوادي الحالية ويزيل عضوية كل لاعب منها نهائياً — للبدء من جديد بالنظام الجديد. لا يمكن التراجع.
+        </p>
+        <button onclick="adminWipeAllClans()"
+          style="width:100%;padding:9px;background:rgba(255,71,87,.15);color:#ff4757;
+            border:1px solid rgba(255,71,87,.4);border-radius:8px;font-weight:bold;cursor:pointer">
+          حذف كل النوادي نهائياً
+        </button>
+      </div>
+
+      </div>
+
+      <div class="admin-tab-panel" data-tab="reports" style="display:none">
       <!-- الإبلاغات -->
       <div style="background:#1a1a28;border-radius:12px;border:1px solid #ff6584;padding:14px;margin-top:12px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
@@ -116,40 +159,52 @@ function renderAdminPanelPage() {
     </div>`;
 }
 
+function switchAdminTab(tabId) {
+  document.querySelectorAll('.admin-tab-panel').forEach(p => {
+    p.style.display = p.dataset.tab === tabId ? 'block' : 'none';
+  });
+  document.querySelectorAll('[id^="admin-tab-btn-"]').forEach(btn => {
+    const active = btn.id === 'admin-tab-btn-' + tabId;
+    btn.style.background   = active ? 'rgba(255,71,87,0.15)' : 'rgba(255,255,255,0.04)';
+    btn.style.color        = active ? '#ff4757' : '#888';
+    btn.style.borderColor  = active ? 'rgba(255,71,87,0.4)' : 'rgba(255,255,255,0.1)';
+  });
+}
+
 function adminUpdateBanner() {
   const title = document.getElementById('banner-title-input')?.value.trim();
   const sub   = document.getElementById('banner-sub-input')?.value.trim();
   const icon  = document.getElementById('banner-icon-input')?.value.trim();
-  if (!title) { alert('أدخل عنوان البانر'); return; }
+  if (!title) { Toast.show('أدخل عنوان البانر', 'error'); return; }
   db.ref('settings/banner').set({ title, sub: sub || '', icon: icon || '🐝' }, e => {
-    if (!e) { alert('تم حفظ البانر ✅'); if (typeof renderHome === 'function') renderHome(); }
+    if (!e) { Toast.show('تم حفظ البانر ✅', 'success'); if (typeof renderHome === 'function') renderHome(); }
   });
 }
 
 function adminUpdateChallenge() {
   const title = document.getElementById('challenge-title-input')?.value.trim();
   const sub   = document.getElementById('challenge-sub-input')?.value.trim();
-  if (!title) { alert('أدخل عنوان التحدي'); return; }
+  if (!title) { Toast.show('أدخل عنوان التحدي', 'error'); return; }
   db.ref('settings/challenge').set({ title, sub: sub || '' }, e => {
-    if (!e) { alert('تم حفظ التحدي ✅'); if (typeof renderHome === 'function') renderHome(); }
+    if (!e) { Toast.show('تم حفظ التحدي ✅', 'success'); if (typeof renderHome === 'function') renderHome(); }
   });
 }
 
 function adminGiveCoins() {
   const username = document.getElementById('admin-coins-user')?.value.trim();
   const amount   = parseInt(document.getElementById('admin-coins-amount')?.value);
-  if (isNaN(amount) || amount <= 0) { alert('أدخل كمية صحيحة'); return; }
+  if (isNaN(amount) || amount <= 0) { Toast.show('أدخل كمية صحيحة', 'error'); return; }
 
   if (!username) {
     const user = auth.currentUser; if (!user) return;
     db.ref('users/' + user.uid + '/coins').transaction(c => (c || 0) + amount,
-      (e, ok) => { if (ok) alert(`تم منح ${amount} 🪙 لنفسك!`); });
+      (e, ok) => { if (ok) Toast.show(`تم منح ${amount} 🪙 لنفسك!`, 'gold'); Sounds.play('coins'); Haptic.success(); });
   } else {
     db.ref('users').orderByChild('username').equalTo(username).once('value', snap => {
-      if (!snap.exists()) { alert('المستخدم غير موجود!'); return; }
+      if (!snap.exists()) { Toast.show('المستخدم غير موجود!', 'error'); return; }
       const uid = Object.keys(snap.val())[0];
       db.ref('users/' + uid + '/coins').transaction(c => (c || 0) + amount,
-        (e, ok) => { if (ok) alert(`تم منح ${amount} 🪙 لـ ${username}!`); });
+        (e, ok) => { if (ok) Toast.show(`تم منح ${amount} 🪙 لـ ${username}!`, 'gold'); Sounds.play('coins'); Haptic.light(); });
     });
   }
 }
@@ -161,7 +216,7 @@ function adminGiveCoinsToUser(uid, username) {
   db.ref('users/' + uid + '/coins').transaction(c => (c || 0) + amount,
     (e, ok) => {
       if (ok) {
-        alert(`تم منح ${amount} 🪙 لـ ${username}!`);
+        Toast.show(`تم منح ${amount} 🪙 لـ ${username}!`, 'gold'); Sounds.play('coins'); Haptic.light();
         if (typeof renderLeaderboard === 'function') renderLeaderboard();
       }
     });
@@ -171,10 +226,10 @@ function assignAdminStatus(status) {
   const name = document.getElementById('admin-target-username')?.value.trim();
   if (!name) return;
   db.ref('users').orderByChild('username').equalTo(name).once('value', snap => {
-    if (!snap.exists()) { alert('المستخدم غير موجود!'); return; }
+    if (!snap.exists()) { Toast.show('المستخدم غير موجود!', 'error'); return; }
     const uid = Object.keys(snap.val())[0];
     db.ref('users/' + uid + '/isAdmin').set(status, e => {
-      if (!e) alert(status ? 'تمت الترقية!' : 'تم سحب الصلاحية!');
+      if (!e) Toast.show(status ? 'تمت الترقية!' : 'تم سحب الصلاحية!', 'success');
     });
   });
 }
@@ -183,12 +238,30 @@ function adminModifyClanName() {
   const old = document.getElementById('admin-clan-target')?.value.trim();
   const nw  = document.getElementById('admin-clan-new-name')?.value.trim();
   if (!old || !nw) return;
-  if (nw.length < 3 || nw.length > 10) { alert('الاسم بين 3 و10 أحرف'); return; }
-  db.ref('users').once('value', snap => {
-    snap.forEach(child => {
-      if (child.val().clan === old) db.ref('users/' + child.key + '/clan').set(nw);
+  if (nw.length < 3 || nw.length > 20) { Toast.show('الاسم بين 3 و20 حرفاً', 'error'); return; }
+
+  const oldKey = old.trim().replace(/\s+/g, ' ').toLowerCase();
+  const newKey = nw.trim().replace(/\s+/g, ' ').toLowerCase();
+
+  db.ref('clanNamesLower/' + encodeURIComponent(newKey)).once('value', dupSnap => {
+    if (dupSnap.exists()) { Toast.show('الاسم الجديد مستخدم بنادٍ آخر بالفعل', 'error'); return; }
+
+    db.ref('clans').orderByChild('name').equalTo(old).once('value', snap => {
+      if (!snap.exists()) { Toast.show('ما فيه نادٍ بهذا الاسم', 'error'); return; }
+      const clanId = Object.keys(snap.val())[0];
+      const members = snap.val()[clanId].members || {};
+
+      const updates = {};
+      updates['clans/' + clanId + '/name'] = nw;
+      updates['clanNamesLower/' + encodeURIComponent(oldKey)] = null;
+      updates['clanNamesLower/' + encodeURIComponent(newKey)] = clanId;
+      Object.keys(members).forEach(uid => { updates['users/' + uid + '/clan'] = nw; });
+
+      db.ref().update(updates, err => {
+        if (err) { Toast.show('فشل التعديل: ' + err.message, 'error'); return; }
+        Toast.show('تم تعديل اسم النادي لكل الأعضاء!', 'success');
+      });
     });
-    alert('تم تعديل الكلان لكل الأعضاء!');
   });
 }
 
@@ -279,7 +352,7 @@ function resolveReport(reportId, action, targetUsername) {
   db.ref('reports/' + reportId + '/status').set(
     action === 'dismiss' ? 'dismissed' : 'resolved',
     () => {
-      if (typeof showToast === 'function') showToast('✅ تم التعامل مع الإبلاغ');
+      Toast.show('✅ تم التعامل مع الإبلاغ', 'success');
       loadAdminReports();
     }
   );
@@ -294,7 +367,7 @@ function publishUpdate(active) {
     const title   = document.getElementById('upd-title')?.value.trim();
     const message = document.getElementById('upd-message')?.value.trim();
     const forced  = document.getElementById('upd-forced')?.checked || false;
-    if (!version) { alert('أدخل رقم الإصدار'); return; }
+    if (!version) { Toast.show('أدخل رقم الإصدار', 'error'); return; }
     db.ref('settings/update').set({
       active: true, minVersion: version,
       url: url || '', title: title || '🔄 تحديث جديد',

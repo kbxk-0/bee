@@ -186,12 +186,11 @@ function registerTournament(tournId, fee) {
   fee = parseInt(fee) || 0;
 
   if (fee > 0 && currentCoins < fee) {
-    alert(`تحتاج ${fee} 🪙 للتسجيل!`); return;
+    Toast.show(`تحتاج ${fee} 🪙 للتسجيل!`, 'success'); return;
   }
-  if (!confirm(`التسجيل في البطولة${fee > 0 ? ` مقابل ${fee} 🪙` : ' مجاناً'}؟`)) return;
 
   db.ref('tournaments/' + tournId + '/players/' + user.uid).once('value', snap => {
-    if (snap.exists()) { alert('أنت مسجّل بالفعل!'); return; }
+    if (snap.exists()) { Toast.show('أنت مسجّل بالفعل!', 'info'); return; }
 
     const doRegister = () => {
       db.ref('tournaments/' + tournId + '/players/' + user.uid).set({
@@ -199,7 +198,7 @@ function registerTournament(tournId, fee) {
         registeredAt: firebase.database.ServerValue.TIMESTAMP
       }, err => {
         if (!err) {
-          if (typeof showToast === 'function') showToast('✅ تم التسجيل في البطولة!');
+          Toast.show('✅ تم التسجيل في البطولة!', 'gold'); Sounds.play('success'); Haptic.success();
           if (typeof sendNotification === 'function')
             sendNotification(user.uid, 'system', '🏆 تم التسجيل', `سجّلت في بطولة بنجاح!`);
           loadTournaments(currentTab);
@@ -219,7 +218,7 @@ function registerTournament(tournId, fee) {
       db.ref('users/' + user.uid).transaction(u => {
         if (!u || u.coins < fee) return u;
         u.coins -= fee; return u;
-      }, (err, committed) => { if (committed) doRegister(); else alert('فشل خصم الرسوم.'); });
+      }, (err, committed) => { if (committed) doRegister(); else Toast.show('فشل خصم الرسوم.', 'error'); });
     } else {
       doRegister();
     }
@@ -267,7 +266,7 @@ function generateBracket(tournId) {
       currentRound: 1,
       status: 'active'
     }, () => {
-      if (typeof showToast === 'function') showToast('🏆 بدأت البطولة!');
+      Toast.show('🏆 بدأت البطولة!', 'gold'); Sounds.play('gameStart'); Haptic.heavy();
       loadTournaments('active');
     });
   });
@@ -402,7 +401,7 @@ function declareWinner(tournId, matchId, p1Uid, p1Name, p2Uid, p2Name) {
             status: 'finished', champion: champion.username,
             championUid: champion.uid
           });
-          if (typeof showToast === 'function') showToast(`🏆 ${champion.username} بطل البطولة!`);
+          Toast.show(`🏆 ${champion.username} بطل البطولة!`, 'gold'); Sounds.play('tournament'); Haptic.heavy();
 
         } else if (winners.length > 1) {
           // بناء الجولة التالية
@@ -429,7 +428,7 @@ function declareWinner(tournId, matchId, p1Uid, p1Name, p2Uid, p2Name) {
           Object.entries(newMatches).forEach(([k,v]) => { updates['bracket/' + k] = v; });
           updates.currentRound = newRound;
           db.ref('tournaments/' + tournId).update(updates,
-            () => { if (typeof showToast === 'function') showToast(`الجولة ${newRound} بدأت!`); });
+            () => { Toast.show(`الجولة ${newRound} بدأت!`, 'success'); });
         }
       }
       viewBracket(tournId);
@@ -444,7 +443,7 @@ function openCreateTournament() {
   if (!modal || !content || !isAdmin) return;
   modal.style.display = 'flex';
 
-  const games    = ['مليون','قلب العملة','رمي النرد','خمّن الرقم'];
+  const games    = ['مليون'];
   const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0,16);
 
   content.innerHTML = `
@@ -479,8 +478,8 @@ function createTournament() {
   const date  = document.getElementById('t-date')?.value;
   const desc  = document.getElementById('t-desc')?.value.trim();
 
-  if (!name) { alert('أدخل اسم البطولة'); return; }
-  if (prize <= 0) { alert('أدخل قيمة الجائزة'); return; }
+  if (!name) { Toast.show('أدخل اسم البطولة', 'error'); return; }
+  if (prize <= 0) { Toast.show('أدخل قيمة الجائزة', 'error'); return; }
 
   db.ref('tournaments').push({
     name, game, prize, entryFee: fee, maxPlayers: max,
@@ -492,7 +491,7 @@ function createTournament() {
     createdBy: currentUsername
   }, err => {
     if (!err) {
-      if (typeof showToast === 'function') showToast('✅ تم إنشاء البطولة!');
+      Toast.show('✅ تم إنشاء البطولة!', 'success');
       document.getElementById('profile-modal').style.display = 'none';
       loadTournaments('upcoming');
       switchTournTab('upcoming');

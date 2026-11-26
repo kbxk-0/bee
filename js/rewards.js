@@ -42,15 +42,15 @@ function claimQuest(type) {
     if (committed && snap.exists()) {
       const userData = snap.val();
       if (userData.tempSuccess) {
-        if (type === 'chat') { claimedChatQuest = true; alert('تم استلام 20 🪙 بنجاح!'); }
-        if (type === 'flip') { claimedFlipQuest = true; alert('تم استلام 30 🪙 بنجاح!'); }
+        if (type === 'chat') { claimedChatQuest = true; Toast.show('🎉 استلمت 20 🪙 مكافأة المهمة!', 'gold'); Sounds.play('coins'); Haptic.success(); }
+        if (type === 'flip') { claimedFlipQuest = true; Toast.show('🎉 استلمت 30 🪙 مكافأة المهمة!', 'gold'); Sounds.play('coins'); Haptic.success(); }
         if (typeof renderHome === 'function') renderHome();
       } else {
-        alert('لم تكمل المهمة بعد، أو قمت بالاستلام مسبقاً!');
+        Toast.show('لم تكمل المهمة بعد، أو قمت بالاستلام مسبقاً!', 'info');
         if (typeof renderHome === 'function') renderHome();
       }
     } else {
-      alert('فشلت العملية، يرجى التحقق من الاتصال.');
+      Toast.show('فشلت العملية، يرجى التحقق من الاتصال.', 'error');
     }
   });
 }
@@ -94,14 +94,15 @@ function claimDaily() {
       if (userData.tempReward) {
         const streakMsg = userData.dailyStreak > 1 ? `\n🔥 سلسلة ${userData.dailyStreak} أيام!` : '';
         const xpMsg     = userData.tempXP ? `\n⭐ +${userData.tempXP} XP` : '';
-        alert(`🎁 استلمت ${userData.tempReward} 🪙 مكافأة يومية!${xpMsg}${streakMsg}`);
+        Toast.show(`🎁 استلمت ${userData.tempReward} 🪙 مكافأة يومية!${xpMsg}${streakMsg}`, 'gold');
+        Sounds.play('coins'); if(userData.dailyStreak>1) setTimeout(()=>Sounds.play('levelUp'),400); Haptic.success();
         if (typeof renderHome === 'function') renderHome();
       } else if (userData.tempTimeLeft) {
         const r = userData.tempTimeLeft;
-        alert(`استلمت بالفعل!\nانتظر ${Math.floor(r / 3600000)} ساعة و${Math.floor((r % 3600000) / 60000)} دقيقة`);
+        Toast.show(`استلمت بالفعل!\nانتظر ${Math.floor(r / 3600000)} ساعة و${Math.floor((r % 3600000) / 60000)} دقيقة`, 'success');
       }
     } else {
-      alert('حدث خطأ أثناء استلام المكافأة، يرجى المحاولة مجدداً.');
+      Toast.show('حدث خطأ أثناء استلام المكافأة، يرجى المحاولة مجدداً.', 'error');
     }
   });
 }
@@ -117,15 +118,15 @@ function transferCoins() {
   const target = targetInput.value.trim();
   const amount = parseInt(amountInput.value);
 
-  if (!user || !target || isNaN(amount) || amount <= 0) { alert('بيانات غير صحيحة'); return; }
-  if (amount > currentCoins) { alert('لا تملك هذا القدر من الكوينز!'); return; }
-  if (target === currentUsername) { alert('لا يمكنك التحويل لنفسك!'); return; }
+  if (!user || !target || isNaN(amount) || amount <= 0) { Toast.show('بيانات غير صحيحة', 'error'); return; }
+  if (amount > currentCoins) { Toast.show('لا تملك هذا القدر من الكوينز!', 'error'); return; }
+  if (target === currentUsername) { Toast.show('لا يمكنك التحويل لنفسك!', 'info'); return; }
 
   if (transferBtn) transferBtn.disabled = true;
 
   db.ref('users').orderByChild('username').equalTo(target).once('value', snap => {
     if (!snap.exists()) {
-      alert('المستخدم المستلم غير موجود!');
+      Toast.show('المستخدم المستلم غير موجود!', 'error');
       if (transferBtn) transferBtn.disabled = false;
       return;
     }
@@ -140,14 +141,15 @@ function transferCoins() {
         db.ref('users/' + tid + '/coins')
           .set(firebase.database.ServerValue.increment(amount))
           .then(() => {
-            alert(`تم تحويل 🪙 ${amount} إلى ${target} بنجاح!`);
+            Toast.show(`تم تحويل 🪙 ${amount} إلى ${target} بنجاح!`, 'gold');
+            Sounds.play('coins'); Haptic.success();
             targetInput.value = '';
             amountInput.value = '';
           })
-          .catch(() => alert('تم خصم الكوينز لكن فشل إيداعها للمستلم، يرجى مراسلة الإدارة.'))
+          .catch(() => Toast.show('تم خصم الكوينز لكن فشل إيداعها للمستلم، يرجى مراسلة الإدارة.', 'success'))
           .finally(() => { if (transferBtn) transferBtn.disabled = false; });
       } else {
-        alert('فشل التحويل. تأكد من رصيدك الحالي.');
+        Toast.show('فشل التحويل. تأكد من رصيدك الحالي.', 'error');
         if (transferBtn) transferBtn.disabled = false;
       }
     });
@@ -166,13 +168,13 @@ function sendGift(targetUid, targetName, giftId) {
 
   const user = auth.currentUser;
   if (!user) return;
-  if (currentCoins < gift.cost) { alert(`لا تملك كوينز كافية! تحتاج ${gift.cost} 🪙`); return; }
+  if (currentCoins < gift.cost) { Toast.show(`لا تملك كوينز كافية! تحتاج ${gift.cost} 🪙`, 'error'); return; }
 
   db.ref('users/' + user.uid).transaction(u => {
     if (u && u.coins >= gift.cost) { u.coins -= gift.cost; return u; }
     return u;
   }, (err, committed) => {
-    if (!committed) { alert('فشل إرسال الهدية. تحقق من رصيدك.'); return; }
+    if (!committed) { Toast.show('فشل إرسال الهدية. تحقق من رصيدك.', 'error'); return; }
 
     db.ref('transfers/' + targetUid).push({
       amount: 0, from: currentUsername, type: 'gift',
@@ -186,6 +188,7 @@ function sendGift(targetUid, targetName, giftId) {
       timestamp: firebase.database.ServerValue.TIMESTAMP
     });
 
-    alert(`تم إرسال ${gift.emoji} ${gift.name} إلى ${targetName}!`);
+    Toast.show(`تم إرسال ${gift.emoji} ${gift.name} إلى ${targetName}!`, 'gold');
+    Sounds.play('purchase'); Haptic.success();
   });
 }

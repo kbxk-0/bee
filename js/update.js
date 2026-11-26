@@ -3,7 +3,7 @@
 //  نظام إشعار التحديث الداخلي
 // ============================================================
 
-const APP_VERSION = '1.0.1'; // ← غيّر هذا الرقم مع كل إصدار جديد
+const APP_VERSION = '1.0.3'; // ← غيّر هذا الرقم مع كل إصدار جديد
 
 // ===== فحص التحديث عند فتح التطبيق =====
 function checkForUpdate() {
@@ -113,11 +113,5 @@ function showUpdateModal({ title, message, version, url, forced }) {
 
   document.body.appendChild(modal);
 }
-// ===== تهريب HTML =====
-function escapeHTML(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+// ملاحظة: escapeHTML تستخدم النسخة المعرّفة بـ config.js (تشفّر أيضاً علامة
+// الاقتباس المفردة ' — ضرورية لمنع XSS). كانت هنا نسخة مكررة أضعف، حُذفت.

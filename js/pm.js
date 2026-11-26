@@ -192,10 +192,11 @@ function sendPM(convId, otherUid, otherName) {
   const input = document.getElementById('pm-input');
   const user  = auth.currentUser;
   if (!user || !input) return;
-  if (isMuted) { alert('أنت مكتوم!'); return; }
+  if (isMuted) { Toast.show('أنت مكتوم!', 'error'); Sounds.play('error'); Haptic.error(); return; }
 
   const text = input.value.trim(); if (!text) return;
   input.value = '';
+  Sounds.play('click');
 
   const msg = {
     senderUid: user.uid, senderName: currentUsername,
