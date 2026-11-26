@@ -106,14 +106,31 @@ async function startRec(){
 async function prep(){stream=null;if(!local&&$('vc').checked){try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}})}catch(e){note('تعذّر تشغيل المايك. اسمح للتطبيق باستخدامه.')}}startRec()}
 
 // ===== الاتصال بالسيرفر =====
-function connect(first){
- ws=new WebSocket(WS_URL);
- ws.onopen=()=>{send({type:'set_name',name:myName});first()};
- ws.onmessage=e=>{try{onMsg(JSON.parse(e.data))}catch(err){}};
- ws.onerror=()=>note('تعذّر الاتصال بالسيرفر. جرّب بعد قليل.');
- ws.onclose=()=>{if(playing){playing=0;$('rt').textContent='انقطع الاتصال بالسيرفر';$('rs').textContent='';$('ra').hidden=1;show('r')}else if(!$('l').hidden)show('h')};
+// يفتح اتصال WebSocket ويعيد المحاولة تلقائيًا: السيرفر المجاني ينام بعد 15 دقيقة ويحتاج حوالي دقيقة ليصحى
+function openSocket(onOpen,onWait){
+ const t0=Date.now();
+ (function attempt(){
+  const s=new WebSocket(WS_URL);let done=0;
+  const retry=()=>{if(done)return;done=1;try{s.close()}catch(e){}
+   const sec=Math.round((Date.now()-t0)/1000);
+   if(sec>150){onWait(-1);return}
+   onWait(sec);setTimeout(attempt,3000)};
+  s.onopen=()=>{if(done)return;done=1;onOpen(s)};
+  s.onerror=retry;s.onclose=retry;setTimeout(retry,20000);
+ })();
 }
-async function online(msg){if(ws&&ws.readyState<2)return;local=0;await prep();note('جاري الاتصال بالسيرفر… (أول مرة قد تأخذ لحظات)');connect(()=>send(Object.assign({avatar:myAv},msg)))}
+const waitMsg=sec=>sec<0?'السيرفر ما رد. جرّب بعد شوي.':'السيرفر نايم وبيصحى… '+sec+' ث (يحتاج حوالي دقيقة)';
+let connecting=0;
+function connect(first){
+ connecting=1;
+ openSocket(s=>{
+  connecting=0;ws=s;
+  ws.onmessage=e=>{try{onMsg(JSON.parse(e.data))}catch(err){}};
+  ws.onclose=()=>{if(playing){playing=0;$('rt').textContent='انقطع الاتصال بالسيرفر';$('rs').textContent='';$('ra').hidden=1;show('r')}else if(!$('l').hidden)show('h')};
+  send({type:'set_name',name:myName});first();
+ },sec=>{note(waitMsg(sec));if(sec<0)connecting=0});
+}
+async function online(msg){if(connecting||(ws&&ws.readyState<2))return;local=0;await prep();note('جاري الاتصال بالسيرفر…');connect(()=>send(Object.assign({avatar:myAv},msg)))}
 function onMsg(m){switch(m.type){
  case 'minute_room':me=m.seat=='b'?'b':'a';show('l');$('rc').textContent=m.priv?m.rid:'';$('wt').textContent=m.priv?'رمز الغرفة، أرسله لصاحبك':'جاري البحث عن خصم…';break;
  case 'minute_ready':{me=m.seat=='b'?'b':'a';(m.players||[]).forEach(q=>{if(q.seat=='a'||q.seat=='b'){names[q.seat]=String(q.name||'').slice(0,16)||names[q.seat];avs[q.seat]=String(q.avatar||'😊').slice(0,300)}});show('l');$('rc').textContent='';$('wt').textContent='خصمك: '+names[O()]+' ✓ — '+(me=='a'?'جاري تجهيز الأسئلة…':'بانتظار تجهيز الأسئلة…');initCall(me=='a');if(me=='a')setTimeout(go,1500);break}
@@ -126,6 +143,11 @@ function onMsg(m){switch(m.type){
  case 'err':note(String(m.msg||'خطأ'));break;
 }}
 
+// ===== إيقاظ السيرفر عند فتح الصفحة (نعرض للاعب حالته قبل ما يضغط) =====
+if(!/localhost|127\.0\.0\.1/.test(WS_URL)){
+ fetch(WS_URL.replace(/^ws/,'http'),{mode:'no-cors',cache:'no-store'}).catch(()=>{});
+ openSocket(s=>{if(!connecting&&!ws)$('nt').textContent='السيرفر جاهز ✓';s.close()},sec=>{if(!connecting&&!ws)$('nt').textContent=waitMsg(sec)});
+}
 // ===== الواجهة =====
 setAv($('myAv'),myAv);$('myNm').textContent=myName;
 if(Q.get('room'))$('cd').value=Q.get('room').toUpperCase().slice(0,8);

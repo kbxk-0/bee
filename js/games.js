@@ -11,7 +11,19 @@ const GAMES_LIST = [
 ];
 
 // ===== رسم صفحة الألعاب =====
+// ===== إيقاظ السيرفر (النسخة المجانية في Render تنام بعد 15 دقيقة) =====
+// أول ما أحد يفتح التطبيق نرسل طلب خفيف للسيرفر عشان يبدأ يصحى قبل ما يختار لعبة
+const SERVER_HTTP = 'https://million-server.onrender.com/';
+let _lastWake = 0;
+function wakeServer() {
+  if (Date.now() - _lastWake < 4 * 60 * 1000) return;
+  _lastWake = Date.now();
+  fetch(SERVER_HTTP, { mode: 'no-cors', cache: 'no-store' }).catch(() => {});
+}
+wakeServer();
+
 function renderGames() {
+  wakeServer();
   const sec = document.getElementById('games');
   if (!sec) return;
 
