@@ -7,7 +7,7 @@ const APP_VERSION = '1.0.3'; // ← غيّر هذا الرقم مع كل إصد�
 
 // ===== فحص التحديث عند فتح التطبيق =====
 function checkForUpdate() {
-  db.ref('settings/update').once('value', snap => {
+  db.ref('update').once('value', snap => {
     const data = snap.val();
     if (!data || !data.active) return;
 
