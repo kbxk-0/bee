@@ -115,3 +115,4 @@ function showUpdateModal({ title, message, version, url, forced }) {
 }
 // ملاحظة: escapeHTML تستخدم النسخة المعرّفة بـ config.js (تشفّر أيضاً علامة
 // الاقتباس المفردة ' — ضرورية لمنع XSS). كانت هنا نسخة مكررة أضعف، حُذفت.
+window.addEventListener('load', checkForUpdate);
