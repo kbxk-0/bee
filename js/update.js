@@ -3,7 +3,7 @@
 //  نظام إشعار التحديث الداخلي
 // ============================================================
 
-const APP_VERSION = '1.0.3'; // ← غيّر هذا الرقم مع كل إصدار جديد
+const APP_VERSION = '1.0.4'; // ← غيّر هذا الرقم مع كل إصدار جديد
 
 // ===== فحص التحديث عند فتح التطبيق =====
 function checkForUpdate() {
@@ -84,7 +84,7 @@ function showUpdateModal({ title, message, version, url, forced }) {
 
       <!-- زر التحديث -->
       ${url ? `
-        <button onclick="window.open('${url}','_blank')"
+        <button onclick="startInAppUpdate('${url}')"
           style="width:100%;padding:14px;background:linear-gradient(135deg,#a07810,#f0c040);
             color:#1a0e00;border:none;border-radius:14px;font-weight:900;
             font-size:.95rem;cursor:pointer;font-family:inherit;margin-bottom:8px">
@@ -116,3 +116,28 @@ function showUpdateModal({ title, message, version, url, forced }) {
 // ملاحظة: escapeHTML تستخدم النسخة المعرّفة بـ config.js (تشفّر أيضاً علامة
 // الاقتباس المفردة ' — ضرورية لمنع XSS). كانت هنا نسخة مكررة أضعف، حُذفت.
 window.addEventListener('load', checkForUpdate);
+// ==== دالة التحديث من داخل التطبيق ====
+function startInAppUpdate(url) {
+    // التحقق من وجود الأداة
+    const updater = window.ApkUpdater || (window.cordova && window.cordova.plugins && window.cordova.plugins.apkupdater);
+
+    if (updater) {
+        const btn = document.querySelector('#update-modal button');
+        if(btn) btn.innerHTML = 'جاري التحميل...';
+
+        updater.download(
+            url,
+            () => { // نجاح التحميل
+                updater.install(
+                    () => { console.log("بدأ التثبيت"); },
+                    (error) => { alert("خطأ في التثبيت: " + error); }
+                );
+            },
+            (error) => { alert("خطأ في التحميل: " + error); },
+            (progress) => { console.log("Download: " + progress); }
+        );
+    } else {
+        // لو ملقاش الأداة (مثلاً فتحته في المتصفح)
+        window.open(url, '_blank');
+    }
+}
