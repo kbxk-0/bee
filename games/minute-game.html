@@ -10,7 +10,7 @@
 :root{--gold:#c8a940;--gold2:#f0c040;--bg:#08080f;--mu:rgba(255,255,255,.5);--bad:#ff7a66;--line:rgba(200,169,64,.3)}
 html,body{min-height:100%;background:var(--bg);font-family:'Cairo',sans-serif;color:#fff;direction:rtl;touch-action:manipulation}
 body{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66L28 100M28 0L28 34L0 50L0 84L28 100L56 84L56 50L28 34' fill='none' stroke='%23c8a940' stroke-opacity='.12'/%3E%3C/svg%3E")}
-main{max-width:520px;margin:0 auto;padding:48px 16px 28px}
+main{max-width:520px;margin:0 auto;padding:60px 16px 28px}
 section{display:flex;flex-direction:column;gap:12px}
 [hidden]{display:none!important}
 h1{font-size:2rem;font-weight:900;color:var(--gold2);text-align:center}
@@ -53,7 +53,7 @@ input[type=checkbox]{width:auto;accent-color:var(--gold)}
 #fl.ok{color:var(--gold2)}
 #cap{min-height:26px;text-align:center;color:var(--mu);overflow-wrap:anywhere}
 .mic.live{border-color:var(--gold2);color:#1a0800;background:linear-gradient(135deg,#a87e10,#f0c040,#a87e10)}
-#xb{position:fixed;top:10px;left:12px;z-index:5;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:rgba(0,0,0,.4);color:var(--gold2);font-size:1rem;cursor:pointer}
+#xb{position:fixed;top:10px;left:12px;z-index:5;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:rgba(8,8,15,.95);color:var(--gold2);font-size:1rem;cursor:pointer}
 .xc{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center}
 .xc.show{display:flex}
 .xbx{background:#12121c;border:1px solid var(--line);border-radius:18px;padding:20px;width:min(320px,90vw);text-align:center;display:flex;flex-direction:column;gap:12px}
@@ -72,6 +72,7 @@ input[type=checkbox]{width:auto;accent-color:var(--gold)}
 <select id="lg" aria-label="لغة الصوت"><option value="ar-SA">لغة الصوت: عربي</option><option value="en-US">Voice language: English</option></select>
 <label class="chk"><input type="checkbox" id="vc" checked>مكالمة صوتية مع الخصم</label>
 <button class="b" id="bq">لعب سريع ⚡</button>
+<button class="b g" id="bb">العب ضد البوت 🤖</button>
 <button class="b g" id="bc">غرفة خاصة</button>
 <div class="row"><input id="cd" placeholder="رمز الغرفة" maxlength="8" autocomplete="off"><button class="b g" id="bj">انضمام</button></div>
 <button class="b g" id="bl">تجربة على جهاز واحد</button>
@@ -99,6 +100,21 @@ input[type=checkbox]{width:auto;accent-color:var(--gold)}
 </main>
 <div class="xc" id="xc"><div class="xbx"><h3>⚠️ الخروج من اللعبة</h3><p class="lead">هل أنت متأكد من الخروج؟</p><div class="row"><button class="b g" id="xs" style="flex:1">البقاء ✊</button><button class="b" id="xl" style="flex:1">خروج 🚪</button></div></div></div>
 <audio id="au" autoplay></audio>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+var firebaseConfig = {
+  apiKey:            "AIzaSyAL5WoxOv0aVh9knoUEVduVt6E5IPmADos",
+  authDomain:        "zero-reality.firebaseapp.com",
+  databaseURL:       "https://zero-reality-default-rtdb.firebaseio.com",
+  projectId:         "zero-reality",
+  storageBucket:     "zero-reality.firebasestorage.app",
+  messagingSenderId: "238024144517",
+  appId:             "1:238024144517:web:1b75964bb68b424b4ddbec",
+};
+var auth,db;try{firebase.initializeApp(firebaseConfig);auth=firebase.auth();db=firebase.database()}catch(e){}
+</script>
 <script src="minute-data.js"></script>
 <script src="minute-game.js"></script>
 </body>
